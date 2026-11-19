@@ -872,3 +872,82 @@
 /* The account menu is the single authoritative display-name label. */
 body:has(#account-menu-button) #account-label,
 body:has(#account-menu-button) #account-avatar{display:none!important}
+
+
+/* Refined streaming-service editor: names only, no external URL requirements. */
+#nr-stream-editor.nr-stream-modal{
+ width:min(510px,calc(100vw - 32px));max-width:510px;max-height:calc(100dvh - 36px);
+ padding:0;margin:auto;border:1px solid #795169;border-radius:18px;
+ background:#1c1723;color:#f8f2f7;box-shadow:0 26px 90px rgba(0,0,0,.68);
+ overflow:auto;box-sizing:border-box;
+}
+#nr-stream-editor::backdrop{background:rgba(6,4,12,.78);backdrop-filter:blur(5px)}
+#nr-stream-editor .nr-stream-modal-inner{display:flex;flex-direction:column;min-width:0}
+#nr-stream-editor .nr-stream-header{
+ display:flex;gap:14px;align-items:flex-start;padding:26px 26px 22px;
+ border-bottom:1px solid #3f303f;background:linear-gradient(130deg,#302138,#201923);
+}
+#nr-stream-editor .nr-stream-header>div:nth-child(2){flex:1;min-width:0}
+#nr-stream-editor .nr-stream-icon{
+ flex:0 0 40px;height:40px;display:grid;place-items:center;
+ border-radius:11px;border:1px solid #b66e90;background:#56314d;color:#ffd4e7;font-size:16px;
+}
+#nr-stream-editor .nr-stream-eyebrow{
+ margin:0 0 7px;color:#db9fbf;font-size:10px;font-weight:800;letter-spacing:.17em;
+}
+#nr-stream-editor h2{margin:0 0 9px;font:700 clamp(20px,4vw,25px)/1.2 var(--head,system-ui);letter-spacing:-.025em;color:#fff}
+#nr-stream-editor .nr-stream-subtitle{margin:0;color:#c9b8c8;font-size:12px;line-height:1.6}
+#nr-stream-editor .nr-stream-x{flex:0 0 30px;width:30px;height:30px;border:0;background:transparent;color:#c9b8c8;font-size:25px;cursor:pointer;border-radius:7px}
+#nr-stream-editor .nr-stream-x:hover{background:#50354c;color:#fff}
+#nr-stream-editor .nr-stream-content{padding:24px 26px 26px}
+#nr-stream-editor .nr-stream-field{display:block;margin:0 0 9px;color:#f4deea;font-size:12px;font-weight:800}
+#nr-stream-editor .nr-stream-controls{display:flex;gap:10px;align-items:stretch}
+#nr-stream-editor #nr-stream-provider,
+#nr-stream-editor #nr-stream-other{
+ appearance:auto;min-width:0;min-height:45px;box-sizing:border-box;
+ border:1px solid #73546b;border-radius:10px;background:#29212f;color:#fff;
+ padding:11px 12px;font:500 16px/1.25 var(--body,system-ui);
+}
+#nr-stream-editor #nr-stream-provider{flex:1;width:100%;cursor:pointer}
+#nr-stream-editor #nr-stream-other{width:100%}
+#nr-stream-editor #nr-stream-provider:focus,
+#nr-stream-editor #nr-stream-other:focus{outline:2px solid #e99abe;outline-offset:2px}
+#nr-stream-editor .nr-stream-add{
+ flex:0 0 auto;min-width:87px;border:1px solid #b97f9b;border-radius:10px;
+ background:#51334d;color:#ffe7f3;font-size:12px;font-weight:800;padding:10px 15px;cursor:pointer;
+}
+#nr-stream-editor .nr-stream-add:hover{background:#70435f}
+#nr-stream-editor .nr-stream-other-wrap{margin-top:17px}
+#nr-stream-editor .nr-stream-other-wrap[hidden]{display:none!important}
+#nr-stream-editor .nr-stream-selected-heading{display:flex;align-items:baseline;justify-content:space-between;gap:9px;margin:27px 0 12px}
+#nr-stream-editor .nr-stream-selected-heading strong{font-size:12px;color:#f4deea}
+#nr-stream-editor .nr-stream-selected-heading small{font-size:11px;color:#a99cab}
+#nr-stream-editor .nr-stream-selected{display:flex;gap:9px;flex-wrap:wrap;min-height:52px;align-items:flex-start;
+ padding:14px;border:1px dashed #6b4a61;border-radius:11px;background:#211a29}
+#nr-stream-editor .nr-stream-chip{max-width:100%;display:inline-flex;align-items:center;gap:9px;
+ border:1px solid #b57b9a;border-radius:999px;background:#4b3048;color:#fff;
+ padding:6px 8px 6px 13px;font-size:12px;font-weight:700}
+#nr-stream-editor .nr-stream-chip span{overflow-wrap:anywhere}
+#nr-stream-editor .nr-stream-chip button{width:22px;height:22px;border:0;border-radius:50%;color:#fff;
+ background:#76516b;cursor:pointer;font-size:16px;line-height:1}
+#nr-stream-editor .nr-stream-chip button:hover{background:#a75c7e}
+#nr-stream-editor .nr-stream-empty{color:#a99cab;font-size:12px;margin:0;padding:3px 0}
+#nr-stream-editor .nr-stream-error{font-size:12px;color:#ffafc3;margin:10px 0 0;min-height:1.2em}
+#nr-stream-editor .nr-stream-footer{display:flex;justify-content:flex-end;gap:10px;align-items:center;
+ border-top:1px solid #403040;background:#201923;padding:17px 26px 20px}
+#nr-stream-editor .nr-stream-footer button{min-height:43px;padding:10px 17px;border-radius:9px;
+ font-weight:800;font-size:12px;cursor:pointer}
+#nr-stream-editor .nr-stream-cancel{background:transparent;color:#e9d9e4;border:1px solid #76566a}
+#nr-stream-editor .nr-stream-save{background:#f0a2bf;color:#251322;border:1px solid #ffb3d0}
+#nr-stream-editor .nr-stream-save:disabled{opacity:.55;cursor:wait}
+.nr-where-watch .nr-service-pills{display:flex;flex-wrap:wrap;gap:7px}
+.nr-where-watch .nr-service-pill{display:inline-block;padding:7px 10px;border:1px solid #a96e8d;
+ border-radius:999px;background:#4d2941;color:#ffe5f0;font-size:11px;font-weight:800;overflow-wrap:anywhere}
+@media(max-width:540px){
+ #nr-stream-editor.nr-stream-modal{width:calc(100vw - 24px);max-height:calc(100dvh - 28px);border-radius:15px}
+ #nr-stream-editor .nr-stream-header{padding:19px 17px;gap:10px}
+ #nr-stream-editor .nr-stream-content{padding:20px 17px}
+ #nr-stream-editor .nr-stream-footer{padding:14px 17px}
+ #nr-stream-editor .nr-stream-icon{flex-basis:34px;height:34px}
+ #nr-stream-editor .nr-stream-selected-heading{flex-direction:column;gap:4px}
+}
