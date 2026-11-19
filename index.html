@@ -39,7 +39,7 @@
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important}}
 
 </style>
-  <link rel="stylesheet" href="app-enhancements.css?v=20" />
+  <link rel="stylesheet" href="app-enhancements.css?v=21" />
 </head>
 <body>
   <section id="startup-warning" role="status" style="max-width:700px;margin:64px auto 20px;padding:24px;color:#eee;background:#27212c;border:1px solid #805362;border-radius:12px;font:15px/1.55 Arial,sans-serif">
@@ -150,7 +150,7 @@
 
   <input type="file" id="import-file" accept=".json,.csv,.html,.htm,application/json,text/csv,text/html" hidden />
   <script src="config.js"></script>
-  <script src="original-collection.js"></script><!-- Optional for preview; needed for Supabase accounts. -->
+  <script src="original-collection.js?v=2"></script><!-- Optional for preview; needed for Supabase accounts. -->
   <script>
 window.addEventListener('error', function(event) {
   var el = document.getElementById('startup-warning');
@@ -947,8 +947,8 @@ start();
 <script defer src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-<script defer src="app-enhancements.js?v=20"></script>
-<script defer src="nightreel-releases.js?v=10"></script>
-<script defer src="social-extras.js?v=2"></script>
+<script defer src="app-enhancements.js?v=21"></script>
+<script defer src="nightreel-releases.js?v=11"></script>
+<script defer src="social-extras.js?v=3"></script>
 </body>
 </html>
