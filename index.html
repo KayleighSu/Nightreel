@@ -65,6 +65,7 @@
         <p id="auth-subtitle">Your queue is waiting for you.</p>
         <div class="auth-tabs" id="auth-tabs"><button type="button" id="tab-signin" class="active">Log in</button><button type="button" id="tab-signup">Create account</button></div>
         <form id="auth-form" autocomplete="on">
+          <div id="signup-display-group" class="form-field" hidden><label for="signup-display-name">Display name <span class="required">*</span></label><input id="signup-display-name" type="text" name="display_name" maxlength="60" minlength="1" autocomplete="nickname" placeholder="What should your friends call you?"><p class="hint">This is the name everyone sees. Your unique username is generated automatically.</p></div>
           <div id="email-group" class="form-field"><label for="auth-email">Email address</label><input type="email" id="auth-email" autocomplete="email" placeholder="you@example.com" required /></div>
           <div class="form-field"><label for="auth-password" id="password-label">Password</label><input type="password" id="auth-password" autocomplete="current-password" placeholder="At least 6 characters" minlength="6" required /></div>
           <div id="auth-error" role="alert" class="form-error" hidden></div>
@@ -300,6 +301,8 @@ function showAuth(mode = 'signin') {
   const special = mode === 'reset' || mode === 'update';
   $('auth-tabs').hidden = special;
   $('email-group').hidden = mode === 'update';
+  $('signup-display-group').hidden = mode !== 'signup';
+  $('signup-display-name').required = mode === 'signup';
   $('auth-email').required = mode !== 'update';
   $('tab-signin').classList.toggle('active', mode === 'signin');
   $('tab-signup').classList.toggle('active', mode === 'signup');
@@ -851,7 +854,12 @@ async function handleSession(session) {
 async function handleAuth(event) {
   event.preventDefault(); if (!state.supabase) return;
   const email = $('auth-email').value.trim(); const password = $('auth-password').value;
+  const displayName = $('signup-display-name').value.trim();
   $('auth-error').hidden = true; $('auth-submit').disabled = true;
+  if(state.authMode === 'signup' && (displayName.length < 1 || displayName.length > 60)){
+    $('auth-error').textContent = 'Choose a display name between 1 and 60 characters.';
+    $('auth-error').hidden = false; $('auth-submit').disabled = false; return;
+  }
   if ((state.authMode === 'signup' || state.authMode === 'update') && password.length < 12) {
     $('auth-error').textContent = 'Use a password with at least 12 characters.';
     $('auth-error').hidden = false; $('auth-submit').disabled = false; return;
@@ -859,7 +867,7 @@ async function handleAuth(event) {
   try {
     let result;
     if (state.authMode === 'signin') result = await state.supabase.auth.signInWithPassword({ email, password });
-    else if (state.authMode === 'signup') result = await state.supabase.auth.signUp({ email, password, options: { emailRedirectTo: `${location.origin}${location.pathname}` } });
+    else if (state.authMode === 'signup') result = await state.supabase.auth.signUp({ email, password, options: { emailRedirectTo: `${location.origin}${location.pathname}`, data: { display_name: displayName } } });
     else if (state.authMode === 'reset') result = await state.supabase.auth.resetPasswordForEmail(email, { redirectTo: `${location.origin}${location.pathname}` });
     else if (state.authMode === 'update') result = await state.supabase.auth.updateUser({ password });
     if (result.error) throw result.error;
