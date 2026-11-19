@@ -329,7 +329,7 @@ $('extra-send-message').addEventListener('submit',async e=>{
  if(!body||body.length>2000){message($('extra-messages-status'),'Messages must be 1–2,000 characters.');return;}
  const button=$('extra-send-button');button.disabled=true;
  try{
-  const r=await state.supabase.from('direct_messages').insert({recipient_id:conversationId,body});
+  const r=await state.supabase.from('direct_messages').insert({sender_id:state.user.id,recipient_id:conversationId,body});
   if(r.error)throw r.error;
   input.value='';
   await loadMessages();
