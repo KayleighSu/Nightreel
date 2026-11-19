@@ -9,7 +9,7 @@ create table if not exists public.anime_entries (
   image_url text,
   synopsis text,
   year integer check (year is null or year between 1900 and 2200),
-  status text not null default 'plan_to_watch' check (status in ('plan_to_watch','watching','completed','on_hold','dropped')),
+  status text not null default 'plan_to_watch' check (status in ('untracked','plan_to_watch','watching','completed','on_hold','dropped')),
   episodes_total integer check (episodes_total is null or episodes_total between 0 and 50000),
   episodes_watched integer not null default 0 check (episodes_watched between 0 and 50000),
   rating integer check (rating is null or rating between 1 and 10),
