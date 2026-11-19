@@ -145,8 +145,7 @@ function updateCardReleaseInfo(){
    const releaseInfo=isRegularSeries(e.catalog_format)&&/currently airing|releasing|not yet aired|not yet released/i.test(e.catalog_airing_status||'');
    if(hasNextEpisode || nextSeason || releaseInfo){
     if(!chip){chip=document.createElement('span');chip.className='nr-airing-chip';front.querySelector('h3')?.before(chip);}
-    if(chip)chip.textContent=hasNextEpisode?'Next ep '+shortDate(e.catalog_next_episode_at):
-      nextSeason||'Release tracking';
+    if(chip)chip.textContent=nextSeason||(hasNextEpisode?'Next ep '+shortDate(e.catalog_next_episode_at):'Release tracking');
    }else chip?.remove();
   }
  });
