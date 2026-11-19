@@ -689,3 +689,45 @@
  .nr-supporting-spotlight .nr-ranked-favorite:not(.is-expanded) .flip-top{display:none}
  .nr-supporting-spotlight .nr-ranked-favorite.is-expanded .flip-top{display:flex}
 }
+
+
+/* Original Nightreel placeholder, also visible if an external cover stops loading. */
+.flip-face{isolation:isolate}
+.flip-face .nr-cover-standin{position:absolute;inset:0;z-index:-3;display:flex;flex-direction:column;
+ align-items:center;justify-content:center;gap:12px;pointer-events:none;
+ background:radial-gradient(ellipse at 55% 40%,#66354d 0%,#342034 34%,#14101d 80%);
+ overflow:hidden}
+.flip-face .nr-cover-standin::before,.flip-face .nr-cover-standin::after{
+ content:'';position:absolute;width:68%;height:50%;border-radius:50%;border:1px solid #ffb4d030;
+ transform:rotate(-30deg)}
+.flip-face .nr-cover-standin::before{width:85%;height:65%;transform:rotate(-37deg)}
+.nr-standin-glyph{font:800 clamp(54px,6vw,94px)/1 var(--head);color:#f5a9c5;letter-spacing:-.08em;
+ filter:drop-shadow(0 0 20px #e876ad70)}
+.nr-standin-wordmark{font:900 13px/1 var(--head);letter-spacing:.27em;color:#f3cfde}
+.nr-standin-lines{width:70px;height:3px;border-radius:4px;background:#ed7697}
+.nr-missing-cover .nr-standin-wordmark{color:#ffe2ed}
+.hero.nr-missing-banner,.social-hero.nr-missing-banner{
+ background:radial-gradient(circle at 73% 40%,#79435f 0%,#44273e 42%,#15121e 100%)}
+.hero.nr-missing-banner::before,.social-hero.nr-missing-banner::before{
+ content:'✦';position:absolute;right:11%;top:8%;font:900 clamp(90px,16vw,190px) var(--head);
+ color:#f5b3d021;pointer-events:none}
+/* Streaming destinations are catalogue links, not region-specific availability guarantees. */
+.nr-where-watch{padding:11px 12px;border:1px solid #78546b;border-radius:11px;
+ background:rgba(17,10,25,.82);display:flex;flex-direction:column;gap:9px;color:#fff}
+.nr-where-watch>strong{font-size:12px;color:#ffd4e1}
+.nr-where-watch p{font-size:12px;line-height:1.4;color:#e5d1da;margin:0}
+.nr-watch-links{display:flex;flex-wrap:wrap;gap:7px}
+.nr-watch-links a{display:inline-block;padding:8px 10px;border-radius:7px;background:#4d2941;
+ border:1px solid #a96e8d;color:#ffdded;font-size:11px;font-weight:800;overflow-wrap:anywhere}
+.nr-watch-links a:hover{background:#67354f}
+.nr-where-watch small{font-size:10px;color:#c4afbd;line-height:1.45}
+/* Artwork editor preview and optional catalogue runtime controls. */
+.nr-upload-preview{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 12px;
+ border-radius:10px;border:1px solid #69465d;background:#1f1826}
+.nr-upload-preview[hidden]{display:none!important}
+.nr-upload-preview img{width:83px;height:100px;object-fit:cover;border-radius:7px}
+.nr-upload-preview button,.nr-runtime-tools button{border:1px solid #a16e86;background:#432c3f;
+ color:#fff;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:800}
+.nr-runtime-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:7px 0}
+.nr-runtime-tools small{font-size:11px;color:#dec2d2}
+@media(max-width:580px){.nr-where-watch{padding:10px}.nr-watch-links a{padding:7px 9px}}
