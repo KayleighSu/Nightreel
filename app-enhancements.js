@@ -348,10 +348,10 @@ function spotlightMarkup(items,readOnly){
  const rankCard=(entry,rank)=>
   '<div class="nr-ranked-favorite nr-rank-'+rank+'">'+
   '<div class="nr-rank-heading"><span>#'+String(rank).padStart(2,'0')+'</span><small>'+
-  (rank===1?'YOUR ALL-TIME #1':'TOP FIVE FAVORITE')+'</small></div>'+
+  (rank===1?(readOnly?'ALL-TIME #1':'YOUR ALL-TIME #1'):'TOP FIVE FAVORITE')+'</small></div>'+
   buildCard(entry,rank-1,readOnly)+'</div>';
  return '<section class="nr-library-section nr-featured-section" data-library-section="featured">'+
-  '<div class="nr-section-heading"><div><span class="nr-section-eyebrow">✦ YOUR ALL-TIME TOP FIVE</span>'+
+  '<div class="nr-section-heading"><div><span class="nr-section-eyebrow">'+(readOnly?'✦ ALL-TIME TOP FIVE':'✦ YOUR ALL-TIME TOP FIVE')+'</span>'+
   '<h3>Favorite anime <small>'+items.length+'</small></h3></div>'+
   (readOnly?'':'<button type="button" data-manage-favorites class="nr-manage-favorites">↕ Rank favorites</button>')+
   '</div>'+
@@ -382,7 +382,10 @@ function organizedMarkup(entries,readOnly){
   '<section class="nr-library-section" data-library-section="'+section.key+'">'+
   '<div class="nr-section-heading"><div><span class="nr-section-eyebrow">'+(section.eyebrow||'WATCH STATUS')+'</span>'+
   '<h3>'+section.name+' <small>'+section.items.length+'</small></h3></div></div>'+
-  '<div class="anime-grid nr-section-grid">'+section.items.map((entry,i)=>buildCard(entry,i,readOnly)).join('')+'</div></section>'
+  '<div class="anime-grid nr-section-grid">'+section.items.map((entry,i)=>
+    section.key==='other-favorites'
+      ? '<div class="nr-more-ranked"><span class="nr-more-ranked-number">#'+String(i+6).padStart(2,'0')+'</span>'+buildCard(entry,i,readOnly)+'</div>'
+      : buildCard(entry,i,readOnly)).join('')+'</div></section>'
  ));
  return output.join('');
 }
