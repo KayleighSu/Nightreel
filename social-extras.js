@@ -283,35 +283,67 @@ async function loadFriends(){
  }));
  return friends;
 }
-async function openMessages(friendId){
+const nrLastMobileKey='nightreel-last-mobile-chat';
+let nrMobileRequest=0;
+function nrRememberMobileConversation(id){
+ if(!loggedIn())return;
+ try{localStorage.setItem(nrLastMobileKey+':'+state.user.id,id);}catch{}
+}
+async function nrMostRecentFriend(){
+ const uid=state.user.id;
+ // Direct messages are participant-only under the existing database policies.
+ const r=await state.supabase.from('direct_messages')
+  .select('sender_id,recipient_id,created_at').or('sender_id.eq.'+uid+',recipient_id.eq.'+uid)
+  .order('created_at',{ascending:false}).limit(60);
+ if(r.error)throw r.error;
+ const latest=(r.data||[]).find(m=>friends.some(f=>f.id===(m.sender_id===uid?m.recipient_id:m.sender_id)));
+ if(latest)return latest.sender_id===uid?latest.recipient_id:latest.sender_id;
+ try{
+  const remembered=localStorage.getItem(nrLastMobileKey+':'+uid);
+  if(friends.some(f=>f.id===remembered))return remembered;
+ }catch{}
+ return friends.length===1?friends[0].id:null;
+}
+async function openMessages(friendId,showList=false){
  nrClearUnread();
  if(!nrIsMobile()&&typeof friendId==='string'){await loadFriends();nrOpenDock(friendId);return;}
  if(!ensureLogin($('extra-messages-status')))return;
+ const request=++nrMobileRequest;
  show(chatDialog);
- message($('extra-messages-status'),'Loading friends…');
+ message($('extra-messages-status'),'Loading conversations…');
  try{
   await loadFriends();
+  if(request!==nrMobileRequest||!chatDialog.open)return;
   const listing=$('extra-conversations');listing.replaceChildren();
   $('extra-open-chat').hidden=true;listing.hidden=false;conversationId=null;
+  if(messagePoll){clearInterval(messagePoll);messagePoll=0;}
   if(!friends.length){
    listing.innerHTML='<p>No accepted friends yet. Use the Friends tab or a friend QR to add someone.</p>';
   }else{
    for(const f of friends){
     const row=document.createElement('div');row.className='extras-convo';
-    const label=document.createElement('span');label.textContent='@'+(f.username||f.display_name||'Anime fan');
-    const btn=document.createElement('button');btn.textContent='Message';btn.type='button';btn.onclick=()=>{if(nrIsMobile()){openConversation(f.id);}else{chatDialog.close();nrOpenDock(f.id);}};
+    const label=document.createElement('span');label.textContent=f.display_name&&f.display_name.toLowerCase()!=='anime fan'?f.display_name:'@'+f.username;
+    const btn=document.createElement('button');btn.textContent='Open chat';btn.type='button';btn.onclick=()=>{if(nrIsMobile()){openConversation(f.id);}else{chatDialog.close();nrOpenDock(f.id);}};
     row.append(label,btn);listing.append(row);
    }
   }
-  message($('extra-messages-status'),'');
-  if(typeof friendId==='string'&&friends.some(f=>f.id===friendId))openConversation(friendId);
- }catch(e){message($('extra-messages-status'),'Could not load friends: '+e.message);}
+  let target=typeof friendId==='string'&&friends.some(f=>f.id===friendId)?friendId:null;
+  if(!target&&nrIsMobile()&&!showList&&friends.length){
+   try{target=await nrMostRecentFriend();}catch(error){
+    message($('extra-messages-status'),'Could not determine most recent conversation: '+error.message);
+   }
+  }
+  if(request!==nrMobileRequest||!chatDialog.open)return;
+  if(target)await openConversation(target);
+  else if(!friends.length||showList)message($('extra-messages-status'),'');
+ }catch(e){if(request===nrMobileRequest)message($('extra-messages-status'),'Could not load friends: '+e.message);}
 }
 async function openConversation(id){
  const f=friends.find(x=>x.id===id);if(!f)return;
  conversationId=id;
+ if(nrIsMobile())nrRememberMobileConversation(id);
  $('extra-conversations').hidden=true;$('extra-open-chat').hidden=false;
- $('extra-chat-title').textContent='Chat with @'+(f.username||f.display_name||'Anime fan');
+ $('extra-chat-title').textContent=f.display_name&&f.display_name.toLowerCase()!=='anime fan'?f.display_name:'@'+(f.username||'Friend');
  await loadMessages();
  if(messagePoll)clearInterval(messagePoll);
  messagePoll=setInterval(()=>{if(chatDialog.open&&conversationId)loadMessages(true);},6000);
@@ -340,7 +372,23 @@ async function loadMessages(quiet=false){
   if(!quiet)message($('extra-messages-status'),'');
  }catch(e){if(!quiet)message($('extra-messages-status'),'Could not load messages: '+e.message);}
 }
-$('extra-back-chats').onclick=()=>openMessages();
+$('extra-back-chats').onclick=()=>openMessages(null,true);
+// Phone keyboards may emit beforeinput(insertLineBreak) instead of keydown Enter.
+const nrMobileInput=$('extra-chat-text');
+nrMobileInput.setAttribute('enterkeyhint','send');
+nrMobileInput.setAttribute('inputmode','text');
+function nrSubmitMobileMessage(e){
+ if(e.isComposing||e.inputType==='insertCompositionText')return;
+ e.preventDefault();
+ if(nrMobileInput.value.trim())$('extra-send-message').requestSubmit();
+}
+nrMobileInput.addEventListener('keydown',e=>{
+ if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing)nrSubmitMobileMessage(e);
+});
+nrMobileInput.addEventListener('beforeinput',e=>{
+ if((e.inputType==='insertLineBreak'||e.inputType==='insertParagraph')&&
+    !e.isComposing&&!e.shiftKey)nrSubmitMobileMessage(e);
+});
 $('extra-send-message').addEventListener('submit',async e=>{
  e.preventDefault();
  if(!loggedIn()||!conversationId)return;
@@ -355,7 +403,7 @@ $('extra-send-message').addEventListener('submit',async e=>{
  }catch(err){message($('extra-messages-status'),'Could not send: '+err.message);}
  finally{button.disabled=false;}
 });
-chatDialog.addEventListener('close',()=>{conversationId=null;if(messagePoll)clearInterval(messagePoll);messagePoll=0;});
+chatDialog.addEventListener('close',()=>{++nrMobileRequest;conversationId=null;if(messagePoll)clearInterval(messagePoll);messagePoll=0;});
 // Friend list integrations
 document.getElementById('friends-results')?.addEventListener('click',e=>{
  const el=e.target.closest('[data-friend-action="view"]');if(!el)return;
