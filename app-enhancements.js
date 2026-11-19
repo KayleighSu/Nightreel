@@ -334,32 +334,155 @@ const nrStatusOrder=[
  ['dropped','Dropped'],
  ['completed','Completed']
 ];
+function rankFavorites(entries){
+ return [...entries].sort((a,b)=>{
+  const ar=Number.isInteger(a.favorite_rank)&&a.favorite_rank>0?a.favorite_rank:Infinity;
+  const br=Number.isInteger(b.favorite_rank)&&b.favorite_rank>0?b.favorite_rank:Infinity;
+  return ar-br||a.title.localeCompare(b.title);
+ });
+}
+function spotlightMarkup(items,readOnly){
+ if(!items.length)return '';
+ const primary=items[0];
+ const topFour=items.slice(1,5);
+ const rankCard=(entry,rank)=>
+  '<div class="nr-ranked-favorite nr-rank-'+rank+'">'+
+  '<div class="nr-rank-heading"><span>#'+String(rank).padStart(2,'0')+'</span><small>'+
+  (rank===1?'YOUR ALL-TIME #1':'TOP FIVE FAVORITE')+'</small></div>'+
+  buildCard(entry,rank-1,readOnly)+'</div>';
+ return '<section class="nr-library-section nr-featured-section" data-library-section="featured">'+
+  '<div class="nr-section-heading"><div><span class="nr-section-eyebrow">✦ YOUR ALL-TIME TOP FIVE</span>'+
+  '<h3>Favorite anime <small>'+items.length+'</small></h3></div>'+
+  (readOnly?'':'<button type="button" data-manage-favorites class="nr-manage-favorites">↕ Rank favorites</button>')+
+  '</div>'+
+  (!items.some(e=>Number.isInteger(e.favorite_rank)&&e.favorite_rank>0) && !readOnly
+   ? '<p class="nr-rank-tip">Shown alphabetically until you choose your personal order. Make your #1 the centerpiece.</p>':'')+
+  '<div class="nr-featured-layout">'+
+  '<div class="nr-primary-spotlight">'+rankCard(primary,1)+'</div>'+
+  (topFour.length?'<div class="nr-supporting-spotlight">'+topFour.map((e,i)=>rankCard(e,i+2)).join('')+'</div>':'')+
+  '</div></section>';
+}
 function organizedMarkup(entries,readOnly){
  const sections=[];
- const favorites=entries.filter(e=>e.favorite);
- if(favorites.length)sections.push({key:'featured',name:'Favorite anime',items:favorites,featured:true});
+ const favorites=rankFavorites(entries.filter(e=>e.favorite));
+ const normal=favorites.slice(5);
  const regular=entries.filter(e=>!e.favorite);
+ const output=[];
+ if(favorites.length)output.push(spotlightMarkup(favorites,readOnly));
+ if(normal.length)sections.push({key:'other-favorites',name:'More favorites',items:normal,eyebrow:'♥ STILL LOVED'});
  for(const [key,name] of nrStatusOrder){
   if(key==='completed'){
    const films=regular.filter(e=>e.is_movie);
-   if(films.length)sections.push({key:'movies',name:'Movies',items:films,featured:false,movies:true});
+   if(films.length)sections.push({key:'movies',name:'Movies',items:films,eyebrow:'FEATURE FILMS'});
   }
   const items=regular.filter(e=>!e.is_movie && e.status===key);
-  if(items.length)sections.push({key,name,items,featured:false});
+  if(items.length)sections.push({key,name,items});
  }
- return sections.map(section=>
-  '<section class="nr-library-section'+(section.featured?' nr-featured-section':'')+'" data-library-section="'+section.key+'">'+
-  '<div class="nr-section-heading"><div><span class="nr-section-eyebrow">'+(section.featured?'✦ TOP PICKS':section.movies?'FEATURE FILMS':'WATCH STATUS')+'</span>'+
+ output.push(...sections.map(section=>
+  '<section class="nr-library-section" data-library-section="'+section.key+'">'+
+  '<div class="nr-section-heading"><div><span class="nr-section-eyebrow">'+(section.eyebrow||'WATCH STATUS')+'</span>'+
   '<h3>'+section.name+' <small>'+section.items.length+'</small></h3></div></div>'+
   '<div class="anime-grid nr-section-grid">'+section.items.map((entry,i)=>buildCard(entry,i,readOnly)).join('')+'</div></section>'
- ).join('');
+ ));
+ return output.join('');
 }
 function displayOrganizedLibrary(){
  const grid=$s('anime-grid');
- const all=state.filter==='all';
- grid.classList.toggle('nr-grouped-library',all);
- if(all)grid.innerHTML=organizedMarkup(filteredEntries(),false);
+ const grouped=(state.filter==='all'||state.filter==='favorites')&&!state.search.trim();
+ grid.classList.toggle('nr-grouped-library',grouped);
+ if(grouped)grid.innerHTML=organizedMarkup(filteredEntries(),false);
 }
+const rankDialog=document.createElement('dialog');
+rankDialog.id='nr-rank-dialog';rankDialog.className='nr-rank-dialog';
+rankDialog.innerHTML='<div class="nr-rank-dialog-content">'+
+ '<div class="nr-rank-dialog-head"><div><span class="nr-section-eyebrow">YOUR PERSONAL ORDER</span>'+
+ '<h2>Rank your favorites.</h2></div><button type="button" data-rank-cancel aria-label="Close ranking editor">×</button></div>'+
+ '<p>Put your most-loved anime at #1. The first five receive the spotlight. Every favorite below them stays in More Favorites.</p>'+
+ '<div id="nr-rank-list" class="nr-rank-list"></div>'+
+ '<p id="nr-rank-error" class="nr-rank-error" role="status"></p>'+
+ '<div class="nr-rank-dialog-buttons"><button type="button" data-rank-cancel>Cancel</button>'+
+ '<button type="button" id="nr-save-rank" class="nr-rank-save">Save my ranking</button></div></div>';
+document.body.append(rankDialog);
+let rankDraft=[];
+function showRankRows(){
+ const holder=$s('nr-rank-list');holder.replaceChildren();
+ const count=rankDraft.length;
+ rankDraft.forEach((entry,index)=>{
+  const row=document.createElement('div');row.className='nr-rank-row';
+  const position=document.createElement('span');position.className='nr-rank-number';
+  position.textContent=String(index+1).padStart(2,'0');
+  const img=document.createElement('img');img.className='nr-rank-thumb';img.alt='';img.loading='lazy';
+  const image=cleanedUrl(entry.image_url);if(image)img.src=image;else img.hidden=true;
+  const title=document.createElement('span');title.className='nr-rank-title';title.textContent=entry.title;
+  const controls=document.createElement('div');controls.className='nr-rank-controls';
+  const select=document.createElement('select');select.dataset.rankPosition=entry.id;
+  select.setAttribute('aria-label','Rank '+entry.title);
+  for(let pos=1;pos<=count;pos++)select.append(new Option('#'+pos,String(pos)));
+  select.value=String(index+1);
+  const up=document.createElement('button');up.type='button';up.textContent='↑';
+  up.dataset.rankMove='up';up.dataset.rankId=entry.id;up.disabled=index===0;up.setAttribute('aria-label','Move '+entry.title+' up');
+  const down=document.createElement('button');down.type='button';down.textContent='↓';
+  down.dataset.rankMove='down';down.dataset.rankId=entry.id;down.disabled=index===count-1;down.setAttribute('aria-label','Move '+entry.title+' down');
+  const first=document.createElement('button');first.type='button';first.textContent='Make #1';first.dataset.rankMove='first';first.dataset.rankId=entry.id;
+  first.disabled=index===0;
+  controls.append(select,up,down,first);
+  row.append(position,img,title,controls);holder.append(row);
+ });
+}
+function moveFavorite(entryId,toPosition){
+ const from=rankDraft.findIndex(item=>String(item.id)===String(entryId));
+ if(from<0)return;
+ const to=Math.max(0,Math.min(rankDraft.length-1,toPosition));
+ if(from===to)return;
+ const [item]=rankDraft.splice(from,1);
+ rankDraft.splice(to,0,item);
+ showRankRows();
+}
+function openRanking(){
+ if(!state.demo&&!owner())return toast('Sign in to rank favorites.');
+ rankDraft=rankFavorites(state.entries.filter(e=>e.favorite));
+ if(!rankDraft.length)return toast('Heart a few anime to create your Top Five.');
+ $s('nr-rank-error').textContent='';
+ showRankRows();
+ if(!rankDialog.open)rankDialog.showModal();
+}
+rankDialog.addEventListener('click',event=>{
+ if(event.target.closest('[data-rank-cancel]')){rankDialog.close();return;}
+ const button=event.target.closest('[data-rank-move]');if(!button)return;
+ const from=rankDraft.findIndex(e=>String(e.id)===button.dataset.rankId);
+ if(from<0)return;
+ const action=button.dataset.rankMove;
+ moveFavorite(button.dataset.rankId,action==='first'?0:from+(action==='up'?-1:1));
+});
+rankDialog.addEventListener('change',event=>{
+ const select=event.target.closest('[data-rank-position]');
+ if(select)moveFavorite(select.dataset.rankPosition,Number(select.value)-1);
+});
+$s('nr-save-rank').addEventListener('click',async()=>{
+ const saveButton=$s('nr-save-rank');if(saveButton.disabled)return;
+ const order=rankDraft.map(e=>e.id);
+ saveButton.disabled=true;$s('nr-rank-error').textContent='';
+ try{
+  if(!state.demo){
+   const result=await state.supabase.rpc('rank_my_favorites',{p_order:order});
+   if(result.error)throw result.error;
+   if(Number(result.data)!==order.length)throw Error('The favorites list changed. Refresh and retry.');
+  }
+  rankDraft.forEach((e,i)=>{
+   const current=state.entries.find(item=>String(item.id)===String(e.id));
+   if(current)current.favorite_rank=i+1;
+  });
+  if(state.demo)storeDemo();
+  rankDialog.close();render();toast('Your Top Five ranking is saved ♥');
+ }catch(error){$s('nr-rank-error').textContent='Could not save ranking: '+error.message;}
+ finally{saveButton.disabled=false;}
+});
+$s('anime-grid').addEventListener('click',event=>{
+ if(event.target.closest('[data-manage-favorites]')){
+  event.preventDefault();event.stopImmediatePropagation();openRanking();
+ }
+},true);
+
 render=function(){sourceRender();displayOrganizedLibrary();drawHero();if(panel==='profile')drawMyBanner();};
 state.sort='title';$s('sort-select').value='title';render();
 function flip(card,e){
@@ -604,7 +727,7 @@ async function viewFriend(id){
  try{
   const [p,e]=await Promise.all([
    state.supabase.from('profiles').select('id,username,display_name,banner_path,avatar_path,banner_desktop_x,banner_desktop_y,banner_desktop_zoom,banner_mobile_x,banner_mobile_y,banner_mobile_zoom').eq('id',id).single(),
-   state.supabase.rpc('get_friend_anime_v3',{p_friend_id:id})
+   state.supabase.rpc('get_friend_anime_v4',{p_friend_id:id})
   ]);
   if(p.error)throw p.error;if(e.error)throw e.error;
   friendProfile=p.data;friendItems=e.data||[];
