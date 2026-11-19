@@ -308,7 +308,16 @@ document.addEventListener('error',event=>{
  const img=event.target;
  if(!(img instanceof HTMLImageElement))return;
  if(img.matches('.anime-card .card-image')){
-  img.closest('.anime-card')?.classList.add('nr-missing-cover');
+  // The custom Bungo Stray Dogs image is AVIF. Some mobile webviews fail
+  // to decode it; try a JPEG cover before showing the Nightreel stand-in.
+  const card=img.closest('.anime-card');
+  const title=card?.querySelector('.flip-body h3,.flip-back-content h3')?.textContent?.trim()||'';
+  if(/^bung(?:o|ou) stray dogs$/i.test(title)&&!img.dataset.nrJpegFallback){
+   img.dataset.nrJpegFallback='1';
+   img.src='https://cdn.myanimelist.net/images/anime/3/79409.jpg';
+   return;
+  }
+  card?.classList.add('nr-missing-cover');
   img.remove(); // Reveal the designed Nightreel placeholder below the failed image.
  }else if(img.id==='hero-banner-image'||img.id==='profile-banner'||img.id==='friend-banner'){
   img.hidden=true;
