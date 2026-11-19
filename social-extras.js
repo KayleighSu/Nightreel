@@ -91,10 +91,10 @@ async function loadOwnProfile(){
  if(state.user?.id!==id)return;
  myProfile=r.data;
  myAvatarUrl=await signedAvatar(myProfile);
- const label=myProfile?.username||'Profile';
+ const label=myProfile?.display_name||myProfile?.username||'Profile';
  $('account-button-name').textContent=label;
- $('extra-profile-handle').textContent='@'+label;
- $('extra-profile-name').textContent=myProfile?.display_name||'Anime fan';
+ $('extra-profile-handle').textContent='@'+(myProfile?.username||'unknown');
+ $('extra-profile-name').textContent=myProfile?.display_name||'Choose a display name';
  setPicture($('account-button-photo'),myAvatarUrl,label);
  setPicture($('extra-avatar-large'),myAvatarUrl,label);
 }
@@ -321,7 +321,7 @@ async function openMessages(friendId,showList=false){
   }else{
    for(const f of friends){
     const row=document.createElement('div');row.className='extras-convo';
-    const label=document.createElement('span');label.textContent=f.display_name&&f.display_name.toLowerCase()!=='anime fan'?f.display_name:'@'+f.username;
+    const label=document.createElement('span');label.textContent=f.display_name||f.username||'Unnamed user';
     const btn=document.createElement('button');btn.textContent='Open chat';btn.type='button';btn.onclick=()=>{if(nrIsMobile()){openConversation(f.id);}else{chatDialog.close();nrOpenDock(f.id);}};
     row.append(label,btn);listing.append(row);
    }
@@ -347,7 +347,7 @@ async function openConversation(id){
   nrMarkChatRead(id);
  }
  $('extra-conversations').hidden=true;$('extra-open-chat').hidden=false;
- $('extra-chat-title').textContent=f.display_name&&f.display_name.toLowerCase()!=='anime fan'?f.display_name:'@'+(f.username||'Friend');
+ $('extra-chat-title').textContent=f.display_name||f.username||'Unnamed user';
  await loadMessages();
  if(messagePoll)clearInterval(messagePoll);
  messagePoll=setInterval(()=>{if(chatDialog.open&&conversationId)loadMessages(true);},6000);
@@ -568,7 +568,7 @@ function nrOpenDock(id,minimized=false){
  }
  const win=document.createElement('section');win.className='nr-chat-window';win.setAttribute('aria-label','Chat with '+(friend.display_name||friend.username));
  const header=document.createElement('div');header.className='nr-chat-head';
- const toggle=document.createElement('button');toggle.type='button';toggle.className='nr-chat-head-toggle';toggle.textContent=friend.display_name||friend.username||'Friend';
+ const toggle=document.createElement('button');toggle.type='button';toggle.className='nr-chat-head-toggle';toggle.textContent=friend.display_name||friend.username||'Unnamed user';
  toggle.setAttribute('aria-expanded',String(!minimized));toggle.onclick=()=>nrSetMinimized(win,!win.classList.contains('nr-chat-minimized'));
  const chatBadge=document.createElement('span');chatBadge.className='nr-chat-unread';chatBadge.hidden=true;chatBadge.setAttribute('aria-label','Unread messages');
  const minimize=document.createElement('button');minimize.type='button';minimize.className='nr-chat-minimize';minimize.textContent='−';minimize.title='Minimize conversation';
