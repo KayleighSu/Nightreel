@@ -135,6 +135,20 @@ Deno.serve(async(req:Request)=>{
    try{value=await fromAniList(title);}
    catch(secondError){return reply({error:'Catalogues temporarily unavailable or unable to identify this title. Try again later or select the title from catalogue search.',details:String(firstError)},503);}
   }
+  // Jikan does not provide the exact upcoming-episode timestamp.
+  // Cross-check AniList for that field, and for seasons not yet listed in MAL relations.
+  if(value.source==='Jikan / MyAnimeList' && title){
+    try{
+      const airing=await fromAniList(title);
+      if(airing.nextEpisodeAt){value.nextEpisodeAt=airing.nextEpisodeAt;value.nextEpisodeNumber=airing.nextEpisodeNumber;}
+      if(!value.sequelTitle && airing.sequelTitle){
+        value.sequelTitle=airing.sequelTitle;value.sequelMalId=airing.sequelMalId;
+        value.sequelStatus=airing.sequelStatus;value.sequelPremiereAt=airing.sequelPremiereAt;
+      }
+      if(!value.episodeTotal && airing.episodeTotal)value.episodeTotal=airing.episodeTotal;
+      if(!value.synopsis && airing.synopsis)value.synopsis=airing.synopsis;
+    }catch{/* AniList lookup can fail independently. */}
+  }
   cache.set(key,{expires:Date.now()+12*60*60*1000,value});
   if(cache.size>300)cache.delete(cache.keys().next().value);
   return reply(value);
