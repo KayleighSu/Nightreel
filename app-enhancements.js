@@ -137,13 +137,58 @@ function repaintBanners(){
 }
 function resetBannerObjectUrl(){if(bannerPendingUrl){URL.revokeObjectURL(bannerPendingUrl);bannerPendingUrl='';}}
 function previewBannerSrc(){return bannerPendingUrl||ownBanner||lastArt(state.entries);}
+
+let bannerPreviewPlacement='home';
+function bannerPreviewSize(mode){
+ const isHome=bannerPreviewPlacement==='home';
+ return mode==='desktop'
+   ?{width:1140,height:isHome?278:210}
+   :{width:354,height:isHome?230:200};
+}
+function scaleBannerPreviews(){
+ for(const mode of ['desktop','mobile']){
+  const stage=$s('nr-banner-stage-'+mode);
+  if(!stage)continue;
+  const {width,height}=bannerPreviewSize(mode);
+  stage.style.aspectRatio=width+'/'+height;
+  stage.style.setProperty('--nr-source-width',width+'px');
+  stage.style.setProperty('--nr-source-height',height+'px');
+  if(stage.clientWidth>0)stage.style.setProperty('--nr-preview-scale',String(stage.clientWidth/width));
+ }
+}
+function rebuildBannerPreviews(){
+ const source=bannerPreviewPlacement==='profile'
+  ?$s('profile-banner')?.closest('.social-hero')
+  :document.querySelector('.main-content>.hero');
+ if(!source)return;
+ for(const mode of ['desktop','mobile']){
+  const viewport=$s('nr-banner-viewport-'+mode);
+  if(!viewport)continue;
+  const sample=source.cloneNode(true);
+  sample.classList.add('nr-banner-simulation');
+  sample.setAttribute('aria-hidden','true');
+  const sampleImage=bannerPreviewPlacement==='profile'
+   ?sample.querySelector('img')
+   :sample.querySelector('.hero-banner-image');
+  sample.querySelectorAll('[id]').forEach(node=>node.removeAttribute('id'));
+  sample.querySelectorAll('button').forEach(button=>{button.disabled=true;button.tabIndex=-1});
+  sample.querySelectorAll('a').forEach(link=>link.removeAttribute('href'));
+  if(sampleImage){sampleImage.id='nr-banner-preview-'+mode;sampleImage.hidden=false;}
+  viewport.replaceChildren(sample);
+  const stage=$s('nr-banner-stage-'+mode);
+  if(stage){stage.dataset.placement=bannerPreviewPlacement;}
+ }
+ scaleBannerPreviews();
+}
+
 function updateBannerEditor(){
  const url=bannerPendingUrl||cleanedUrl(ownBanner||lastArt(state.entries));
  for(const mode of ['desktop','mobile']){
   const img=$s('nr-banner-preview-'+mode),frame=bannerFrame(bannerDraft);
   if(!img)continue;
-  if(url){img.src=url;img.hidden=false;}else{img.removeAttribute('src');img.hidden=true;}
+  if(url){if(img.src!==url)img.src=url;img.hidden=false;}else{img.removeAttribute('src');img.hidden=true;}
   positionBanner(img,frame,mode);
+  scaleBannerPreviews();
   for(const axis of ['x','y','zoom']){
    const val=frame['banner_'+mode+'_'+axis];
    const input=$s('nr-banner-'+mode+'-'+axis);
@@ -158,18 +203,30 @@ function initializeBannerEditor(){
  if(!fileInput || $s('nr-banner-editor'))return;
  const editor=document.createElement('section');
  editor.id='nr-banner-editor';editor.className='nr-banner-editor';
- editor.innerHTML='<h3>Position your banner</h3><p>Drag or swipe to position your picture, then zoom. Your desktop and phone previews are adjusted separately.</p>'+
+ editor.innerHTML='<h3>Position your banner</h3><p>Position the artwork while viewing Nightreel’s real home or profile banner layouts. Desktop and phone framing is saved independently.</p>'+
+  '<div class="nr-banner-preview-mode"><label for="nr-banner-preview-placement">Preview placement</label><select id="nr-banner-preview-placement"><option value="home">Home · Stay Obsessed banner</option><option value="profile">Public profile banner</option></select></div>'+
   '<div class="nr-banner-previews">'+['desktop','mobile'].map(mode=>
    '<fieldset class="nr-banner-panel nr-banner-panel-'+mode+'"><legend>'+(mode==='desktop'?'Desktop preview':'Phone preview')+'</legend>'+
-   '<div class="nr-banner-stage nr-banner-stage-'+mode+'" data-banner-stage="'+mode+'" aria-label="'+mode+' banner; drag to reposition">'+
-   '<img id="nr-banner-preview-'+mode+'" alt="" draggable="false" hidden>'+
-   '<div class="nr-banner-preview-text"><span>STAY OBSESSED.</span><strong>Your anime. Your story.</strong></div></div>'+
+   '<div class="nr-banner-stage nr-banner-stage-'+mode+'" id="nr-banner-stage-'+mode+'" data-banner-stage="'+mode+'" aria-label="'+mode+' banner; drag to reposition">'+
+   '<div class="nr-banner-viewport" id="nr-banner-viewport-'+mode+'"></div></div>'+
    '<label>Zoom <output id="nr-banner-'+mode+'-zoom-value">100%</output><input type="range" id="nr-banner-'+mode+'-zoom" min="100" max="300" step="5" value="100"></label>'+
    '<label>Left / right <output id="nr-banner-'+mode+'-x-value">50%</output><input type="range" id="nr-banner-'+mode+'-x" min="0" max="100" step="1" value="50"></label>'+
    '<label>Up / down <output id="nr-banner-'+mode+'-y-value">50%</output><input type="range" id="nr-banner-'+mode+'-y" min="0" max="100" step="1" value="50"></label>'+
    '<button type="button" data-banner-reset="'+mode+'" class="nr-banner-reset">Reset '+mode+' position</button></fieldset>'
   ).join('')+'</div><p class="nr-banner-hint">Preview changes are saved with <strong>Save profile</strong>. Friends see your chosen layout on their screen size.</p>';
  fileInput.closest('label').after(editor);
+ const placement=$s('nr-banner-preview-placement');
+ placement.addEventListener('change',()=>{
+  bannerPreviewPlacement=placement.value;
+  rebuildBannerPreviews();
+  updateBannerEditor();
+ });
+ rebuildBannerPreviews();
+ if(typeof ResizeObserver==='function'){
+  const observer=new ResizeObserver(scaleBannerPreviews);
+  for(const mode of ['desktop','mobile'])observer.observe($s('nr-banner-stage-'+mode));
+ }
+ window.addEventListener('resize',scaleBannerPreviews);
  for(const mode of ['desktop','mobile']){
   for(const axis of ['zoom','x','y']){
    $s('nr-banner-'+mode+'-'+axis).addEventListener('input',e=>{
