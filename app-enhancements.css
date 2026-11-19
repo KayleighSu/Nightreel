@@ -334,3 +334,35 @@
 .hero .hero-banner-image,.social-hero>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;max-width:none;will-change:transform}
 @media(max-width:800px){.nr-banner-previews{grid-template-columns:minmax(0,1fr)}.nr-banner-stage-mobile{max-width:340px;width:100%}}
 @media(max-width:580px){.nr-banner-editor{padding:12px}.nr-banner-panel{padding:10px}.nr-banner-stage-desktop{min-height:100px}.nr-banner-stage-mobile{max-width:290px}.nr-banner-panel legend{font-size:11px}}
+
+/* Banner framing editor – different non-destructive crops for desktop and mobile. */
+.nr-banner-editor{margin:18px 0 22px;padding:19px;border:1px solid #624456;background:#19141e;border-radius:14px}
+.nr-banner-editor h3{font:800 20px/1.25 var(--head);color:#ffe1eb;margin:0 0 7px}
+.nr-banner-editor>p{font-size:12px;line-height:1.6;color:#d7bfd0;margin:0 0 16px}
+.nr-banner-previews{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(185px,.7fr);gap:17px;align-items:start}
+.nr-banner-panel{border:1px solid #563c4e;border-radius:12px;background:#211923;min-width:0;padding:13px;display:flex;flex-direction:column;gap:11px}
+.nr-banner-panel legend{font-size:12px;color:#ffd1e0;font-weight:800;padding:0 7px}
+.nr-banner-stage{position:relative;overflow:hidden;isolation:isolate;background:linear-gradient(135deg,#29202d,#121019);border:1px solid #705365;border-radius:9px;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;min-width:0}
+.nr-banner-stage:active{cursor:grabbing}
+.nr-banner-stage:focus-visible{outline:2px solid #ffabc4;outline-offset:3px}
+.nr-banner-stage-desktop{width:100%;aspect-ratio:16/6;min-height:135px}
+.nr-banner-stage-mobile{width:min(100%,240px);aspect-ratio:9/11;min-height:205px;margin-inline:auto}
+.nr-banner-stage img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 50%;transform:scale(1);transform-origin:50% 50%;pointer-events:none}
+.nr-banner-stage img[hidden]{display:none}
+.nr-banner-stage::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(14,9,19,.8),rgba(22,13,28,.36) 78%);pointer-events:none}
+.nr-banner-preview-text{position:absolute;z-index:2;left:13px;bottom:13px;display:grid;gap:4px;color:#fff;text-shadow:0 2px 8px #000}
+.nr-banner-preview-text span{font-size:10px;letter-spacing:.14em;font-weight:900;color:#ffb8d1}
+.nr-banner-preview-text strong{font:800 clamp(15px,2vw,22px)/1.15 var(--head)}
+.nr-banner-panel label{font-size:11px;font-weight:700;color:#e4c9d5;display:grid;gap:5px;grid-template-columns:1fr auto}
+.nr-banner-panel label input[type=range]{grid-column:1/-1;width:100%;accent-color:#f38cae;min-height:25px}
+.nr-banner-panel output{color:#ffb6ca;font-variant-numeric:tabular-nums}
+.nr-banner-reset{align-self:flex-start;border:1px solid #73516a;background:#372336;color:#fff;padding:8px 11px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer}
+.nr-banner-reset:hover{background:#563249}
+.nr-banner-hint{font-size:11px;color:#dbc8d3;line-height:1.55}
+.hero .hero-banner-image,.social-hero>img{will-change:transform}
+@media(max-width:760px){
+ .nr-banner-editor{padding:13px}
+ .nr-banner-previews{grid-template-columns:1fr}
+ .nr-banner-stage-desktop{min-height:105px}
+ .nr-banner-stage-mobile{width:min(100%,260px)}
+}
