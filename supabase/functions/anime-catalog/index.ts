@@ -163,10 +163,11 @@ async function fromJikan(title:string,id:number|null){
  const record=jikanRecord(full,sequel);
  try{
   const series=await surveyMainSeries(full);
-  if(series.episodeTotal!==null){
-    record.episodeTotal=series.episodeTotal;
-    record.aggregatedSeasons=series.seasonCount;
-  }
+  // Never present the first season's count as an entire series total when
+  // traversing its known sequel chain was incomplete or rate-limited.
+  record.episodeTotal=series.episodeTotal;
+  record.aggregatedSeasons=series.seasonCount;
+  record.seriesCountComplete=series.complete;
   if(series.next){
     record.sequelTitle=series.next.title;
     record.sequelMalId=series.next.malId;
