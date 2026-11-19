@@ -165,6 +165,8 @@ function rebuildBannerPreviews(){
   const viewport=$s('nr-banner-viewport-'+mode);
   if(!viewport)continue;
   const sample=source.cloneNode(true);
+  sample.hidden=false;
+  sample.removeAttribute('hidden');
   sample.classList.add('nr-banner-simulation');
   sample.setAttribute('aria-hidden','true');
   const sampleImage=bannerPreviewPlacement==='profile'
@@ -206,7 +208,7 @@ function initializeBannerEditor(){
  editor.innerHTML='<h3>Position your banner</h3><p>Position the artwork while viewing Nightreel’s real home or profile banner layouts. Desktop and phone framing is saved independently.</p>'+
   '<div class="nr-banner-preview-mode"><label for="nr-banner-preview-placement">Preview placement</label><select id="nr-banner-preview-placement"><option value="home">Home · Stay Obsessed banner</option><option value="profile">Public profile banner</option></select></div>'+
   '<div class="nr-banner-previews">'+['desktop','mobile'].map(mode=>
-   '<fieldset class="nr-banner-panel nr-banner-panel-'+mode+'"><legend>'+(mode==='desktop'?'Desktop preview':'Phone preview')+'</legend>'+
+   '<fieldset class="nr-banner-panel nr-banner-panel-'+mode+'"><legend>'+(mode==='desktop'?'Desktop preview · 1440px screen':'Phone preview · 390px screen')+'</legend>'+
    '<div class="nr-banner-stage nr-banner-stage-'+mode+'" id="nr-banner-stage-'+mode+'" data-banner-stage="'+mode+'" aria-label="'+mode+' banner; drag to reposition">'+
    '<div class="nr-banner-viewport" id="nr-banner-viewport-'+mode+'"></div></div>'+
    '<label>Zoom <output id="nr-banner-'+mode+'-zoom-value">100%</output><input type="range" id="nr-banner-'+mode+'-zoom" min="100" max="300" step="5" value="100"></label>'+
