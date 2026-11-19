@@ -782,3 +782,21 @@
 }
 /* The mobile-specific launcher replaces the desktop one on small screens. */
 @media(max-width:720px){#messages-top-button{display:none!important}}
+
+
+/* Messenger-style tabs remain at the bottom after minimizing. */
+@media(min-width:721px){
+ #nr-chat-dock{right:94px;max-width:calc(100vw - 200px);overflow-x:auto;overflow-y:visible;scrollbar-width:thin}
+ #nr-chat-dock .nr-chat-window{flex:0 0 310px}
+ #nr-chat-dock .nr-chat-window.nr-chat-minimized{
+   flex-basis:165px;width:165px;height:46px;min-height:46px;border-radius:12px 12px 0 0;
+   overflow:hidden
+ }
+ .nr-chat-minimized .nr-dock-thread,.nr-chat-minimized .nr-dock-form,.nr-chat-minimized .nr-dock-status{display:none!important}
+ .nr-chat-head-toggle{flex:1;min-width:0;border:0;background:transparent;color:#fff;
+   cursor:pointer;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+   font:700 13px/1.2 var(--body,Arial,sans-serif);padding:7px 2px}
+ .nr-chat-head-toggle:hover{text-decoration:underline}
+ #nr-chat-dock .nr-chat-minimized .nr-chat-head{height:45px;padding:6px}
+ #nr-chat-dock .nr-chat-minimized .nr-chat-head button{font-size:17px;padding:3px 5px}
+}
