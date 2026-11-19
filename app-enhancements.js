@@ -129,14 +129,14 @@ function buildCard(e,index,readOnly){
  const total=e.episodes_total,progress=total?watched+' / '+total+' episodes':watched+' episodes watched';
  const percent=total?Math.min(100,Math.round(100*watched/total)):(e.status==='completed'?100:0);
  const pic=cleanedUrl(e.image_url)?'<img class="card-image" loading="lazy" src="'+esc(cleanedUrl(e.image_url))+'" alt="">':'';
- const stars=[1,2,3,4,5].map(n=>'<button type="button" '+(readOnly?'disabled':'data-action="rate" data-id="'+id+'" data-rating="'+(n*2)+'"')+' class="'+(rating&&n<=Math.ceil(rating/2)?'rated':'unrated')+'" title="'+(readOnly?'Rating':'Rate '+n+' stars')+'">★</button>').join('');
+ const stars=[1,2,3,4,5].map(n=>'<button type="button" '+(readOnly?'disabled':'data-action="rate" data-id="'+id+'" data-rating="'+(n*2)+'"')+' class="'+(rating&&n<=Math.floor(rating/2)?'rated':rating&&n===Math.ceil(rating/2)?'half-rated':'unrated')+'" title="'+(readOnly?'Rating':'Rate '+n+' stars')+'">★</button>').join('');
  const synopsis=esc(e.synopsis||summaries.get(canonicalTitle(e.title))||'Tap here to load a story summary, or follow the IMDb link.');
  const publicNote=readOnly&&e.public_notes?'<div class="public-note"><strong>Public note:</strong> '+esc(e.public_notes)+'</div>':'';
  return '<article class="anime-card" data-card-id="'+id+'"><div class="flip-inner">'+
  '<div class="flip-face front">'+pic+'<div class="flip-top"><span class="status-pill">'+esc(statuses[e.status]||'Not sorted yet')+'</span>'+
  (readOnly?'':'<button type="button" class="favorite-icon '+(e.favorite?'active':'')+'" data-action="favorite" data-id="'+id+'" aria-label="Toggle favorite">♥</button>')+'</div>'+
  '<div class="flip-body"><div class="art-label">'+(originalByTitle.has(canonicalTitle(e.title))?'ORIGINAL HAND-PICKED ART':'YOUR ANIME LIBRARY')+'</div><h3>'+title+'</h3>'+
- '<div class="flip-rating">'+stars+'<span class="rating-text">'+(rating?rating+'/10':'Not rated')+'</span></div>'+
+ '<div class="flip-rating">'+stars+'<span class="rating-text">'+(rating?(rating/2)+'/5':'Not rated')+'</span></div>'+
  '<div class="flip-progress">'+esc(progress)+'<div class="progress-track"><div class="progress-fill" style="width:'+percent+'%"></div></div></div>'+
  '<div class="flip-actions">'+(readOnly?'':'<button type="button" data-action="edit" data-id="'+id+'">Edit</button>')+
  '<button type="button" data-action="flip">Story ↻</button><a href="'+esc(imdbLink(e))+'" target="_blank" rel="noopener noreferrer">IMDb ↗</a></div></div></div>'+
@@ -171,7 +171,7 @@ async function rate(e,n){
  state.busy=true;
  try{
   if(!state.demo){const r=await state.supabase.from('anime_entries').update({rating:n}).eq('id',e.id);if(r.error)throw r.error;}
-  e.rating=n;e.updated_at=new Date().toISOString();if(state.demo)storeDemo();render();toast('Rating: '+n+'/10');
+  e.rating=n;e.updated_at=new Date().toISOString();if(state.demo)storeDemo();render();toast('Rating: '+(n/2)+'/5');
  }catch(err){toast('Rating not saved: '+err.message);}
  finally{state.busy=false;}
 }
