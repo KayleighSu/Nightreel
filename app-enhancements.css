@@ -260,3 +260,44 @@
  .nr-grouped-library .anime-card{min-height:min(77svh,770px)}
  .nr-grouped-library .flip-inner{min-height:min(77svh,770px)}
 }
+
+
+/* Nightreel Release Radar: confirmed catalogue dates, season links and per-card details. */
+#nr-release-radar[hidden]{display:none!important}
+#nr-release-radar{background:linear-gradient(150deg,#201b28,#11111b);border:1px solid #644a60;border-radius:17px;margin:14px 0 35px;padding:24px;max-width:100%}
+.nr-radar-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:16px}
+.nr-radar-head h2{font:800 clamp(26px,3.5vw,37px)/1.12 var(--head);color:#fff;margin:6px 0 9px;letter-spacing:-.04em}
+.nr-radar-head p{font-size:13px;color:#cfbdca;line-height:1.6;max-width:600px;margin:0}
+.nr-radar-controls{display:flex;align-items:center;flex-wrap:wrap;gap:9px}
+.nr-radar-controls button,.nr-card-release-summary button{
+ background:#4b2c3e;border:1px solid #a46883;color:#fff;padding:10px 13px;border-radius:9px;font-size:12px;font-weight:800;cursor:pointer
+}
+.nr-radar-controls button:hover,.nr-card-release-summary button:hover{background:#633449}
+.nr-radar-progress,.nr-radar-coverage{font-size:12px;color:#dfcad7;margin:10px 0 20px}
+.nr-radar-results>section{border-top:1px solid #443242;padding-top:15px;margin-top:20px}
+.nr-radar-results>section h3{font-size:18px;color:#fff;margin:0 0 13px}
+.nr-radar-results>section h3 small{font-size:12px;color:#dec1d1;margin-left:5px}
+.nr-radar-event-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.nr-radar-event{display:flex;align-items:center;gap:14px;overflow:hidden;background:#251d2a;border:1px solid #533b50;border-radius:10px;padding:12px}
+.nr-radar-event img{width:76px;height:76px;object-fit:cover;border-radius:8px;opacity:.78;flex:0 0 76px}
+.nr-radar-event small{font-size:9px;color:#ffb9d0;letter-spacing:.13em;font-weight:900}
+.nr-radar-event h3{margin:5px 0!important;font-size:15px!important;line-height:1.3;color:white}
+.nr-radar-event p{font-size:12px;line-height:1.5;margin:5px 0;color:#e1d5dd}
+.nr-radar-empty{font-size:13px;line-height:1.6;color:#d8c5d2}
+.nr-card-release-summary{padding:12px;background:rgba(11,10,20,.9);border-radius:10px;border:1px solid rgba(224,161,193,.43);display:flex;flex-direction:column;gap:8px}
+.nr-card-release-summary>strong{font-size:12px;color:#ffc8da}
+.nr-card-release-summary p{font-size:12px;line-height:1.6;color:#f3ecf1;margin:0}
+.nr-card-release-summary a{color:#ffc4d5;text-decoration:underline;font-weight:700}
+.nr-card-release-summary button{align-self:flex-start;font-size:11px;padding:7px 9px}
+.nr-card-release-summary button:disabled{opacity:.6;cursor:wait}
+.nr-airing-chip{display:inline-flex;margin:4px 0 2px;padding:5px 8px;border-radius:6px;background:#401d37b8;border:1px solid #faadc5b0;font-size:10px;font-weight:800;color:#ffe3ec}
+#nr-release-button{display:inline-flex;align-items:center;justify-content:center}
+@media(max-width:700px){
+ #nr-release-radar{padding:15px;border-radius:12px}
+ .nr-radar-event-grid{grid-template-columns:minmax(0,1fr)}
+ .nr-radar-event{gap:10px}
+ .nr-radar-event img{width:63px;height:70px;flex-basis:63px}
+ .nr-radar-head{align-items:flex-start}
+ .nr-radar-controls{width:100%}
+ .nr-radar-controls button{flex:1}
+}
