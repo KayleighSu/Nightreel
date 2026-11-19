@@ -766,3 +766,19 @@
  #extra-chat-thread{min-height:180px;flex:1;overflow-y:auto}
  #extra-chat-text{font-size:16px}
 }
+
+
+/* Launch messages from the lower-right on desktop rather than the top bar. */
+@media (min-width:721px){
+ #messages-top-button{
+  position:fixed;right:24px;bottom:18px;z-index:155;
+  width:58px;height:58px;padding:0;border-radius:50%;
+  display:grid;place-items:center;background:#562c49;color:#fff;
+  border:1px solid #f4b1cd;box-shadow:0 8px 30px #0009;
+  font-size:25px;cursor:pointer;
+ }
+ #messages-top-button:hover{background:#74405e}
+ #messages-top-button .nr-notification-badge{top:-3px;right:-3px}
+}
+/* The mobile-specific launcher replaces the desktop one on small screens. */
+@media(max-width:720px){#messages-top-button{display:none!important}}
