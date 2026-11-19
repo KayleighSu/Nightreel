@@ -346,7 +346,7 @@ setInterval(async()=>{
 },240000);
 const header=document.querySelector('.topbar-right');
 if(header){
- const b=document.createElement('button');b.className='btn btn-ghost btn-small';b.type='button';b.textContent='Friends ♡';
+ const b=document.createElement('button');b.id='top-friends-button';b.className='btn btn-ghost btn-small';b.type='button';b.textContent='Friends ♡';
  b.addEventListener('click',()=>show('friends'));header.prepend(b);
 }
 
