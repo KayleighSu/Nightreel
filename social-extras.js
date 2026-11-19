@@ -336,7 +336,7 @@ async function openMessages(friendId,showList=false){
   }
   if(request!==nrMobileRequest||!chatDialog.open)return;
   if(target)await openConversation(target);
-  else if(!friends.length||showList)message($('extra-messages-status'),'');
+  else message($('extra-messages-status'),'');
  }catch(e){if(request===nrMobileRequest)message($('extra-messages-status'),'Could not load friends: '+e.message);}
 }
 async function openConversation(id){
