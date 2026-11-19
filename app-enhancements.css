@@ -800,3 +800,13 @@
  #nr-chat-dock .nr-chat-minimized .nr-chat-head{height:45px;padding:6px}
  #nr-chat-dock .nr-chat-minimized .nr-chat-head button{font-size:17px;padding:3px 5px}
 }
+
+
+/* Conversation-specific unread notifications, including minimized desktop tabs. */
+.nr-chat-head .nr-chat-unread{
+ flex:0 0 auto;min-width:18px;height:18px;padding:0 5px;border-radius:12px;
+ display:inline-flex;align-items:center;justify-content:center;
+ background:#f18db5;color:#281320;font:800 11px/1 system-ui;
+ box-shadow:0 0 0 1px #45263b;
+}
+.nr-chat-head .nr-chat-unread[hidden]{display:none!important}
