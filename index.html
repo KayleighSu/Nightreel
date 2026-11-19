@@ -287,6 +287,8 @@ function showAuth(mode = 'signin') {
   $('auth-password').required = mode !== 'reset';
   $('auth-password').closest('.form-field').hidden = mode === 'reset';
   $('auth-password').autocomplete = mode === 'signup' || mode === 'update' ? 'new-password' : 'current-password';
+  $('auth-password').minLength = mode === 'signup' || mode === 'update' ? 12 : 6;
+  $('auth-password').placeholder = mode === 'signup' || mode === 'update' ? 'At least 12 characters' : 'Your password';
   $('forgot-password').textContent = special ? '← Back to login' : 'Forgot your password?';
   $('auth-error').hidden = true;
 }
@@ -661,6 +663,10 @@ async function handleAuth(event) {
   event.preventDefault(); if (!state.supabase) return;
   const email = $('auth-email').value.trim(); const password = $('auth-password').value;
   $('auth-error').hidden = true; $('auth-submit').disabled = true;
+  if ((state.authMode === 'signup' || state.authMode === 'update') && password.length < 12) {
+    $('auth-error').textContent = 'Use a password with at least 12 characters.';
+    $('auth-error').hidden = false; $('auth-submit').disabled = false; return;
+  }
   try {
     let result;
     if (state.authMode === 'signin') result = await state.supabase.auth.signInWithPassword({ email, password });
@@ -715,7 +721,7 @@ async function start() {
     state.entries = getDemoEntries(); showWorkspace(); return;
   }
   try {
-    const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+    const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/+esm');
     state.supabase = createClient(config.supabaseUrl.trim().replace(/\/$/, ''), config.supabaseAnonKey.trim(), {
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
     });
