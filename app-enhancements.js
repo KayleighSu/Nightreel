@@ -5,6 +5,7 @@ const $s=id=>document.getElementById(id),esc=escapeHtml;
 const sourceRender=render;
 const summaries=new Map();
 let ownProfile=null, links=[], friendItems=[], friendProfile=null, panel='library', ownBanner='';
+let currentProfileOwner='', loadingProfile=false;
 const social=document.createElement('section');social.id='social-ui';
 social.innerHTML=[
 '<div class="social-toolbar" id="social-navigation"><button type="button" data-social-view="library">◈ My library</button><button type="button" data-social-view="friends">♡ Friends</button><button type="button" data-social-view="profile">◉ My profile</button></div>',
@@ -22,7 +23,20 @@ if(!col||!main)return;
 col.before(social);col.after(friendView);
 const owner=()=>Boolean(state.supabase&&state.user&&!state.demo);
 const lastArt=arr=>[...arr].sort((a,b)=>String(b.updated_at||b.created_at||'').localeCompare(String(a.updated_at||a.created_at||''))).find(x=>cleanedUrl(x.image_url))?.image_url||'';
-function putImage(id,url){const img=$s(id),safe=cleanedUrl(url);img.hidden=!safe;if(safe)img.src=safe;else img.removeAttribute('src');}
+function putImage(id,url){const img=$s(id),safe=cleanedUrl(url);if(!img)return;img.hidden=!safe;if(safe)img.src=safe;else img.removeAttribute('src');}
+function drawHero(){
+ putImage('hero-banner-image',ownBanner||lastArt(state.entries));
+ if(owner() && (!ownProfile || currentProfileOwner!==state.user.id) && !loadingProfile){
+  loadingProfile=true;
+  state.supabase.from('profiles').select('id,username,display_name,banner_path').eq('id',state.user.id).maybeSingle().then(async r=>{
+   if(!r.error && r.data && state.user?.id===r.data.id){
+    ownProfile=r.data;currentProfileOwner=r.data.id;
+    ownBanner=await getSignedBanner(ownProfile);
+    putImage('hero-banner-image',ownBanner||lastArt(state.entries));
+   }
+  }).finally(()=>{loadingProfile=false;});
+ }
+}
 function note(id,msg){$s(id).textContent=msg;}
 function need(id){if(owner())return true;note(id,'Connect Nightreel to a Supabase project to use accounts and friends.');return false;}
 function buildCard(e,index,readOnly){
@@ -46,7 +60,7 @@ function buildCard(e,index,readOnly){
  '<div class="back-actions"><button type="button" data-action="flip">↶ Flip back</button><a href="'+esc(imdbLink(e))+'" target="_blank" rel="noopener noreferrer">IMDb ↗</a></div></div></div></div></article>';
 }
 cardHtml=(e,i)=>buildCard(e,i,false);
-render=function(){sourceRender();if(panel==='profile')drawMyBanner();};
+render=function(){sourceRender();drawHero();if(panel==='profile')drawMyBanner();};
 state.sort='title';$s('sort-select').value='title';render();
 function flip(card,e){
  card.classList.toggle('is-flipped');
@@ -113,7 +127,8 @@ async function loadProfile(){
   $s('profile-handle').value=ownProfile.username;
   $s('profile-display').value=ownProfile.display_name;
   ownBanner=await getSignedBanner(ownProfile);
-  drawMyBanner();
+  currentProfileOwner=ownProfile.id;
+  drawMyBanner();drawHero();
   note('profile-error','Only accepted friends can see your profile.');
  }catch(err){note('profile-error','Profile unavailable: '+err.message);}
 }
@@ -146,14 +161,14 @@ $s('profile-editor').addEventListener('submit',async ev=>{
   if(r.error)throw r.error;
   ownProfile={...ownProfile,username,display_name,banner_path};
   ownBanner=await getSignedBanner(ownProfile);
-  drawMyBanner();$s('profile-image-file').value='';note('profile-error','Profile saved.');
+  drawMyBanner();drawHero();$s('profile-image-file').value='';note('profile-error','Profile saved.');
  }catch(e){note('profile-error','Save failed: '+e.message);}
 });
 $s('remove-banner').onclick=async()=>{
  if(!need('profile-error'))return;
  const r=await state.supabase.from('profiles').update({banner_path:null}).eq('id',state.user.id);
  if(r.error){note('profile-error',r.error.message);return;}
- ownProfile.banner_path=null;ownBanner='';drawMyBanner();note('profile-error','Using your most recently edited anime image.');
+ ownProfile.banner_path=null;ownBanner='';drawMyBanner();drawHero();note('profile-error','Using your most recently edited anime image.');
 };
 async function refreshFriends(){
  if(!need('friends-error'))return;
