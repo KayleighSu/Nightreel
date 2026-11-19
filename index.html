@@ -38,6 +38,8 @@
 @media(max-width:580px){.brand>span:last-child{font-size:13px}.topbar-right{gap:8px}.hero{min-height:230px}.hero-text{padding:24px}.hero h1{font-size:35px}.hero p{font-size:11px;max-width:280px}.stats{gap:9px;margin:12px 0 26px}.stat{min-height:105px;padding:13px}.stat-label{font-size:8px}.stat-number{font-size:31px}.stat-footer{font-size:10px}.section-header{display:block}.section-tools{justify-content:flex-start;margin-top:16px}.collection-toolbar{align-items:stretch;flex-direction:column}.search-field{max-width:100%}.toolbar-right{justify-content:space-between}.anime-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.anime-card-content{padding:10px}.anime-title{font-size:13px}.poster-fallback{font-size:18px}.stat-label span{display:none}.section-header h2{font-size:25px}.page-footer{line-height:1.7}.modal-inner{padding:20px 16px}.modal-header h2{font-size:24px}.catalog-item{gap:9px}.catalog-item button{padding:8px}.catalog-cover{width:48px;flex-basis:48px;height:68px}.catalog-text h3{font-size:12px}.catalog-text p{font-size:10px}.demo-banner{flex-direction:column;align-items:flex-start;gap:4px}.form-row{gap:9px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important}}
 
+ .nr-brand-icon{width:35px;height:35px;display:block;object-fit:contain;border-radius:9px;flex-shrink:0}
+@media(max-width:780px){input:not([type=checkbox]):not([type=radio]),textarea,select{font-size:16px!important}}
 </style>
   <link rel="stylesheet" href="app-enhancements.css?v=21" />
 </head>
@@ -50,13 +52,13 @@
 
   <section id="auth-screen" class="auth-screen" hidden>
     <div class="auth-art">
-      <div class="brand auth-brand"><span class="brand-mark">N<span class="brand-slash">//</span></span><span>NIGHTREEL</span></div>
+      <div class="brand auth-brand"><img class="nr-brand-icon" src="icons/nightreel-icon.svg" alt="" aria-hidden="true"><span>NIGHTREEL</span></div>
       <div class="auth-ornament ornament-one">✳</div><div class="auth-ornament ornament-two">◉</div>
       <div class="auth-copy"><div class="eyebrow">THE PERSONAL ANIME ARCHIVE</div><h1>Every story<br>leaves a <em>mark.</em></h1><p>Save your favorites. Track your progress. Remember the ones that ruined you in the best way.</p><div class="auth-caption">YOUR LIST. YOUR TASTE. YOUR LITTLE CORNER OF THE INTERNET.</div></div>
       <div class="art-lines" aria-hidden="true"></div>
     </div>
     <div class="auth-panel">
-      <div class="auth-mobile-brand brand"><span class="brand-mark">N<span class="brand-slash">//</span></span><span>NIGHTREEL</span></div>
+      <div class="auth-mobile-brand brand"><img class="nr-brand-icon" src="icons/nightreel-icon.svg" alt="" aria-hidden="true"><span>NIGHTREEL</span></div>
       <div class="auth-form-wrap">
         <div class="eyebrow">WELCOME TO THE ARCHIVE</div>
         <h2 id="auth-title">Welcome back<span class="accent-dot">.</span></h2>
@@ -76,7 +78,7 @@
 
   <div id="app-shell" class="app-shell" hidden>
     <header class="topbar">
-      <div class="topbar-left"><a href="#" class="brand" id="brand-home" aria-label="Nightreel home"><span class="brand-mark">N<span class="brand-slash">//</span></span><span>NIGHTREEL</span></a><span class="topbar-divider"></span><span class="topbar-note">THE PERSONAL ANIME ARCHIVE</span></div>
+      <div class="topbar-left"><a href="#" class="brand" id="brand-home" aria-label="Nightreel home"><img class="nr-brand-icon" src="icons/nightreel-icon.svg" alt="" aria-hidden="true"><span>NIGHTREEL</span></a><span class="topbar-divider"></span><span class="topbar-note">THE PERSONAL ANIME ARCHIVE</span></div>
       <div class="topbar-right"><span id="account-label" class="account-name">Guest preview</span><span class="account-avatar" id="account-avatar">G</span><button type="button" id="signout-btn" class="btn btn-ghost btn-small" hidden>Log out <span>↗</span></button></div>
     </header>
 
@@ -947,8 +949,8 @@ start();
 <script defer src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-<script defer src="app-enhancements.js?v=21"></script>
+<script defer src="app-enhancements.js?v=22"></script>
 <script defer src="nightreel-releases.js?v=11"></script>
-<script defer src="social-extras.js?v=3"></script>
+<script defer src="social-extras.js?v=4"></script>
 </body>
 </html>
