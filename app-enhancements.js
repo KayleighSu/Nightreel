@@ -126,7 +126,7 @@ function note(id,msg){$s(id).textContent=msg;}
 function need(id){if(owner())return true;note(id,'Connect Nightreel to a Supabase project to use accounts and friends.');return false;}
 function buildCard(e,index,readOnly){
  const title=esc(e.title),id=esc(e.id),rating=Number(e.rating)||0,watched=e.episodes_watched||0;
- const total=e.episodes_total,progress=total?watched+' / '+total+' episodes':watched+' episodes watched';
+ const total=e.catalog_episode_total||e.episodes_total,progress=total?watched+' / '+total+' episodes':watched+' episodes watched';
  const percent=total?Math.min(100,Math.round(100*watched/total)):(e.status==='completed'?100:0);
  const pic=cleanedUrl(e.image_url)?'<img class="card-image" loading="lazy" src="'+esc(cleanedUrl(e.image_url))+'" alt="">':'';
  const stars=[1,2,3,4,5].map(n=>'<button type="button" '+(readOnly?'disabled':'data-action="rate" data-id="'+id+'" data-rating="'+(n*2)+'"')+' class="'+(rating&&n<=Math.floor(rating/2)?'rated':rating&&n===Math.ceil(rating/2)?'half-rated':'unrated')+'" title="'+(readOnly?'Rating':'Rate '+n+' stars')+'">★</button>').join('');
@@ -188,18 +188,36 @@ function flip(card,e){
 async function lookupSynopsis(card,e){
  const target=card.querySelector('.synopsis'),key=canonicalTitle(e?.title||'');
  if(!target||!e)return;
- if(summaries.has(key)){target.textContent=summaries.get(key);return;}
- target.textContent='Loading a synopsis…';
+ const cached=summaries.get(key);
+ if(cached){target.textContent=cached;return;}
+ if(e.synopsis){target.textContent=e.synopsis;return;}
+ target.textContent='Finding a verified story summary…';
  try{
-  const resp=await fetch('https://api.jikan.moe/v4/anime?q='+encodeURIComponent(e.title)+'&limit=5');
-  if(!resp.ok)throw Error('Unavailable');
-  const json=await resp.json(),all=Array.isArray(json.data)?json.data:[];
-  const match=all.find(x=>canonicalTitle(x.title)===key||canonicalTitle(x.title_english)===key)||all[0];
-  const story=String(match?.synopsis||'No synopsis found. Open IMDb for more information.').slice(0,4500);
-  summaries.set(key,story);if(!e.synopsis)e.synopsis=story;
-  target.textContent=story;
- }catch{target.textContent='A synopsis is unavailable at the moment. The IMDb link is still available.';}
+  let info=null;
+  if(window.NightreelReleaseCatalog?.refreshEntry && state.user && !state.demo){
+   // Fetches via the authenticated Nightreel catalogue proxy, with AniList fallback.
+   // Saves the synopsis and release details without modifying any personal tracking fields.
+   info=await window.NightreelReleaseCatalog.refreshEntry(e,true);
+  }else{
+   // Local preview fallback. Live accounts use the server-side catalogue.
+   const response=await fetch('https://api.jikan.moe/v4/anime?q='+encodeURIComponent(e.title)+'&limit=10');
+   if(!response.ok)throw new Error('Catalogue unavailable');
+   const data=await response.json(),all=Array.isArray(data.data)?data.data:[];
+   const match=all.find(x=>canonicalTitle(x.title)===key||canonicalTitle(x.title_english)===key||
+     (Array.isArray(x.title_synonyms)&&x.title_synonyms.some(n=>canonicalTitle(n)===key)));
+   if(!match)throw new Error('No confident title match');
+   info={synopsis:match.synopsis};
+  }
+  const description=String(info?.synopsis||e.synopsis||'').trim();
+  if(!description)throw new Error('No synopsis published for this anime yet');
+  summaries.set(key,description);
+  if(!e.synopsis)e.synopsis=description;
+  if(target.isConnected)target.textContent=description;
+ }catch(error){
+  if(target.isConnected)target.textContent='No story description is available right now. Try “Story” again later, or open the IMDb link. ('+String(error?.message||'Lookup failed').slice(0,100)+')';
+ }
 }
+
 async function rate(e,n){
  if(!e||state.busy)return;
  state.busy=true;
