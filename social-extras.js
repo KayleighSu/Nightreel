@@ -296,7 +296,7 @@ async function openMessages(friendId){
   }else{
    for(const f of friends){
     const row=document.createElement('div');row.className='extras-convo';
-    const label=document.createElement('span');label.textContent=f.display_name+' (@'+f.username+')';
+    const label=document.createElement('span');label.textContent='@'+(f.username||f.display_name||'Anime fan');
     const btn=document.createElement('button');btn.textContent='Message';btn.type='button';btn.onclick=()=>openConversation(f.id);
     row.append(label,btn);listing.append(row);
    }
@@ -309,7 +309,7 @@ async function openConversation(id){
  const f=friends.find(x=>x.id===id);if(!f)return;
  conversationId=id;
  $('extra-conversations').hidden=true;$('extra-open-chat').hidden=false;
- $('extra-chat-title').textContent='Chat with @'+f.username;
+ $('extra-chat-title').textContent='Chat with @'+(f.username||f.display_name||'Anime fan');
  await loadMessages();
  if(messagePoll)clearInterval(messagePoll);
  messagePoll=setInterval(()=>{if(chatDialog.open&&conversationId)loadMessages(true);},6000);
