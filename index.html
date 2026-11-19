@@ -7,6 +7,7 @@
   <meta name="description" content="Nightreel — a personal anime library to share with friends, each with their own collection." />
   <title>Nightreel — Your anime, your story</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="app-enhancements.css?v=4" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -90,6 +91,7 @@
 
       <main class="main-content">
         <section class="hero">
+          <img id="hero-banner-image" class="hero-banner-image" alt="" hidden />
           <div class="hero-text"><div class="eyebrow">CURATED BY YOU <span class="eyebrow-line"></span> <span id="hero-date"></span></div><h1>Your anime.<br><em>Your universe.</em></h1><p>Your hand-picked artwork and all the stories you collected, now in one better library.</p><button type="button" id="hero-add" class="btn btn-primary">+ &nbsp; Add to collection</button></div>
           <div class="hero-design" aria-hidden="true"><span class="hero-orbit orbit-a"></span><span class="hero-orbit orbit-b"></span><span class="hero-asterisk">✳</span><span class="hero-script">stay<br>obsessed.</span><span class="hero-japanese">アニメ・アーカイブ</span><span class="hero-number">01 / ∞</span></div>
         </section>
@@ -103,7 +105,7 @@
 
         <section class="collection-section">
           <div class="section-header"><div><div class="section-kicker">THE COLLECTION / <span id="filter-label-small">ALL TITLES</span></div><h2 id="collection-title">My collection<span class="accent-dot">.</span></h2></div><div class="section-tools"><button type="button" id="export-btn" class="btn btn-ghost btn-small" title="Download your collection as JSON">↓ Export</button><button type="button" id="import-btn" class="btn btn-ghost btn-small" title="Import JSON, CSV, or the old Tracker.html file">↑ Import</button><button type="button" id="restore-original-btn" class="btn btn-ghost btn-small" title="Restore original artwork and titles">✦ Original collection</button><button type="button" id="add-btn" class="btn btn-secondary btn-small">+ Add anime</button></div></div>
-          <div class="collection-toolbar"><div class="search-field"><span aria-hidden="true">⌕</span><input id="library-search" type="search" autocomplete="off" placeholder="Search your collection..." aria-label="Search your collection"></div><div class="toolbar-right"><span id="result-count" class="result-count">0 titles</span><label for="sort-select" class="sr-only">Sort collection</label><select id="sort-select"><option value="newest">Recently added</option><option value="title">Title A–Z</option><option value="rating">Highest rated</option><option value="progress">Most progress</option></select></div></div>
+          <div class="collection-toolbar"><div class="search-field"><span aria-hidden="true">⌕</span><input id="library-search" type="search" autocomplete="off" placeholder="Search your collection..." aria-label="Search your collection"></div><div class="toolbar-right"><span id="result-count" class="result-count">0 titles</span><label for="sort-select" class="sr-only">Sort collection</label><select id="sort-select"><option value="title" selected>Title A–Z</option><option value="newest">Recently added</option><option value="rating">Highest rated</option><option value="progress">Most progress</option></select></div></div>
           <div id="anime-grid" class="anime-grid"></div>
           <div id="empty-state" class="empty-state" hidden><div class="empty-icon">✳</div><h3 id="empty-title">No anime here yet.</h3><p id="empty-description">Your next obsession is one click away.</p><button id="empty-add" class="btn btn-primary" type="button">+ Add your first anime</button></div>
         </section>
@@ -120,7 +122,8 @@
         <div class="form-field"><label for="anime-title">Title <span class="required">*</span></label><input id="anime-title" name="title" maxlength="200" required placeholder="e.g. Bungou Stray Dogs" /></div>
         <div class="form-row"><div class="form-field"><label for="anime-status">Watch status</label><select id="anime-status"><option value="untracked">Not sorted yet</option><option value="plan_to_watch">Plan to watch</option><option value="watching">Watching</option><option value="completed">Completed</option><option value="on_hold">On hold</option><option value="dropped">Dropped</option></select></div><div class="form-field"><label for="anime-rating">Your rating</label><select id="anime-rating"><option value="">Not rated</option><option value="10">10 / 10 — masterpiece</option><option value="9">9 / 10</option><option value="8">8 / 10</option><option value="7">7 / 10</option><option value="6">6 / 10</option><option value="5">5 / 10</option><option value="4">4 / 10</option><option value="3">3 / 10</option><option value="2">2 / 10</option><option value="1">1 / 10</option></select></div></div>
         <div class="form-row"><div class="form-field"><label for="anime-watched">Episodes watched</label><input id="anime-watched" type="number" min="0" max="50000" value="0" /></div><div class="form-field"><label for="anime-total">Total episodes (if known)</label><input id="anime-total" type="number" min="0" max="50000" placeholder="Unknown" /></div></div>
-        <div class="form-field"><label for="anime-notes">Your thoughts</label><textarea id="anime-notes" rows="3" maxlength="5000" placeholder="The ending destroyed me. Five stars. No notes."></textarea></div>
+        <div class="form-field"><label for="anime-public-notes">Public note <span class="optional">VISIBLE TO ACCEPTED FRIENDS</span></label><textarea id="anime-public-notes" rows="3" maxlength="5000" placeholder="What would you tell a friend about this anime?"></textarea><p class="hint">Only accepted friends can read this note.</p></div>
+         <div class="form-field"><label for="anime-notes">Private note <span class="optional">ONLY YOU</span></label><textarea id="anime-notes" rows="3" maxlength="5000" placeholder="Thoughts to keep just for yourself."></textarea><p class="hint">This stays private, including when friends view your list.</p></div>
         <div class="form-field"><label for="anime-imdb">IMDb link or IMDb title ID <span class="optional">OPTIONAL</span></label><input id="anime-imdb" placeholder="https://www.imdb.com/title/tt..." /><div class="hint">If left empty, we'll link to an IMDb title search instead.</div></div>
         <div class="form-field"><label for="anime-image">Poster image URL <span class="optional">OPTIONAL</span></label><input id="anime-image" type="url" placeholder="https://..." /></div>
         <div class="favorite-line"><label><input id="anime-favorite" type="checkbox" /><span>♥ &nbsp; Mark as a favorite</span></label></div>
@@ -177,7 +180,7 @@ const demoExamples = [
   { title: 'Attack on Titan', status: 'plan_to_watch', episodes_watched: 0, episodes_total: 25, rating: null, favorite: false, year: 2013, notes: '' },
   { title: 'Zom 100: Bucket List of the Dead', status: 'on_hold', episodes_watched: 4, episodes_total: 12, rating: 8, favorite: false, year: 2023, notes: '' },
 ];
-const state = { supabase: null, user: null, demo: !configured, entries: [], filter: 'all', search: '', sort: 'newest', modalMetadata: {}, catalog: [], catalogController: null, catalogTimer: null, authMode: 'signin', loadId: 0, busy: false, recoveryFlow: false };
+const state = { supabase: null, user: null, demo: !configured, entries: [], filter: 'all', search: '', sort: 'title', modalMetadata: {}, catalog: [], catalogController: null, catalogTimer: null, authMode: 'signin', loadId: 0, busy: false, recoveryFlow: false };
 let toastTimer;
 const DEMO_KEY = 'nightreel-local-preview-v2';
 const OLD_DEMO_KEY = 'nightreel-local-preview-v1';
@@ -236,6 +239,7 @@ function toEntryData(raw) {
     rating: score !== null && score >= 1 && score <= 10 ? score : null,
     favorite,
     notes: String(raw.notes ?? raw.comment ?? raw.review ?? '').slice(0, 5000),
+    public_notes: String(raw.public_notes ?? '').slice(0, 5000),
     imdb_id: parseImdbId(raw.imdb_id ?? raw.imdb_url ?? raw.imdb),
     image_url: cleanedUrl(raw.image_url ?? raw.poster ?? raw.image),
     synopsis: String(raw.synopsis || '').slice(0, 12000) || null,
@@ -385,6 +389,7 @@ function openAnime(entry = null) {
   $('anime-watched').value = entry?.episodes_watched ?? 0;
   $('anime-total').value = entry?.episodes_total ?? '';
   $('anime-notes').value = entry?.notes || '';
+  $('anime-public-notes').value = entry?.public_notes || '';
   $('anime-imdb').value = entry?.imdb_id || '';
   $('anime-image').value = entry?.image_url || '';
   $('anime-favorite').checked = Boolean(entry?.favorite);
@@ -413,6 +418,7 @@ function collectForm() {
     episodes_total: total,
     episodes_watched: watched,
     notes: $('anime-notes').value.trim().slice(0, 5000),
+    public_notes: $('anime-public-notes').value.trim().slice(0, 5000),
     imdb_id: imdbId,
     image_url: imageUrl || null,
     favorite: $('anime-favorite').checked,
@@ -733,5 +739,6 @@ async function start() {
 start();
 
 </script>
+<script src="app-enhancements.js?v=4"></script>
 </body>
 </html>
