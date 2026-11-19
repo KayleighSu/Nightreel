@@ -73,7 +73,7 @@ window.NIGHTREEL_ORIGINAL_COLLECTION = [
   {
     "title": "Bungo Stray Dogs",
     "status": "untracked",
-    "image_url": "https://raw.githubusercontent.com/KayleighSu/anime-tracker/main/images/bungo-stray-dogs-strongest-characters.jpg",
+    "image_url": "https://kayleighsu.github.io/Nightreel/images/bungo-stray-dogs.avif",
     "imdb_id": "tt5679720",
     "episodes_total": 12
   },
