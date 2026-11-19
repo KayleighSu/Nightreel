@@ -324,11 +324,21 @@ function countBy(filter) {
   if (filter === 'favorites') return state.entries.filter((e) => e.favorite).length;
   return state.entries.filter((e) => e.status === filter).length;
 }
+function searchNormalize(value) {
+  return String(value || '').normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+}
 function filteredEntries() {
-  const q = state.search.trim().toLocaleLowerCase();
+  const words = searchNormalize(state.search).split(/\s+/).filter(Boolean);
   const list = state.entries.filter((e) => {
     const group = state.filter === 'all' || (state.filter === 'favorites' ? e.favorite : e.status === state.filter);
-    return group && (!q || `${e.title} ${e.notes || ''}`.toLocaleLowerCase().includes(q));
+    if (!group || !words.length) return group;
+    const text = searchNormalize([e.title, e.notes, e.public_notes, e.synopsis,
+      statuses[e.status] || '', e.catalog_sequel_title || ''].join(' '));
+    // Treat common Hepburn "ou" spellings as their shortened English names.
+    const searchable = text + ' ' + text.replace(/ou/g, 'o');
+    return words.every((word) => searchable.includes(word));
   });
   return list.sort((a, b) => {
     if (state.sort === 'title') return a.title.localeCompare(b.title);
@@ -486,19 +496,52 @@ function catalogItemHtml(anime, i) {
 }
 async function searchCatalog() {
   const q = $('catalog-query').value.trim();
-  if (q.length < 2) { $('catalog-message').textContent = 'Enter at least 2 characters to search.'; $('catalog-results').replaceChildren(); return; }
+  if (q.length < 2) {
+    $('catalog-message').textContent = 'Enter at least 2 characters to search.';
+    $('catalog-results').replaceChildren();
+    state.catalog = [];
+    return;
+  }
   state.catalogController?.abort();
-  const controller = new AbortController(); state.catalogController = controller;
-  $('catalog-message').textContent = `Searching for “${q}”...`;
+  const controller = new AbortController();
+  state.catalogController = controller;
+  const resultId = (state.catalogSearchId || 0) + 1;
+  state.catalogSearchId = resultId;
+  $('catalog-message').textContent = 'Searching for “' + q + '”…';
   $('catalog-results').replaceChildren();
+  state.catalog = [];
   try {
-    const response = await fetch(`https://api.jikan.moe/v4/anime?q=${encodeURIComponent(q)}&limit=12`, { signal: controller.signal });
-    if (!response.ok) throw new Error(response.status === 429 ? 'Too many searches. Try again in a moment.' : `Anime search is temporarily unavailable (${response.status}).`);
-    const json = await response.json(); if (controller.signal.aborted) return;
-    state.catalog = Array.isArray(json.data) ? json.data : [];
+    let found = null;
+    if (state.supabase && !state.demo) {
+      // The server search retries with AniList if Jikan fails.
+      const { data, error } = await state.supabase.functions.invoke('anime-search', {
+        body: { query: q }, signal: controller.signal
+      });
+      if (controller.signal.aborted || resultId !== state.catalogSearchId) return;
+      if (error) throw new Error(data?.error || error.message || 'Catalogue search unavailable.');
+      if (data?.error) throw new Error(data.error);
+      found = data;
+    } else {
+      // For the offline preview, preserve a public read-only fallback.
+      const response = await fetch('https://api.jikan.moe/v4/anime?q=' +
+        encodeURIComponent(q) + '&limit=15', { signal: controller.signal });
+      if (!response.ok) throw new Error('Catalogue is temporarily unavailable (' + response.status + ').');
+      found = await response.json();
+    }
+    if (controller.signal.aborted || resultId !== state.catalogSearchId) return;
+    state.catalog = Array.isArray(found?.data) ? found.data : [];
     $('catalog-results').innerHTML = state.catalog.map(catalogItemHtml).join('');
-    $('catalog-message').textContent = state.catalog.length ? `${state.catalog.length} results · Select a show to fill in its details.` : 'No matching anime found. You can still add it manually.';
-  } catch (e) { if (e.name !== 'AbortError') $('catalog-message').textContent = e.message || 'Search failed. Try a manual entry.'; }
+    $('catalog-message').textContent = state.catalog.length
+      ? state.catalog.length + ' results · Powered by ' +
+        (found?.source || 'Jikan') + '. Select a show to fill in its details.'
+      : 'No matching titles. You can still add an anime manually.';
+  } catch (error) {
+    if (controller.signal.aborted || resultId !== state.catalogSearchId) return;
+    state.catalog = [];
+    $('catalog-results').replaceChildren();
+    $('catalog-message').textContent =
+      (error?.message || 'Anime search failed.') + ' You can still add a title manually.';
+  }
 }
 function addFromCatalog(index) {
   const anime = state.catalog[index]; if (!anime) return;
