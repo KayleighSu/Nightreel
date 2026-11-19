@@ -191,3 +191,12 @@
   .topbar .brand{font-size:13px}
   #messages-top-button{min-width:35px;width:35px}
 }
+
+/* Five visible stars are a five-point score; odd legacy values show half a star. */
+.anime-card .flip-rating button.half-rated{
+  background:linear-gradient(90deg,#ffc17a 50%,rgba(255,255,255,.42) 50%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.nr-round-avatar{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.nr-profile-preview{width:70px;height:70px;border-radius:50%;background:#56374a;display:grid;place-items:center;overflow:hidden;margin-bottom:8px}
+.nr-profile-preview img{height:100%;width:100%;object-fit:cover}
