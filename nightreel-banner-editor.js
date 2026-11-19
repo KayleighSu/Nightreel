@@ -58,7 +58,7 @@ function drawPreviews(){
   const slider=el('nr-crop-'+key+'-slider');
   if(slider)slider.value=String(Math.round(frames[key].zoom*100));
   const output=el('nr-crop-'+key+'-value');
-  if(output)output.value=String(Math.round(frames[key].zoom))+'%';
+  if(output)output.value=String(Math.round(frames[key].zoom*100))+'%';
  }
 }
 function setPreviewSource(url){
