@@ -10,7 +10,12 @@ const dateLabel=value=>{const d=validDate(value);return d?d.toLocaleString(undef
 const shortDate=value=>{const d=validDate(value);return d?d.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric',timeZone:'UTC'}):'Date not announced';};
 const isRegularSeries=value=>!value || ['TV','TV_SHORT','ONA'].includes(String(value).toUpperCase());
 const isConfirmedFuture=value=>{const d=validDate(value);return !!d && d.getTime()>Date.now();};
-const sequelLabel=e=>e.catalog_sequel_title && isConfirmedFuture(e.catalog_sequel_premiere_at)?'Next season airing '+shortDate(e.catalog_sequel_premiere_at):e.catalog_sequel_title&&!e.catalog_sequel_premiere_at&&/not yet|upcoming/i.test(e.catalog_sequel_status||'')?'Next season: date TBA':'';
+const sequelLabel=e=>!e.catalog_sequel_title?'':isConfirmedFuture(e.catalog_sequel_premiere_at)
+ ?'Next season airing '+shortDate(e.catalog_sequel_premiere_at)
+ :e.catalog_sequel_window&&/not yet|upcoming/i.test(e.catalog_sequel_status||'')
+ ?'Next season airing '+e.catalog_sequel_window
+ :!e.catalog_sequel_premiere_at&&/not yet|upcoming/i.test(e.catalog_sequel_status||'')
+ ?'Next season: date TBA':'';
 const authenticated=()=>Boolean(!state.demo&&state.supabase&&state.user);
 const cached=new Map(),inFlight=new Map(),failedUntil=new Map();
 const day=86400000;
@@ -25,7 +30,7 @@ function cacheData(e){return {
   episodeTotal:e.catalog_episode_total,airingStatus:e.catalog_airing_status,
   broadcast:e.catalog_broadcast,premiereAt:e.catalog_premiere_at,
   nextEpisodeAt:e.catalog_next_episode_at,nextEpisodeNumber:e.catalog_next_episode_number,
-  sequelTitle:e.catalog_sequel_title,sequelMalId:e.catalog_sequel_mal_id,
+  sequelTitle:e.catalog_sequel_title,sequelWindow:e.catalog_sequel_window,sequelMalId:e.catalog_sequel_mal_id,
   sequelStatus:e.catalog_sequel_status,sequelPremiereAt:e.catalog_sequel_premiere_at,
   source:e.catalog_source,fetchedAt:e.catalog_checked_at
 };}
@@ -55,10 +60,15 @@ function makePatch(e,d){
   catalog_premiere_at:d.premiereAt||null,
   catalog_next_episode_at:d.nextEpisodeAt||null,
   catalog_next_episode_number:Number.isSafeInteger(d.nextEpisodeNumber)&&d.nextEpisodeNumber>0?d.nextEpisodeNumber:null,
-  catalog_sequel_title:String(d.sequelTitle||'').slice(0,200)||null,
-  catalog_sequel_mal_id:Number.isSafeInteger(d.sequelMalId)&&d.sequelMalId>0?d.sequelMalId:null,
-  catalog_sequel_status:String(d.sequelStatus||'').slice(0,100)||null,
-  catalog_sequel_premiere_at:d.sequelPremiereAt||null,
+  catalog_sequel_title:String(d.sequelTitle||e.catalog_sequel_title||'').slice(0,200)||null,
+  catalog_sequel_mal_id:Number.isSafeInteger(d.sequelMalId)&&d.sequelMalId>0?d.sequelMalId:e.catalog_sequel_mal_id||null,
+  catalog_sequel_status:String(d.sequelStatus||e.catalog_sequel_status||'').slice(0,100)||null,
+  catalog_sequel_premiere_at:d.sequelPremiereAt||(
+   !d.sequelTitle||canonicalTitle(d.sequelTitle)===canonicalTitle(e.catalog_sequel_title)
+    ?e.catalog_sequel_premiere_at:null)||null,
+  catalog_sequel_window:String(d.sequelWindow||(
+   !d.sequelTitle||canonicalTitle(d.sequelTitle)===canonicalTitle(e.catalog_sequel_title)
+    ?e.catalog_sequel_window:'')||'').slice(0,40)||null,
   catalog_source:String(d.source||'Anime catalogue').slice(0,90),
   catalog_checked_at:new Date().toISOString()
  };
@@ -105,12 +115,12 @@ function summary(e){
  if(e.catalog_next_episode_at){
   pieces.push('Next episode '+(e.catalog_next_episode_number?'#'+e.catalog_next_episode_number+' · ':'')+safe(dateLabel(e.catalog_next_episode_at)));
  }
- if(e.catalog_sequel_title && (isConfirmedFuture(e.catalog_sequel_premiere_at)||(!e.catalog_sequel_premiere_at&&/not yet|upcoming/i.test(e.catalog_sequel_status||'')))){
+ if(sequelLabel(e)){
   const malId=e.catalog_sequel_mal_id;
   const name=safe(e.catalog_sequel_title);
   const sequelUrl=Number.isInteger(malId)&&malId>0?'https://myanimelist.net/anime/'+malId:null;
   const linked=sequelUrl?'<a href="'+sequelUrl+'" target="_blank" rel="noopener noreferrer">'+name+' ↗</a>':name;
-  pieces.push('Next season: '+linked+(e.catalog_sequel_premiere_at?' · '+safe(shortDate(e.catalog_sequel_premiere_at)):' · date TBA'));
+  pieces.push('Next season: '+linked+' · '+safe(sequelLabel(e).replace(/^Next season(?: airing)?:?\s*/,'')));
  }
  if(!pieces.length)return '<p>Release details not checked yet.</p>';
  return '<p>'+pieces.join(' <span aria-hidden="true">·</span> ')+'</p>';
@@ -178,7 +188,7 @@ function timelineCard(e,what,eventAt){
  const image=cleanedUrl(e.image_url);
  return '<article class="nr-radar-event">'+(image?'<img src="'+safe(image)+'" alt="" loading="lazy">':'')+
  '<div><small>'+safe(what)+'</small><h3>'+safe(e.title)+'</h3>'+
- '<p>'+(eventAt?safe(dateLabel(eventAt)):'No confirmed date yet')+'</p>'+
+ '<p>'+(eventAt?safe(dateLabel(eventAt)):(what==='SEQUEL / NEW SEASON'&&e.catalog_sequel_window?safe(e.catalog_sequel_window):'No confirmed date yet'))+'</p>'+
  (e.catalog_sequel_title?'<p>Season / sequel: '+safe(e.catalog_sequel_title)+'</p>':'')+
  '</div></article>';
 }
