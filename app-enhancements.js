@@ -294,14 +294,14 @@ function note(id,msg){$s(id).textContent=msg;}
 function need(id){if(owner())return true;note(id,'Connect Nightreel to a Supabase project to use accounts and friends.');return false;}
 /* Streaming links are catalogue leads, not guarantees of regional access. */
 function streamingMarkup(entry){
- const links=Array.isArray(entry.catalog_streaming)?entry.catalog_streaming:[];
- const list=links.slice(0,15).filter(link=>cleanedUrl(link?.url)&&link?.name)
-   .map(link=>'<a href="'+esc(cleanedUrl(link.url))+'" target="_blank" rel="noopener noreferrer">'+
-     esc(String(link.name).slice(0,90))+' ↗</a>');
- return '<strong>Where to watch</strong>'+
-   (list.length?'<div class="nr-watch-links">'+list.join('')+'</div>':
-     '<p>No streaming platforms listed for this title yet.</p>')+
-   '<small>Catalogue links · availability varies by country and may change.</small>';
+ const curated=Array.isArray(entry.user_streaming)?entry.user_streaming:[];
+ const catalogue=Array.isArray(entry.catalog_streaming)?entry.catalog_streaming:[];
+ const safeLinks=(links)=>links.slice(0,15).filter(link=>cleanedUrl(link?.url)&&link?.name)
+  .map(link=>'<a href="'+esc(cleanedUrl(link.url))+'" target="_blank" rel="noopener noreferrer">'+esc(String(link.name).slice(0,90))+' ↗</a>');
+ const links=safeLinks([...curated,...catalogue.filter(c=>!curated.some(u=>String(u.name).toLowerCase()===String(c.name).toLowerCase()))]);
+ return '<strong>Where to watch</strong>'+(links.length?'<div class="nr-watch-links">'+links.join('')+'</div>':
+ '<p>No streaming platforms listed yet.</p>')+
+ '<small>Streaming catalogues may be incomplete, and availability depends on your country.</small>';
 }
 window.NightreelStreamingMarkup=streamingMarkup;
 document.addEventListener('error',event=>{
@@ -346,11 +346,56 @@ function buildCard(e,index,readOnly){
  '<div class="flip-progress">'+esc(progress)+'<div class="progress-track"><div class="progress-fill" style="width:'+percent+'%"></div></div></div>'+
  '<div class="flip-actions">'+(readOnly?'':'<button type="button" data-action="edit" data-id="'+id+'">Edit</button>')+
  '<button type="button" data-action="flip">Story ↻</button><a href="'+esc(imdbLink(e))+'" target="_blank" rel="noopener noreferrer">IMDb ↗</a></div></div></div>'+
- '<div class="flip-face back">'+pic+'<div class="flip-back-content">'+(originalByTitle.has(canonicalTitle(e.title))?'<span class="nr-original-art-credit">Your original artwork</span>':'')+'<span class="synopsis-heading">ABOUT THIS ANIME</span><h3>'+title+'</h3>'+
+ '<div class="flip-face back">'+pic+'<div class="flip-back-content">'+''+'<span class="synopsis-heading">ABOUT THIS ANIME</span><h3>'+title+'</h3>'+
  '<p class="synopsis">'+synopsis+'</p>'+publicNote+
  '<section class="nr-where-watch">'+streamingMarkup(e)+'</section>'+
+ (readOnly?'':'<button type="button" class="nr-edit-watch" data-stream-edit="'+id+'">Edit streaming services</button>')+
  '<div class="back-actions"><button type="button" data-action="flip">↶ Flip back</button><a href="'+esc(imdbLink(e))+'" target="_blank" rel="noopener noreferrer">IMDb ↗</a></div></div></div></div></article>';
 }
+const watchEditor=document.createElement('dialog');watchEditor.id='nr-stream-editor';
+watchEditor.className='nr-rank-dialog';
+watchEditor.innerHTML='<form method="dialog" class="nr-stream-editor-inner"><h2>Where to watch</h2><p>Add the services you know. Catalogue links appear alongside yours.</p>'+
+'<label>Streaming services (one per line)<textarea id="nr-stream-list" rows="6" placeholder="Crunchyroll | https://www.crunchyroll.com/\nNetflix | https://www.netflix.com/"></textarea></label>'+
+'<p id="nr-stream-error" role="status"></p><div class="nr-rank-dialog-buttons">'+
+'<button type="button" data-stream-close>Cancel</button><button type="button" id="nr-stream-save" class="nr-rank-save">Save services</button></div></form>';
+document.body.append(watchEditor);
+let currentStreamEntry=null;
+document.addEventListener('click',event=>{
+ const open=event.target.closest('[data-stream-edit]');
+ if(open){
+  event.preventDefault();event.stopImmediatePropagation();
+  currentStreamEntry=state.entries.find(e=>String(e.id)===open.dataset.streamEdit);
+  if(!currentStreamEntry)return;
+  $s('nr-stream-list').value=(currentStreamEntry.user_streaming||[]).map(x=>x.name+' | '+x.url).join('\n');
+  $s('nr-stream-error').textContent='';
+  watchEditor.showModal();
+ }
+ if(event.target.closest('[data-stream-close]'))watchEditor.close();
+},true);
+$s('nr-stream-save').onclick=async()=>{
+ if(!currentStreamEntry)return;
+ const lines=$s('nr-stream-list').value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+ if(lines.length>15)return void($s('nr-stream-error').textContent='Maximum 15 services.');
+ const links=[];
+ for(const line of lines){
+  const i=line.indexOf('|');
+  const name=line.slice(0,i).trim(),url=line.slice(i+1).trim();
+  if(i<1||name.length>90||!cleanedUrl(url))return void($s('nr-stream-error').textContent='Use Service Name | https://example.com for each line.');
+  links.push({name,url});
+ }
+ const button=$s('nr-stream-save');button.disabled=true;
+ try{
+  if(!state.demo){
+   const r=await state.supabase.from('anime_entries').update({user_streaming:links}).eq('id',currentStreamEntry.id);
+   if(r.error)throw r.error;
+  }
+  currentStreamEntry.user_streaming=links;
+  if(state.demo)storeDemo();
+  watchEditor.close();render();toast('Streaming services saved.');
+ }catch(e){$s('nr-stream-error').textContent=e.message}
+ finally{button.disabled=false}
+};
+
 cardHtml=(e,i)=>buildCard(e,i,false);
 const nrStatusOrder=[
  ['untracked','Not sorted yet'],
