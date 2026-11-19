@@ -30,12 +30,18 @@ async function fetchJson(url:string,options?:RequestInit){
   return await r.json();
  }finally{clearTimeout(timeout);}
 }
+// Count broadcast/streamed series episodes only: never movies, OVAs, specials, recaps, music or promotional entries.
+function isRegularSeries(format:unknown){
+ const type=String(format||'').trim().toUpperCase().replace(/[ -]/g,'_');
+ return type==='TV'||type==='TV_SHORT'||type==='ONA';
+}
 function jikanRecord(data:any,sequel:any){
  const j=data||{};
  return {
   matched:true,source:'Jikan / MyAnimeList',malId:Number(j.mal_id)||null,
   title:String(j.title_english||j.title||''),synopsis:trimText(j.synopsis),
-  episodeTotal:Number.isInteger(j.episodes)&&j.episodes>0?j.episodes:null,
+  format:String(j.type||'').trim().toUpperCase().replace(/[ -]/g,'_')||null,
+  episodeTotal:isRegularSeries(j.type)&&Number.isInteger(j.episodes)&&j.episodes>0?j.episodes:null,
   airingStatus:String(j.status||'').slice(0,90)||null,
   broadcast:String(j.broadcast?.string||'').slice(0,110)||null,
   premiereAt:dateIso(j.aired?.from),
@@ -67,22 +73,32 @@ async function fromJikan(title:string,id:number|null){
   if(r?.data?.mal_id===candidate.mal_id)full=r.data;
  }catch{/* Keep the search result as an offline-compatible fallback. */}
  const relations=Array.isArray(full.relations)?full.relations:[];
- const sequelEntry=relations.filter((r:any)=>String(r.relation).toLowerCase()==='sequel')
+ const sequelEntries=relations.filter((r:any)=>String(r.relation).toLowerCase()==='sequel')
    .flatMap((r:any)=>Array.isArray(r.entry)?r.entry:[])
-   .find((r:any)=>r.type==='anime'&&Number.isInteger(r.mal_id));
+   .filter((r:any)=>r.type==='anime'&&Number.isInteger(r.mal_id));
  let sequel=null;
- if(sequelEntry){
-  sequel={title:String(sequelEntry.name||''),malId:Number(sequelEntry.mal_id),status:null,premiereAt:null};
+ // A "Sequel" relation may refer to a movie or OVA. It is not a new TV season.
+ // Look at a few related entries and only identify a not-yet-aired regular series.
+ for(const related of sequelEntries.slice(0,4)){
   try{
-   const detail=await fetchJson('https://api.jikan.moe/v4/anime/'+sequel.malId);
-   const item=detail.data;
-   sequel.status=String(item?.status||'')||null;
-   sequel.premiereAt=dateIso(item?.aired?.from);
-  }catch{/* The sequel link remains useful even when release details are unavailable. */}
+   const response=await fetchJson('https://api.jikan.moe/v4/anime/'+related.mal_id);
+   const anime=response?.data;
+   if(!anime || !isRegularSeries(anime.type))continue;
+   const premiereAt=dateIso(anime.aired?.from);
+   const upcoming=String(anime.status||'').toLowerCase().includes('not yet')
+     || (premiereAt && new Date(premiereAt).getTime()>Date.now());
+   if(!upcoming)continue;
+   sequel={
+     title:String(anime.title_english||anime.title||related.name||''),
+     malId:Number(anime.mal_id),status:String(anime.status||'')||null,
+     premiereAt
+   };
+   break;
+  }catch{/* Ignore a broken relation rather than showing an invented season date. */}
  }
  return jikanRecord(full,sequel);
 }
-const anilistQuery='query($search:String){Media(search:$search,type:ANIME){id idMal title{romaji english native} description(asHtml:false) episodes status startDate{year month day} nextAiringEpisode{airingAt episode} relations{edges{relationType node{idMal title{romaji english} status startDate{year month day}}}}}}';
+const anilistQuery='query($search:String){Media(search:$search,type:ANIME){id idMal format title{romaji english native} description(asHtml:false) episodes status startDate{year month day} nextAiringEpisode{airingAt episode} relations{edges{relationType node{idMal format title{romaji english} status startDate{year month day}}}}}}';
 async function fromAniList(title:string){
  const response=await fetchJson('https://graphql.anilist.co',{
   method:'POST',
@@ -99,12 +115,17 @@ async function fromAniList(title:string){
   HIATUS:'On hiatus',CANCELLED:'Cancelled'
  };
  const next=m.nextAiringEpisode;
- const sequel=m.relations?.edges?.find((e:any)=>e.relationType==='SEQUEL'&&e.node);
+ const sequel=m.relations?.edges?.find((e:any)=>
+   e.relationType==='SEQUEL'&&e.node&&isRegularSeries(e.node.format)&&
+   (e.node.status==='NOT_YET_RELEASED' ||
+    (calendarDate(e.node.startDate)&&new Date(calendarDate(e.node.startDate)).getTime()>Date.now()))
+ );
  const other=sequel?.node;
  return {
   matched:true,source:'AniList',malId:Number(m.idMal)||null,
   title:String(m.title?.english||m.title?.romaji||title),synopsis:trimText(m.description),
-  episodeTotal:Number.isInteger(m.episodes)&&m.episodes>0?m.episodes:null,
+  format:String(m.format||'').trim().toUpperCase()||null,
+  episodeTotal:isRegularSeries(m.format)&&Number.isInteger(m.episodes)&&m.episodes>0?m.episodes:null,
   airingStatus:label[m.status]||String(m.status||'')||null,
   broadcast:null,premiereAt:calendarDate(m.startDate),
   nextEpisodeAt:next?.airingAt?dateIso(Number(next.airingAt)*1000):null,
@@ -145,7 +166,11 @@ Deno.serve(async(req:Request)=>{
         value.sequelTitle=airing.sequelTitle;value.sequelMalId=airing.sequelMalId;
         value.sequelStatus=airing.sequelStatus;value.sequelPremiereAt=airing.sequelPremiereAt;
       }
-      if(!value.episodeTotal && airing.episodeTotal)value.episodeTotal=airing.episodeTotal;
+      // Never count an AniList episode figure for a movie/OVA/special.
+      // A format mismatch also means the title match is uncertain: do not mix counts.
+      if(isRegularSeries(value.format) && isRegularSeries(airing.format) &&
+        value.format===airing.format && !value.episodeTotal && airing.episodeTotal)
+        value.episodeTotal=airing.episodeTotal;
       if(!value.synopsis && airing.synopsis)value.synopsis=airing.synopsis;
     }catch{/* AniList lookup can fail independently. */}
   }
