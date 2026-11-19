@@ -5,7 +5,7 @@ const $s=id=>document.getElementById(id),esc=escapeHtml;
 const sourceRender=render;
 const summaries=new Map();
 let ownProfile=null, links=[], friendItems=[], friendProfile=null, panel='library', ownBanner='';
-let currentProfileOwner='', loadingProfile=false;
+let currentProfileOwner='', loadingProfile=false, displayedAccount='';
 const social=document.createElement('section');social.id='social-ui';
 social.innerHTML=[
 '<div class="social-toolbar" id="social-navigation"><button type="button" data-social-view="library">◈ My library</button><button type="button" data-social-view="friends">♡ Friends</button><button type="button" data-social-view="profile">◉ My profile</button></div>',
@@ -25,6 +25,8 @@ const owner=()=>Boolean(state.supabase&&state.user&&!state.demo);
 const lastArt=arr=>[...arr].sort((a,b)=>String(b.updated_at||b.created_at||'').localeCompare(String(a.updated_at||a.created_at||''))).find(x=>cleanedUrl(x.image_url))?.image_url||'';
 function putImage(id,url){const img=$s(id),safe=cleanedUrl(url);if(!img)return;img.hidden=!safe;if(safe)img.src=safe;else img.removeAttribute('src');}
 function drawHero(){
+ const account=state.user?.id||'';
+ if(account!==displayedAccount){displayedAccount=account;ownProfile=null;ownBanner='';currentProfileOwner='';}
  putImage('hero-banner-image',ownBanner||lastArt(state.entries));
  if(owner() && (!ownProfile || currentProfileOwner!==state.user.id) && !loadingProfile){
   loadingProfile=true;
@@ -240,6 +242,13 @@ async function viewFriend(id){
   show('friend');
  }catch(err){note('friends-error','Could not load friend profile: '+err.message);}
 }
+// Refresh private signed banner URLs periodically so custom artwork remains visible
+// without making the storage bucket public.
+setInterval(async()=>{
+ if(!owner())return;
+ if(ownProfile?.banner_path){ownBanner=await getSignedBanner(ownProfile);drawHero();if(panel==='profile')drawMyBanner();}
+ if(panel==='friend' && friendProfile?.banner_path){const url=await getSignedBanner(friendProfile);putImage('friend-banner',url||lastArt(friendItems));}
+},240000);
 const header=document.querySelector('.topbar-right');
 if(header){
  const b=document.createElement('button');b.className='btn btn-ghost btn-small';b.type='button';b.textContent='Friends ♡';
