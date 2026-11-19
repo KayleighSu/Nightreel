@@ -66,7 +66,7 @@ async function refreshEntry(entry,force=false){
  const e=state.entries.find(x=>String(x.id)===String(entry.id));
  if(!e)throw Error('This anime is no longer in your library.');
  const last=validDate(e.catalog_checked_at)?.getTime()||0;
- if(!force&&Date.now()-last<48*60*60*1000&&(e.synopsis||e.catalog_airing_status))
+ if(!force&&e.catalog_format&&Date.now()-last<48*60*60*1000&&(e.synopsis||e.catalog_airing_status))
   return cacheData(e);
  const key=state.user.id+'::'+e.id;
  if(inFlight.has(key))return inFlight.get(key);
