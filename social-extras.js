@@ -64,6 +64,7 @@ const scanDialog=createDialog('extra-scan-dialog','Scan a friend QR',[
 ].join(''));
 const chatDialog=createDialog('extra-messages-dialog','Messages',[
  '<p>Private conversations with your accepted friends. Removing a friendship ends access to the conversation.</p>',
+ '<section id="extra-friend-requests" class="nr-chat-requests" hidden><h3>Friend requests <span id="extra-request-count"></span></h3><div id="extra-request-list"></div></section>',
  '<div id="extra-conversations"></div>',
  '<div id="extra-open-chat" hidden><div class="extras-top"><h3 id="extra-chat-title">Conversation</h3><button type="button" class="extras-close" id="extra-back-chats">All chats</button></div>',
  '<div class="message-thread" id="extra-chat-thread" aria-live="polite"></div>',
@@ -296,6 +297,42 @@ async function loadFriends(){
  }));
  return friends;
 }
+// The Messages hub mirrors pending requests from the Friends section.
+// Friendships RPC exposes the requester's chosen display name without email access.
+async function nrRenderFriendRequests(){
+ if(!loggedIn())return;
+ const result=await state.supabase.rpc('get_nightreel_connections');
+ if(result.error)throw result.error;
+ const incoming=(result.data||[]).filter(row=>row.status==='pending'&&row.recipient_id===state.user.id);
+ const container=$('extra-friend-requests'),list=$('extra-request-list');
+ container.hidden=incoming.length===0;list.replaceChildren();
+ $('extra-request-count').textContent=incoming.length?String(incoming.length):'';
+ for(const request of incoming){
+  const row=document.createElement('div');row.className='nr-request-row';
+  const name=document.createElement('strong');name.textContent=request.display_name||request.username||'Unnamed user';
+  const actions=document.createElement('div');actions.className='nr-request-actions';
+  for(const [status,text] of [['accepted','Accept'],['declined','Decline']]){
+   const button=document.createElement('button');button.type='button';
+   button.className=status==='accepted'?'nr-request-accept':'nr-request-decline';
+   button.textContent=text;
+   button.addEventListener('click',async()=>{
+    actions.querySelectorAll('button').forEach(b=>b.disabled=true);
+    const result=await state.supabase.from('friendships').update({status}).eq('id',request.id).eq('recipient_id',state.user.id).eq('status','pending');
+    if(result.error){
+     message($('extra-messages-status'),'Could not update friend request: '+result.error.message);
+     actions.querySelectorAll('button').forEach(b=>b.disabled=false);
+     return;
+    }
+    // Keep the Friends panel and conversation list consistent.
+    document.dispatchEvent(new CustomEvent('nightreel:friendship-changed'));
+    await openMessages(null,true);
+    message($('extra-messages-status'),status==='accepted'?'Friend request accepted.':'Friend request declined.');
+   });
+   actions.append(button);
+  }
+  row.append(name,actions);list.append(row);
+ }
+}
 const nrLastMobileKey='nightreel-last-mobile-chat';
 let nrMobileRequest=0;
 function nrRememberMobileConversation(id){
@@ -325,6 +362,8 @@ async function openMessages(friendId,showList=false){
  message($('extra-messages-status'),'Loading conversations…');
  try{
   await loadFriends();
+  if(request!==nrMobileRequest||!chatDialog.open)return;
+  await nrRenderFriendRequests();
   if(request!==nrMobileRequest||!chatDialog.open)return;
   const listing=$('extra-conversations');listing.replaceChildren();
   $('extra-open-chat').hidden=true;listing.hidden=false;conversationId=null;
