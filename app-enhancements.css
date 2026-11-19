@@ -816,3 +816,32 @@
    Keep the fallback in the markup so an image load error can reveal it. */
 .anime-card .flip-face:has(> .card-image) > .nr-cover-standin{display:none!important}
 .anime-card .flip-face:not(:has(> .card-image)) > .nr-cover-standin{display:flex}
+
+
+/* iOS WebKit: avoid nested 3D back-face compositing on the large #1 card.
+   Without this, the entire hero can render as an empty dark rectangle. */
+@media(max-width:580px){
+ .nr-primary-spotlight .anime-card .flip-inner{
+  transform:none!important;transform-style:flat!important;-webkit-transform:none!important;
+ }
+ .nr-primary-spotlight .anime-card .flip-face{
+  -webkit-backface-visibility:visible;backface-visibility:visible;transform:none!important;
+ }
+ .nr-primary-spotlight .anime-card .flip-face.front{display:flex}
+ .nr-primary-spotlight .anime-card .flip-face.back{display:none}
+ .nr-primary-spotlight .anime-card.is-flipped .flip-face.front{display:none}
+ .nr-primary-spotlight .anime-card.is-flipped .flip-face.back{display:flex}
+ .nr-primary-spotlight .flip-face .card-image{z-index:0}
+ .nr-primary-spotlight .flip-face::before{z-index:1}
+ .nr-primary-spotlight .flip-top,.nr-primary-spotlight .flip-body,
+ .nr-primary-spotlight .flip-back-content{position:relative;z-index:2}
+ .nr-primary-spotlight .nr-ranked-favorite{height:auto;min-height:0}
+ .nr-primary-spotlight .nr-ranked-favorite .anime-card{
+  flex:0 0 auto;height:min(62svh,560px);min-height:380px;
+ }
+ .nr-primary-spotlight .nr-ranked-favorite .flip-inner{height:100%;min-height:0}
+}
+/* Give installed iOS apps breathing room beneath their status bar. */
+@media(display-mode:standalone){
+ .app-shell{padding-top:env(safe-area-inset-top,0px)}
+}
