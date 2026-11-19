@@ -133,7 +133,7 @@ Deno.serve(async(req:Request)=>{
   catch(firstError){
    if(!title)return reply({error:String(firstError)},503);
    try{value=await fromAniList(title);}
-   catch(secondError)return reply({error:'Catalogues temporarily unavailable or unable to identify this title. Try again later or select the title from catalogue search.',details:String(firstError)},503);
+   catch(secondError){return reply({error:'Catalogues temporarily unavailable or unable to identify this title. Try again later or select the title from catalogue search.',details:String(firstError)},503);}
   }
   cache.set(key,{expires:Date.now()+12*60*60*1000,value});
   if(cache.size>300)cache.delete(cache.keys().next().value);
