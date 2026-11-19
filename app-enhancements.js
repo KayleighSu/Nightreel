@@ -793,7 +793,7 @@ async function viewFriend(id){
  try{
   const [p,e]=await Promise.all([
    state.supabase.from('profiles').select('id,username,display_name,banner_path,avatar_path,banner_desktop_x,banner_desktop_y,banner_desktop_zoom,banner_mobile_x,banner_mobile_y,banner_mobile_zoom').eq('id',id).single(),
-   state.supabase.rpc('get_friend_anime_v5',{p_friend_id:id})
+   state.supabase.rpc('get_friend_anime_v6',{p_friend_id:id})
   ]);
   if(p.error)throw p.error;if(e.error)throw e.error;
   friendProfile=p.data;friendItems=e.data||[];
