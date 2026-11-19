@@ -29,7 +29,7 @@ topRight.insertBefore(account,topRight.firstChild);
 const messagesTop=document.createElement('button');
 messagesTop.type='button';messagesTop.className='btn btn-ghost btn-small';messagesTop.id='messages-top-button';
 messagesTop.textContent='✉';messagesTop.title='Messages';
-topRight.insertBefore(messagesTop,account);
+document.body.append(messagesTop);
 const profileDialog=createDialog('extra-account-dialog','Your Nightreel profile',[
  '<div class="extras-profile-heading"><div class="extras-avatar-large" id="extra-avatar-large">?</div><div><strong id="extra-profile-handle">@username</strong><p id="extra-profile-name">Your anime, your universe.</p></div></div>',
  '<div class="extras-menu-actions">',
