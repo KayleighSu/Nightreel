@@ -35,6 +35,10 @@ Open `http://localhost:8000`. Account authentication and hosted storage require 
 
 Database setup and incremental changes live in `supabase/`. User collections and messages live in Supabase, **not** in this GitHub repository.
 
+### Copyright
+
+© 2026 Kayleigh Suckling. All rights reserved. Nightreel's original code and assets are proprietary; reuse, redistribution, and derivative releases require prior written permission. See [LICENSE.md](LICENSE.md) for details. Third-party content retains its own rights and licenses.
+
 ---
 
 Made for the anime that stay with you.
