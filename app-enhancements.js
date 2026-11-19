@@ -41,7 +41,8 @@ handleDialog.innerHTML=[
 document.body.append(handleDialog);
 let handleCheckId='',handleCheckRunning=false;
 function needsUsername(profile) {
- return profile?.username && /^user_[0-9a-f]{24}$/.test(profile.username);
+ // Usernames are generated on account creation. No username setup prompt.
+ return false;
 }
 function askForUsername(profile) {
  if(!owner() || !profile || !needsUsername(profile) || handleDialog.open)return;
@@ -732,6 +733,8 @@ async function loadProfile(){
   if(!ownProfile)throw Error('No profile exists. Run the social database migration.');
   askForUsername(ownProfile);
   $s('profile-handle').value=ownProfile.username;
+  $s('profile-handle').readOnly=true;
+  $s('profile-handle').title='Automatically generated unique username';
   $s('profile-display').value=ownProfile.display_name;
   ownBanner=await getSignedBanner(ownProfile);
   currentProfileOwner=ownProfile.id;
@@ -755,8 +758,8 @@ async function getSignedBanner(p){
 }
 $s('profile-editor').addEventListener('submit',async ev=>{
  ev.preventDefault();if(!need('profile-error'))return;
- const username=$s('profile-handle').value.trim(),display_name=$s('profile-display').value.trim();
- if(!/^[A-Za-z][A-Za-z0-9_]{2,31}$/.test(username)||!display_name||display_name.length>60){note('profile-error','Invalid username or display name.');return;}
+ const username=ownProfile.username,display_name=$s('profile-display').value.trim();
+ if(!display_name||display_name.length>60){note('profile-error','Invalid username or display name.');return;}
  const file=$s('profile-image-file').files?.[0];
  const avatarFile=$s('profile-avatar-file').files?.[0];
  if(avatarFile && (!['image/png','image/jpeg','image/webp'].includes(avatarFile.type)||avatarFile.size>2097152)){note('profile-error','Profile picture must be JPG, PNG or WebP and under 2 MB.');return;}
@@ -776,7 +779,7 @@ $s('profile-editor').addEventListener('submit',async ev=>{
    const uploaded=await state.supabase.storage.from('nightreel-banners').upload(banner_path,file,{upsert:false,contentType:file.type});
    if(uploaded.error)throw uploaded.error;
   }
-  const r=await state.supabase.from('profiles').update({username,display_name,banner_path,avatar_path,...bannerFrame(bannerDraft)}).eq('id',state.user.id);
+  const r=await state.supabase.from('profiles').update({display_name,banner_path,avatar_path,...bannerFrame(bannerDraft)}).eq('id',state.user.id);
   if(r.error)throw r.error;
   ownProfile={...ownProfile,username,display_name,banner_path,avatar_path,...bannerFrame(bannerDraft)};
   ownBanner=await getSignedBanner(ownProfile);
@@ -801,7 +804,7 @@ async function refreshFriends(){
    const controls=f.status==='pending'&&incoming?'<button data-friend-action="accept" data-friend-row="'+esc(f.id)+'">Accept</button><button data-friend-action="declined" data-friend-row="'+esc(f.id)+'">Decline</button>':
     f.status==='accepted'?'<button data-friend-action="view" data-friend-id="'+esc(id)+'">View profile</button><button data-friend-action="remove" data-friend-row="'+esc(f.id)+'">Unfriend</button>':
     '<button data-friend-action="remove" data-friend-row="'+esc(f.id)+'">Cancel / dismiss</button>';
-   return '<div class="social-row"><div><strong>'+esc(f.username||f.display_name||'Anime fan')+'</strong><small>@'+esc(f.username||'unknown')+' · '+esc(f.status)+(incoming?' · incoming':'')+'</small></div><div class="social-toolbar" style="margin:0">'+controls+'</div></div>';
+   return '<div class="social-row"><div><strong>'+esc(f.display_name||f.username||'Unnamed user')+'</strong><small>@'+esc(f.username||'unknown')+' · '+esc(f.status)+(incoming?' · incoming':'')+'</small></div><div class="social-toolbar" style="margin:0">'+controls+'</div></div>';
   }).join(''):'<p>No friends or pending requests yet.</p>';
   note('friends-error','');
  }catch(e){note('friends-error','Unable to load friends: '+e.message);}
@@ -853,7 +856,7 @@ async function viewFriend(id){
   friendProfile=p.data;friendItems=e.data||[];
   const image=await getSignedBanner(friendProfile);
   putImage('friend-banner',image||lastArt(friendItems));frameBannerAt('friend-banner',friendProfile);
-  $s('friend-name').textContent=friendProfile.username||friendProfile.display_name||'Anime fan';
+  $s('friend-name').textContent=friendProfile.display_name||friendProfile.username||'Unnamed user';
   $s('friend-handle').textContent='@'+friendProfile.username+' · '+friendItems.length+' titles';
   $s('nr-friend-hours').textContent=estimatedHours(friendItems);
   $s('friend-grid').classList.add('nr-grouped-library');
@@ -877,9 +880,9 @@ if(header){
 async function refreshAccountAvatar(){
  if(!owner() || !ownProfile || ownProfile.id!==state.user.id)return;
  const label=document.getElementById('account-label'),avatar=document.getElementById('account-avatar');
- if(label)label.textContent='@'+ownProfile.username;
+ if(label)label.textContent=ownProfile.display_name||ownProfile.username;
  if(!avatar)return;
- avatar.textContent=(ownProfile.username||'?')[0].toUpperCase();
+ avatar.textContent=(ownProfile.display_name||ownProfile.username||'?')[0].toUpperCase();
  if(ownProfile.avatar_path){
   const r=await state.supabase.storage.from('nightreel-avatars').createSignedUrl(ownProfile.avatar_path,300);
   if(!r.error && r.data?.signedUrl){const img=document.createElement('img');img.alt='';img.src=r.data.signedUrl;img.className='nr-round-avatar';avatar.replaceChildren(img);}
