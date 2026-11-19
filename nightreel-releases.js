@@ -50,7 +50,7 @@ function makePatch(e,d){
  // Reject suspicious season-one undercounts when the user's record clearly covers
  // several seasons. An official total one or two below the saved value can be
  // genuine when the saved value includes an OVA.
- const verifiedCount=regularEpisodes && (!originalTotal || regularEpisodes>=originalTotal-2)
+ const verifiedCount=!e.is_movie && regularEpisodes && (!originalTotal || regularEpisodes>=originalTotal-2)
    ? regularEpisodes : null;
  const result={
   catalog_format:String(d.format||'').trim().toUpperCase().slice(0,30)||null,
@@ -135,12 +135,16 @@ function updateCardReleaseInfo(){
    const regular=isRegularSeries(e.catalog_format);
    const storedTotal=Number(e.episodes_total)||0,listed=Number(e.catalog_episode_total)||0;
    const total=regular?(listed&&(!storedTotal||listed>=storedTotal-2)?listed:(storedTotal||listed||null)):null;
-   const line=!regular?String(e.catalog_format).replace(/_/g,' ')+' · excluded from episode totals':
+   const movieMinutes=Number(e.movie_runtime_minutes)||0;
+   const line=e.is_movie?('Movie'+(movieMinutes>0?' · '+movieMinutes+' min':'')+
+       (e.status==='completed'?' · Watched':'')):
+     !regular?String(e.catalog_format).replace(/_/g,' ')+' · excluded from episode totals':
      total&&watched>total?total+' / '+total+' regular episodes · '+watched+' watched saved':
      total?watched+' / '+total+' episodes':watched+' episodes watched';
    if(progress.firstChild?.nodeType===Node.TEXT_NODE)progress.firstChild.nodeValue=line;
    const bar=progress.querySelector('.progress-fill');
-   if(bar)bar.style.width=(!regular?0:total?Math.min(100,Math.round(100*watched/total)):(e.status==='completed'?100:0))+'%';
+   if(bar)bar.style.width=(e.is_movie?(e.status==='completed'?100:0):
+     !regular?0:total?Math.min(100,Math.round(100*watched/total)):(e.status==='completed'?100:0))+'%';
   }
   const back=card.querySelector('.flip-back-content');
   if(back){
@@ -160,9 +164,9 @@ function updateCardReleaseInfo(){
   const front=card.querySelector('.flip-body');
   if(front){
    let chip=front.querySelector('.nr-airing-chip');
-   const hasNextEpisode=isRegularSeries(e.catalog_format)&&isConfirmedFuture(e.catalog_next_episode_at);
-   const nextSeason=sequelLabel(e);
-   const releaseInfo=isRegularSeries(e.catalog_format)&&/currently airing|releasing|not yet aired|not yet released/i.test(e.catalog_airing_status||'');
+   const hasNextEpisode=!e.is_movie&&isRegularSeries(e.catalog_format)&&isConfirmedFuture(e.catalog_next_episode_at);
+   const nextSeason=e.is_movie?'':sequelLabel(e);
+   const releaseInfo=!e.is_movie&&isRegularSeries(e.catalog_format)&&/currently airing|releasing|not yet aired|not yet released/i.test(e.catalog_airing_status||'');
    if(hasNextEpisode || nextSeason || releaseInfo){
     if(!chip){chip=document.createElement('span');chip.className='nr-airing-chip';front.querySelector('h3')?.before(chip);}
     if(chip)chip.textContent=nextSeason||(hasNextEpisode?'Next ep '+shortDate(e.catalog_next_episode_at):'Release tracking');
