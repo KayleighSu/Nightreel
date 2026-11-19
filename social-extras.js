@@ -137,7 +137,7 @@ $('extra-invite').onclick=()=>{
 };
 $('extra-scan-qr').onclick=()=>{profileDialog.close();show(scanDialog);};
 $('extra-open-messages').onclick=()=>{profileDialog.close();openMessages();};
-messagesTop.onclick=()=>{nrClearUnread();openMessages();};
+messagesTop.onclick=()=>openMessages();
 async function uploadAvatar(){
  if(!ensureLogin($('extra-profile-status')))return;
  const file=$('extra-avatar-file').files?.[0];
@@ -305,7 +305,6 @@ async function nrMostRecentFriend(){
  return friends.length===1?friends[0].id:null;
 }
 async function openMessages(friendId,showList=false){
- nrClearUnread();
  if(!nrIsMobile()&&typeof friendId==='string'){await loadFriends();nrOpenDock(friendId);return;}
  if(!ensureLogin($('extra-messages-status')))return;
  const request=++nrMobileRequest;
@@ -329,9 +328,11 @@ async function openMessages(friendId,showList=false){
   }
   let target=typeof friendId==='string'&&friends.some(f=>f.id===friendId)?friendId:null;
   if(!target&&nrIsMobile()&&!showList&&friends.length){
-   try{target=await nrMostRecentFriend();}catch(error){
-    message($('extra-messages-status'),'Could not determine most recent conversation: '+error.message);
-   }
+   // Unread messages take priority over conversation history. Do not
+   // automatically enter an older chat when there is nothing new.
+   const unreadFriends=friends.filter(f=>(nrChatUnread.get(f.id)||0)>0);
+   unreadFriends.sort((a,b)=>(nrIncomingTimes.get(b.id)||0)-(nrIncomingTimes.get(a.id)||0));
+   target=unreadFriends[0]?.id||null;
   }
   if(request!==nrMobileRequest||!chatDialog.open)return;
   if(target)await openConversation(target);
@@ -341,7 +342,10 @@ async function openMessages(friendId,showList=false){
 async function openConversation(id){
  const f=friends.find(x=>x.id===id);if(!f)return;
  conversationId=id;
- if(nrIsMobile())nrRememberMobileConversation(id);
+ if(nrIsMobile()){
+  nrRememberMobileConversation(id);
+  nrMarkChatRead(id);
+ }
  $('extra-conversations').hidden=true;$('extra-open-chat').hidden=false;
  $('extra-chat-title').textContent=f.display_name&&f.display_name.toLowerCase()!=='anime fan'?f.display_name:'@'+(f.username||'Friend');
  await loadMessages();
@@ -460,6 +464,7 @@ let nrSoundEnabled=localStorage.getItem('nightreel-sounds')!=='off';
 let nrAudioContext=null,nrAudioUnlocked=false,nrSeenMessages=new Set(),nrSeenRequests=new Set(),nrSeenAcceptances=new Set(),nrNoticesReady=false,nrUnread=0;
 const nrWindows=new Map();
 const nrChatUnread=new Map();
+const nrIncomingTimes=new Map();
 function nrIsMobile(){return matchMedia('(max-width: 720px)').matches;}
 function nrPlaySound(kind){
  if(!nrSoundEnabled||!nrAudioUnlocked)return;
@@ -503,7 +508,7 @@ function nrMarkChatRead(id){
 }
 function nrClearUnread(){nrUnread=0;nrBadgeUpdate();}
 async function nrCheckNotifications(){
- if(!loggedIn()){nrRestoredFor='';nrNoticesReady=false;nrSeenMessages.clear();nrSeenRequests.clear();nrSeenAcceptances.clear();nrClearUnread();nrDock.replaceChildren();nrWindows.clear();nrChatUnread.clear();return;}
+ if(!loggedIn()){nrRestoredFor='';nrNoticesReady=false;nrSeenMessages.clear();nrSeenRequests.clear();nrSeenAcceptances.clear();nrClearUnread();nrDock.replaceChildren();nrWindows.clear();nrChatUnread.clear();nrIncomingTimes.clear();return;}
  const uid=state.user.id;
  try{
   const [m,f]=await Promise.all([
@@ -522,6 +527,7 @@ async function nrCheckNotifications(){
     nrUnread+=fresh.length+requests.length+approvals.length;
     for(const item of fresh){
      nrChatUnread.set(item.sender_id,(nrChatUnread.get(item.sender_id)||0)+1);
+     nrIncomingTimes.set(item.sender_id,Math.max(nrIncomingTimes.get(item.sender_id)||0,Date.parse(item.created_at)||Date.now()));
     }
     if(fresh.length&&!nrIsMobile()){
      const senders=[...new Set(fresh.map(item=>item.sender_id))];
@@ -629,7 +635,11 @@ async function nrLoadDockMessages(win){
  }catch(error){win.querySelector('.nr-dock-status').textContent=error.message;}
  finally{win._busy=false;}
 }
-nrBubble.onclick=()=>{nrClearUnread();openMessages();};
+nrBubble.onclick=async()=>{
+ // Check immediately instead of depending on the eight-second polling interval.
+ await nrCheckNotifications();
+ openMessages();
+};
 setInterval(nrCheckNotifications,8000);
 nrCheckNotifications();
 })();
