@@ -683,3 +683,9 @@
   font-size:20px
  }
 }
+
+/* Compact favorites have no dead controls: tap the tile to open real actions. */
+@media (max-width:580px){
+ .nr-supporting-spotlight .nr-ranked-favorite:not(.is-expanded) .flip-top{display:none}
+ .nr-supporting-spotlight .nr-ranked-favorite.is-expanded .flip-top{display:flex}
+}
