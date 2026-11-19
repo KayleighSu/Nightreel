@@ -431,7 +431,7 @@ function spotlightMarkup(items,readOnly){
   '<div class="nr-rank-heading"><span>#'+String(rank).padStart(2,'0')+'</span><small>'+
   (rank===1?(readOnly?'ALL-TIME #1':'YOUR ALL-TIME #1'):'TOP FIVE FAVORITE')+'</small></div>'+
   buildCard(entry,rank-1,readOnly)+
-  (rank===1?'':'<button type="button" class="nr-favorite-mobile-toggle" data-favorite-expand aria-expanded="false" aria-label="Expand details for '+esc(entry.title)+'">View details <span aria-hidden="true">⌄</span></button>')+
+  (rank===1?'<button type="button" class="nr-primary-mobile-open" data-primary-flip aria-label="Open details for '+esc(entry.title)+'">View card details ↻</button>':'<button type="button" class="nr-favorite-mobile-toggle" data-favorite-expand aria-expanded="false" aria-label="Expand details for '+esc(entry.title)+'">View details <span aria-hidden="true">⌄</span></button>')+
   '</div>';
  return '<section class="nr-library-section nr-featured-section" data-library-section="featured">'+
   '<div class="nr-section-heading"><div><span class="nr-section-eyebrow">'+(readOnly?'✦ ALL-TIME TOP FIVE':'✦ YOUR ALL-TIME TOP FIVE')+'</span>'+
@@ -635,6 +635,18 @@ function setMobileFavoriteExpanded(wrapper,expanded){
  }
  if(!expanded)wrapper.querySelector('.anime-card')?.classList.remove('is-flipped');
 }
+function primaryFavoriteClick(event){
+ const button=event.target.closest('[data-primary-flip]');
+ if(!button)return;
+ event.preventDefault();
+ event.stopImmediatePropagation();
+ const card=button.closest('.nr-ranked-favorite')?.querySelector('.anime-card');
+ if(!card)return;
+ const entry=(card.closest('#friend-view')?friendItems:state.entries).find(e=>String(e.id)===card.dataset.cardId);
+ flip(card,entry);
+ button.textContent=card.classList.contains('is-flipped')?'Back to cover ↶':'View card details ↻';
+ button.setAttribute('aria-label',button.textContent);
+}
 function favoriteToggleClick(event){
  const button=event.target.closest('[data-favorite-expand]');
  if(!button)return;
@@ -703,6 +715,8 @@ async function savePublicNote(event){
 }
 $s('anime-grid').addEventListener('change',saveQuickStatus,true);
 $s('anime-grid').addEventListener('click',savePublicNote,true);
+$s('anime-grid').addEventListener('click',primaryFavoriteClick,true);
+$s('friend-grid').addEventListener('click',primaryFavoriteClick,true);
 $s('anime-grid').addEventListener('click',favoriteToggleClick,true);
 $s('friend-grid').addEventListener('click',favoriteToggleClick,true);
 $s('anime-grid').addEventListener('click',e=>cardClick(e,false),true);
