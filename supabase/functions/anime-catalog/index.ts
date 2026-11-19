@@ -51,6 +51,70 @@ function jikanRecord(data:any,sequel:any){
   url:j.url||null,fetchedAt:new Date().toISOString()
  };
 }
+
+/* Follow main-series TV season links rather than using a season-one episode count.
+   We deliberately reject movies, OVA/ONA extras without a clear main-series relationship,
+   spinoffs, and distinct series titles. A partial/inconclusive chain is not a verified total. */
+function sameSeasonTitle(root:any,next:any){
+ const names=[root.title_english,root.title].filter(Boolean);
+ const candidates=[next.title_english,next.title].filter(Boolean);
+ const isSeasonSuffix=(s:string)=>/^(?:\d+(?:st|nd|rd|th)?(?:season)?(?:part\d+)?|(?:first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|\d+(?:st|nd|rd|th)?)season(?:part\d+)?|season\d+(?:part\d+)?|(?:part|cour)\d+|(?:the)?final(?:season)?(?:part\d+)?|(?:the)?(?:second|third|fourth|fifth)plate|[a-z0-9]+arc|[a-z0-9]+saga|stonewars|newworld|sciencefuture)$/i.test(s);
+ return names.some(base=>candidates.some(name=>{
+  const start=canon(base),full=canon(name);
+  if(!start||!full.startsWith(start))return false;
+  const suffix=full.slice(start.length);
+  return !suffix||isSeasonSuffix(suffix);
+ }));
+}
+function regularEps(item:any){
+ return isRegularSeries(item.type) && Number.isInteger(item.episodes) && item.episodes>0 &&
+    !/not yet aired/i.test(String(item.status||'')) ? Number(item.episodes) : 0;
+}
+function linkEntries(item:any){
+ return (Array.isArray(item?.relations)?item.relations:[])
+   .filter((r:any)=>['sequel','prequel'].includes(String(r.relation||'').toLowerCase()))
+   .flatMap((r:any)=>Array.isArray(r.entry)?r.entry:[])
+   .filter((e:any)=>e.type==='anime'&&Number.isInteger(e.mal_id));
+}
+async function surveyMainSeries(root:any){
+ const start=Date.now();
+ const queue=[root],seen=new Set<number>(),included=[];
+ let truncated=false;
+ while(queue.length){
+  if(seen.size>=14||Date.now()-start>16000){truncated=true;break;}
+  const pending=queue.shift();
+  if(!pending || seen.has(Number(pending.mal_id)))continue;
+  seen.add(Number(pending.mal_id));
+  let item:any=pending;
+  if(pending!==root){
+   try{
+    const result=await fetchJson('https://api.jikan.moe/v4/anime/'+pending.mal_id+'/full');
+    item=result?.data;
+   }catch{truncated=true;continue;}
+  }
+  if(!item || !isRegularSeries(item.type) || !sameSeasonTitle(root,item))continue;
+  included.push(item);
+  for(const rel of linkEntries(item)){
+   // Avoid walking to films, side stories, and unrelated franchise branches.
+   if(sameSeasonTitle(root,{title:rel.name}) && !seen.has(Number(rel.mal_id)))queue.push(rel);
+  }
+  if(queue.length)await new Promise(resolve=>setTimeout(resolve,400));
+ }
+ const count=included.reduce((sum,item)=>sum+regularEps(item),0);
+ const next=included.filter(item=>{
+  const date=dateIso(item.aired?.from);
+  return (/not yet aired/i.test(String(item.status||'')) || !!(date&&new Date(date).getTime()>Date.now())) &&
+    isRegularSeries(item.type);
+ }).sort((a,b)=>{
+  const da=dateIso(a.aired?.from),db=dateIso(b.aired?.from);
+  return (da?Date.parse(da):Infinity)-(db?Date.parse(db):Infinity);
+ })[0];
+ return {episodeTotal:!truncated&&count>0?count:null,
+   observedTotal:count,seasonCount:included.length,complete:!truncated,
+   next:next?{title:String(next.title_english||next.title||''),malId:Number(next.mal_id),
+     status:String(next.status||'')||null,premiereAt:dateIso(next.aired?.from)}:null};
+}
+
 async function fromJikan(title:string,id:number|null){
  let candidate:any=null;
  if(id){
@@ -96,7 +160,21 @@ async function fromJikan(title:string,id:number|null){
    break;
   }catch{/* Ignore a broken relation rather than showing an invented season date. */}
  }
- return jikanRecord(full,sequel);
+ const record=jikanRecord(full,sequel);
+ try{
+  const series=await surveyMainSeries(full);
+  if(series.episodeTotal!==null){
+    record.episodeTotal=series.episodeTotal;
+    record.aggregatedSeasons=series.seasonCount;
+  }
+  if(series.next){
+    record.sequelTitle=series.next.title;
+    record.sequelMalId=series.next.malId;
+    record.sequelStatus=series.next.status;
+    record.sequelPremiereAt=series.next.premiereAt;
+  }
+ }catch{/* Preserve the original record rather than claiming a made-up total. */}
+ return record;
 }
 const anilistQuery='query($search:String){Media(search:$search,type:ANIME){id idMal format title{romaji english native} description(asHtml:false) episodes status startDate{year month day} nextAiringEpisode{airingAt episode} relations{edges{relationType node{idMal format title{romaji english} status startDate{year month day}}}}}}';
 async function fromAniList(title:string){
