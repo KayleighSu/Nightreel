@@ -292,6 +292,29 @@ function drawHero(){
 }
 function note(id,msg){$s(id).textContent=msg;}
 function need(id){if(owner())return true;note(id,'Connect Nightreel to a Supabase project to use accounts and friends.');return false;}
+/* Streaming links are catalogue leads, not guarantees of regional access. */
+function streamingMarkup(entry){
+ const links=Array.isArray(entry.catalog_streaming)?entry.catalog_streaming:[];
+ const list=links.slice(0,15).filter(link=>cleanedUrl(link?.url)&&link?.name)
+   .map(link=>'<a href="'+esc(cleanedUrl(link.url))+'" target="_blank" rel="noopener noreferrer">'+
+     esc(String(link.name).slice(0,90))+' ↗</a>');
+ return '<strong>Where to watch</strong>'+
+   (list.length?'<div class="nr-watch-links">'+list.join('')+'</div>':
+     '<p>No streaming platforms listed for this title yet.</p>')+
+   '<small>Catalogue links · availability varies by country and may change.</small>';
+}
+window.NightreelStreamingMarkup=streamingMarkup;
+document.addEventListener('error',event=>{
+ const img=event.target;
+ if(!(img instanceof HTMLImageElement))return;
+ if(img.matches('.anime-card .card-image')){
+  img.closest('.anime-card')?.classList.add('nr-missing-cover');
+  img.remove(); // Reveal the designed Nightreel placeholder below the failed image.
+ }else if(img.id==='hero-banner-image'||img.id==='profile-banner'||img.id==='friend-banner'){
+  img.hidden=true;
+  img.closest('.hero,.social-hero')?.classList.add('nr-missing-banner');
+ }
+},true);
 function buildCard(e,index,readOnly){
  const title=esc(e.title),id=esc(e.id),rating=Number(e.rating)||0,watched=e.episodes_watched||0;
  const isRegular=!e.catalog_format||['TV','TV_SHORT','ONA'].includes(String(e.catalog_format).toUpperCase());
@@ -305,7 +328,9 @@ function buildCard(e,index,readOnly){
   total?watched+' / '+total+' episodes':watched+' episodes watched';
  const percent=e.is_movie?(e.status==='completed'?100:0):
   !isRegular?0:total?Math.min(100,Math.round(100*watched/total)):(e.status==='completed'?100:0);
- const pic=cleanedUrl(e.image_url)?'<img class="card-image" loading="lazy" src="'+esc(cleanedUrl(e.image_url))+'" alt="">':'';
+ const standin='<div class="nr-cover-standin" aria-hidden="true"><div class="nr-standin-glyph">✦</div><div class="nr-standin-wordmark">NIGHTREEL</div><div class="nr-standin-lines"></div></div>';
+ const media=cleanedUrl(e.image_url);
+ const pic=standin+(media?'<img class="card-image" loading="'+(e.favorite?'eager':'lazy')+'" decoding="async" src="'+esc(media)+'" alt="">':'');
  const stars=[1,2,3,4,5].map(n=>'<button type="button" '+(readOnly?'disabled':'data-action="rate" data-id="'+id+'" data-rating="'+(n*2)+'"')+' class="'+(rating&&n<=Math.floor(rating/2)?'rated':rating&&n===Math.ceil(rating/2)?'half-rated':'unrated')+'" title="'+(readOnly?'Rating':'Rate '+n+' stars')+'">★</button>').join('');
  const synopsis=esc(e.synopsis||summaries.get(canonicalTitle(e.title))||'Tap here to load a story summary, or follow the IMDb link.');
  const publicNote=readOnly
@@ -323,6 +348,7 @@ function buildCard(e,index,readOnly){
  '<button type="button" data-action="flip">Story ↻</button><a href="'+esc(imdbLink(e))+'" target="_blank" rel="noopener noreferrer">IMDb ↗</a></div></div></div>'+
  '<div class="flip-face back">'+pic+'<div class="flip-back-content">'+(originalByTitle.has(canonicalTitle(e.title))?'<span class="nr-original-art-credit">Your original artwork</span>':'')+'<span class="synopsis-heading">ABOUT THIS ANIME</span><h3>'+title+'</h3>'+
  '<p class="synopsis">'+synopsis+'</p>'+publicNote+
+ '<section class="nr-where-watch">'+streamingMarkup(e)+'</section>'+
  '<div class="back-actions"><button type="button" data-action="flip">↶ Flip back</button><a href="'+esc(imdbLink(e))+'" target="_blank" rel="noopener noreferrer">IMDb ↗</a></div></div></div></div></article>';
 }
 cardHtml=(e,i)=>buildCard(e,i,false);
