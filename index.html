@@ -128,11 +128,13 @@
       <form id="anime-form"><input type="hidden" name="entry-id" id="entry-id" />
         <div class="form-field"><label for="anime-title">Title <span class="required">*</span></label><input id="anime-title" name="title" maxlength="200" required placeholder="e.g. Bungou Stray Dogs" /></div>
         <div class="form-row"><div class="form-field"><label for="anime-status">Watch status</label><select id="anime-status"><option value="untracked">Not sorted yet</option><option value="plan_to_watch">Plan to watch</option><option value="watching">Watching</option><option value="completed">Completed</option><option value="on_hold">On hold</option><option value="dropped">Dropped</option></select></div><div class="form-field"><label for="anime-rating">Your rating</label><select id="anime-rating"><option value="">Not rated</option><option value="10">5 / 5 — masterpiece</option><option value="9">4.5 / 5</option><option value="8">4 / 5</option><option value="7">3.5 / 5</option><option value="6">3 / 5</option><option value="5">2.5 / 5</option><option value="4">2 / 5</option><option value="3">1.5 / 5</option><option value="2">1 / 5</option><option value="1">0.5 / 5</option></select></div></div>
-        <div id="anime-episode-fields"><div class="form-row"><div class="form-field"><label for="anime-watched">Episodes watched</label><input id="anime-watched" type="number" min="0" max="50000" value="0" /></div><div class="form-field"><label for="anime-total">Total episodes (if known)</label><input id="anime-total" type="number" min="0" max="50000" placeholder="Unknown" /></div></div><div class="form-field"><label for="anime-episode-minutes">Episode length (minutes)</label><input id="anime-episode-minutes" type="number" min="1" max="600" step="1" value="24" required inputmode="numeric" /><p class="hint">24 minutes is the default. Change it for this anime if its regular episodes are a different length; your watched-hours total will update.</p></div></div>
+        <div id="anime-episode-fields"><div class="form-row"><div class="form-field"><label for="anime-watched">Episodes watched</label><input id="anime-watched" type="number" min="0" max="50000" value="0" /></div><div class="form-field"><label for="anime-total">Total episodes (if known)</label><input id="anime-total" type="number" min="0" max="50000" placeholder="Unknown" /></div></div><div class="form-field"><label for="anime-episode-minutes">Episode length (minutes)</label><input id="anime-episode-minutes" type="number" min="1" max="600" step="1" value="24" required inputmode="numeric" /><div class="nr-runtime-tools"><button type="button" id="anime-runtime-auto">Use catalogue length</button><small id="anime-runtime-hint">24 minutes by default · auto-update when known</small></div><p class="hint">Nightreel checks the usual episode runtime; you can override it here for this anime.</p></div></div>
         <div class="form-field"><label for="anime-public-notes">Public note <span class="optional">VISIBLE TO ACCEPTED FRIENDS</span></label><textarea id="anime-public-notes" rows="3" maxlength="5000" placeholder="What would you tell a friend about this anime?"></textarea><p class="hint">Only accepted friends can read this note.</p></div>
          <div class="form-field"><label for="anime-notes">Private note <span class="optional">ONLY YOU</span></label><textarea id="anime-notes" rows="3" maxlength="5000" placeholder="Thoughts to keep just for yourself."></textarea><p class="hint">This stays private, including when friends view your list.</p></div>
         <div class="form-field"><label for="anime-imdb">IMDb link or IMDb title ID <span class="optional">OPTIONAL</span></label><input id="anime-imdb" placeholder="https://www.imdb.com/title/tt..." /><div class="hint">If left empty, we'll link to an IMDb title search instead.</div></div>
-        <div class="form-field"><label for="anime-image">Poster image URL <span class="optional">OPTIONAL</span></label><input id="anime-image" type="url" placeholder="https://..." /></div>
+        <div class="form-field"><label for="anime-image">Artwork URL <span class="optional">OPTIONAL</span></label><input id="anime-image" type="url" placeholder="https://..." /><p class="hint">Paste an HTTPS image link or choose a photo below. If left blank, Nightreel uses its own cover design.</p></div>
+        <div class="form-field"><label for="anime-cover-file">Or choose an image from your phone <span class="optional">OPTIONAL</span></label><input id="anime-cover-file" type="file" accept="image/*" /><p class="hint">Photos are optimized before uploading (max 4 MB). Cover images are public so friends can see them.</p></div>
+        <div class="nr-upload-preview" id="anime-cover-preview" hidden><img id="anime-cover-preview-image" alt="Selected cover artwork preview"><button type="button" id="anime-cover-clear">Clear photo</button></div>
         <div class="favorite-line"><label><input id="anime-favorite" type="checkbox" /><span>♥ &nbsp; Mark as a favorite</span></label></div>
         <div class="favorite-line"><label><input id="anime-is-movie" type="checkbox" /><span>🎬 &nbsp; This is a movie</span></label></div>
         <div class="form-field" id="anime-movie-runtime-field" hidden><label for="anime-movie-runtime">Movie runtime in minutes <span class="optional">OPTIONAL</span></label><input id="anime-movie-runtime" type="number" min="1" max="1200" placeholder="e.g. 120" /><p class="hint">Completed movies with a runtime contribute to your watched-hours total.</p></div>
@@ -243,6 +245,7 @@ function toEntryData(raw) {
   const isMovie = rawMovie === true || rawMovie === 1 || /^(true|yes|1|movie)$/i.test(String(rawMovie || ''));
   const runtime = num(raw.movie_runtime_minutes ?? raw.runtime_minutes);
   const duration = num(raw.episode_minutes ?? raw.episode_length_minutes);
+  const manuallySet = raw.episode_minutes_manual===true || (duration!==null && duration!==24);
   const mal = num(raw.mal_id);
   return {
     title,
@@ -250,6 +253,7 @@ function toEntryData(raw) {
     episodes_total: total !== null && total >= 0 && total <= 50000 ? total : null,
     episodes_watched: Math.max(0, Math.min(50000, watched)),
     episode_minutes: Number.isInteger(duration) && duration>=1 && duration<=600 ? duration : 24,
+    episode_minutes_manual: manuallySet,
     rating: score !== null && score >= 1 && score <= 10 ? score : null,
     favorite,
     is_movie: isMovie,
@@ -443,6 +447,12 @@ function openAnime(entry = null) {
   $('anime-watched').value = entry?.episodes_watched ?? 0;
   $('anime-total').value = entry?.episodes_total ?? '';
   $('anime-episode-minutes').value = entry?.episode_minutes ?? 24;
+  state.editorDurationManual=Boolean(entry?.episode_minutes_manual);
+  state.editorDurationReset=false;
+  $('anime-runtime-hint').textContent = entry?.catalog_duration_minutes
+    ? 'Catalogue: '+entry.catalog_duration_minutes+' min per episode'
+    : '24 min standard · catalogue updates when available';
+  clearCoverPreview();
   $('anime-notes').value = entry?.notes || '';
   $('anime-public-notes').value = entry?.public_notes || '';
   $('anime-imdb').value = entry?.imdb_id || '';
@@ -480,7 +490,8 @@ function collectForm() {
   if (imdbValue && !imdbId) throw new Error('Enter a valid IMDb title link or ID (for example, tt1234567).');
   const imageValue = $('anime-image').value.trim();
   const imageUrl = cleanedUrl(imageValue);
-  if (imageValue && !imageUrl) throw new Error('Poster image links must start with https://.');
+  if (imageValue && !imageUrl && !$('anime-cover-file').files?.length)
+    throw new Error('Artwork links must start with https://.');
   const selectedRating = num($('anime-rating').value);
   const runtime = isMovie ? num($('anime-movie-runtime').value) : null;
   if (isMovie && runtime !== null && (!Number.isInteger(runtime) || runtime < 1 || runtime > 1200))
@@ -493,6 +504,7 @@ function collectForm() {
     episodes_total: total,
     episodes_watched: watched,
     episode_minutes: Number.isInteger(episodeMinutes) && episodeMinutes>=1 && episodeMinutes<=600?episodeMinutes:24,
+    episode_minutes_manual: !isMovie && Boolean(state.editorDurationManual),
     notes: $('anime-notes').value.trim().slice(0, 5000),
     public_notes: $('anime-public-notes').value.trim().slice(0, 5000),
     imdb_id: imdbId,
@@ -502,14 +514,77 @@ function collectForm() {
     movie_runtime_minutes: runtime,
   };
 }
+
+let coverObjectURL='';
+function clearCoverPreview(){
+ if(coverObjectURL){URL.revokeObjectURL(coverObjectURL);coverObjectURL='';}
+ const preview=$('anime-cover-preview');if(preview)preview.hidden=true;
+ const img=$('anime-cover-preview-image');if(img)img.removeAttribute('src');
+}
+function previewAnimeCover(){
+ clearCoverPreview();
+ const photo=$('anime-cover-file')?.files?.[0];
+ if(!photo)return;
+ if(!photo.type.startsWith('image/')){showFormError('Choose an image file.');return;}
+ coverObjectURL=URL.createObjectURL(photo);
+ $('anime-cover-preview-image').src=coverObjectURL;
+ $('anime-cover-preview').hidden=false;
+}
+async function optimizedAnimePhoto(file){
+ if(!file || !file.type.startsWith('image/'))throw Error('Choose an image from Photos or your files.');
+ if(file.size>20*1024*1024)throw Error('Choose an image under 20 MB.');
+ const source=URL.createObjectURL(file);
+ let image;
+ try{
+  image=await new Promise((resolve,reject)=>{
+   const photo=new Image();
+   photo.onload=()=>resolve(photo);
+   photo.onerror=()=>reject(Error('This phone photo format is not supported. Try JPG, PNG or WebP.'));
+   photo.src=source;
+  });
+  const ratio=Math.min(1,1600/Math.max(image.naturalWidth,image.naturalHeight));
+  const canvas=document.createElement('canvas');
+  canvas.width=Math.max(1,Math.round(image.naturalWidth*ratio));
+  canvas.height=Math.max(1,Math.round(image.naturalHeight*ratio));
+  if(canvas.width*canvas.height>12000000)throw Error('Image is too large.');
+  const context=canvas.getContext('2d',{alpha:false});
+  if(!context)throw Error('Photo editor unavailable on this device.');
+  context.fillStyle='#1c1029';context.fillRect(0,0,canvas.width,canvas.height);
+  context.drawImage(image,0,0,canvas.width,canvas.height);
+  let blob;
+  for(const quality of [.86,.72,.58]){
+   blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',quality));
+   if(blob?.size<=4*1024*1024)break;
+  }
+  if(!blob||blob.size>4*1024*1024)throw Error('Unable to reduce image below 4 MB.');
+  return blob;
+ }finally{URL.revokeObjectURL(source);}
+}
+async function uploadAnimeCover(file){
+ if(state.demo||!state.user||!state.supabase)
+  throw Error('Sign in to your account before uploading a cover photo.');
+ const photo=await optimizedAnimePhoto(file);
+ const ownerId=state.user.id;
+ const path=ownerId+'/'+crypto.randomUUID()+'.jpg';
+ const uploaded=await state.supabase.storage.from('nightreel-covers')
+  .upload(path,photo,{contentType:'image/jpeg',cacheControl:'3600',upsert:false});
+ if(uploaded.error)throw uploaded.error;
+ const resolved=state.supabase.storage.from('nightreel-covers').getPublicUrl(path);
+ const url=cleanedUrl(resolved.data?.publicUrl);
+ if(!url)throw Error('Could not generate a public URL for the uploaded cover.');
+ return url;
+}
+
 function showFormError(msg) { $('anime-error').textContent = msg; $('anime-error').hidden = false; }
 async function saveEntry(event) {
   event.preventDefault(); if (state.busy) return;
   try {
     const payload = collectForm();
     const id = $('entry-id').value;
+    const photo = $('anime-cover-file').files?.[0];
     if (!id && state.entries.some((e) => payload.mal_id && e.mal_id === payload.mal_id)) throw new Error('That anime is already in your collection.');
     state.busy = true; $('save-anime').disabled = true;
+    if(photo)payload.image_url=await uploadAnimeCover(photo);
     if (state.demo) {
       if (id) state.entries = state.entries.map((e) => e.id === id ? { ...e, ...payload, updated_at: new Date().toISOString() } : e);
       else state.entries.unshift({ ...payload, id: `demo-${newLocalId()}`, created_at: new Date().toISOString() });
@@ -523,7 +598,7 @@ async function saveEntry(event) {
       if (id) state.entries = state.entries.map((e) => e.id === id ? data : e);
       else state.entries.unshift(data);
     }
-    closeDialog('anime-dialog'); render(); toast(id ? 'Entry updated.' : 'Anime added to your collection.');
+    clearCoverPreview();closeDialog('anime-dialog'); render(); toast(id ? 'Entry updated.' : 'Anime added to your collection.');
   } catch (e) { showFormError(e.message || 'Could not save anime.'); }
   finally { state.busy = false; $('save-anime').disabled = false; }
 }
@@ -802,6 +877,17 @@ function wireEvents() {
   ['add-btn', 'hero-add', 'empty-add'].forEach((id) => $(id).addEventListener('click', () => openAnime()));
   $('anime-form').addEventListener('submit', saveEntry);
   $('anime-is-movie').addEventListener('change', toggleMovieRuntimeField);
+  $('anime-episode-minutes').addEventListener('input',()=>{state.editorDurationManual=true;state.editorDurationReset=false;});
+  $('anime-runtime-auto').addEventListener('click',()=>{
+    const current=state.entries.find(e=>String(e.id)===String($('entry-id').value));
+    $('anime-episode-minutes').value=current?.catalog_duration_minutes||24;
+    state.editorDurationManual=false;state.editorDurationReset=true;
+    $('anime-runtime-hint').textContent=current?.catalog_duration_minutes
+      ? 'Using '+current.catalog_duration_minutes+' min from catalogue'
+      : 'Using 24-minute default until catalogue data is available';
+  });
+  $('anime-cover-file').addEventListener('change',previewAnimeCover);
+  $('anime-cover-clear').addEventListener('click',()=>{$('anime-cover-file').value='';clearCoverPreview();});
   $('delete-entry').addEventListener('click', deleteEntry);
   $('anime-grid').addEventListener('click', (event) => {
     const btn = event.target.closest('[data-action]'); if (!btn) return;
