@@ -566,3 +566,120 @@
 .nr-more-ranked-number{display:inline-flex;align-self:flex-start;align-items:center;justify-content:center;
  min-width:43px;border-radius:7px;padding:6px 10px;background:#4b2d40;
  border:1px solid #916078;color:#fbd3df;font:900 13px/1.2 var(--head)}
+
+
+/* Favorite spotlight — phone only. Desktop layout is intentionally unchanged.
+   #1 stays an immersive hero; #2–5 become compact, readable two-column tiles.
+   Tapping a supporting tile expands it to the full interactive anime card. */
+.nr-favorite-mobile-toggle{display:none}
+@media (max-width:580px){
+ .nr-featured-section{padding:13px 12px 16px}
+ .nr-featured-section .nr-section-heading{margin-bottom:12px;gap:8px}
+ .nr-featured-section .nr-section-heading h3{font-size:clamp(19px,5.5vw,24px)}
+ .nr-featured-section .nr-section-heading h3 small{font-size:10px}
+ .nr-featured-section .nr-manage-favorites{min-height:36px}
+ .nr-featured-layout{display:flex;flex-direction:column;gap:18px}
+ .nr-primary-spotlight .nr-ranked-favorite{min-height:min(66svh,640px)}
+ .nr-primary-spotlight .nr-ranked-favorite .anime-card{min-height:min(61svh,590px)}
+ .nr-primary-spotlight .nr-rank-heading{padding:3px 1px}
+ .nr-primary-spotlight .flip-body{padding:20px 19px 23px}
+ .nr-primary-spotlight .flip-body h3{font-size:clamp(28px,8vw,40px)}
+ .nr-supporting-spotlight{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  align-items:start;gap:14px 10px;min-width:0;
+ }
+ .nr-supporting-spotlight .nr-ranked-favorite{
+  height:auto;min-height:0;gap:6px;min-width:0;align-self:start;
+ }
+ .nr-supporting-spotlight .nr-rank-heading{padding:0 1px;gap:4px}
+ .nr-supporting-spotlight .nr-rank-heading>span{
+  min-width:36px;font-size:12px;padding:5px 7px;border-radius:6px
+ }
+ .nr-supporting-spotlight .nr-rank-heading>small{font-size:9px;letter-spacing:.035em}
+ .nr-supporting-spotlight .nr-ranked-favorite:not(.is-expanded) .anime-card{
+  flex:0 0 auto;width:100%;height:232px;min-height:232px;
+  border-radius:12px;box-shadow:none
+ }
+ .nr-supporting-spotlight .nr-ranked-favorite:not(.is-expanded) .flip-inner{
+  height:100%;min-height:0;
+ }
+ .nr-supporting-spotlight .nr-ranked-favorite:not(.is-expanded) .flip-top{padding:7px}
+ .nr-supporting-spotlight .nr-ranked-favorite:not(.is-expanded) .nr-status-select{display:none}
+ .nr-supporting-spotlight .nr-ranked-favorite:not(.is-expanded) .favorite-icon{
+  transform:scale(.83);transform-origin:right top
+ }
+ .nr-supporting-spotlight .nr-ranked-favorite:not(.is-expanded) .flip-body{
+  padding:11px 10px 13px
+ }
+ .nr-supporting-spotlight .nr-ranked-favorite:not(.is-expanded) .flip-body h3{
+  font-size:clamp(15px,4.15vw,19px);line-height:1.18;margin:0 0 6px;
+  letter-spacing:-.025em;display:-webkit-box;-webkit-box-orient:vertical;
+  -webkit-line-clamp:3;line-clamp:3;overflow:hidden
+ }
+ .nr-supporting-spotlight .nr-ranked-favorite:not(.is-expanded) .flip-rating{
+  min-height:0;margin:2px 0 0;gap:0
+ }
+ .nr-supporting-spotlight .nr-ranked-favorite:not(.is-expanded) .flip-rating button,
+ .nr-supporting-spotlight .nr-ranked-favorite:not(.is-expanded) .flip-progress,
+ .nr-supporting-spotlight .nr-ranked-favorite:not(.is-expanded) .flip-actions,
+ .nr-supporting-spotlight .nr-ranked-favorite:not(.is-expanded) .nr-note-indicator{
+  display:none
+ }
+ .nr-supporting-spotlight .nr-ranked-favorite:not(.is-expanded) .flip-rating .rating-text{
+  margin:0;font-size:11px;color:#ffe1ec
+ }
+ .nr-supporting-spotlight .nr-ranked-favorite:not(.is-expanded) .flip-face .card-image{
+  opacity:.67
+ }
+ .nr-favorite-mobile-toggle{
+  display:flex;justify-content:center;align-items:center;gap:8px;
+  width:100%;padding:9px 7px;min-height:38px;border-radius:8px;
+  background:#503149;color:#fff;border:1px solid #b87b99;
+  font:800 11px/1.1 var(--body,Arial,sans-serif);cursor:pointer
+ }
+ .nr-favorite-mobile-toggle:focus-visible{outline:2px solid #ffbed6;outline-offset:3px}
+ .nr-favorite-mobile-toggle span{font-size:15px;line-height:1}
+ .nr-supporting-spotlight .nr-ranked-favorite.is-expanded{
+  grid-column:1 / -1;min-height:0
+ }
+ .nr-supporting-spotlight .nr-ranked-favorite.is-expanded .anime-card{
+  width:100%;height:min(73svh,700px);min-height:min(73svh,700px);
+  flex:1 0 auto;border-radius:15px;box-shadow:0 0 0 1px #de9ab9
+ }
+ .nr-supporting-spotlight .nr-ranked-favorite.is-expanded .flip-inner{
+  height:100%;min-height:100%
+ }
+ .nr-supporting-spotlight .nr-ranked-favorite.is-expanded .flip-top{padding:15px}
+ .nr-supporting-spotlight .nr-ranked-favorite.is-expanded .nr-status-select{display:block}
+ .nr-supporting-spotlight .nr-ranked-favorite.is-expanded .favorite-icon{transform:none}
+ .nr-supporting-spotlight .nr-ranked-favorite.is-expanded .flip-body{padding:21px}
+ .nr-supporting-spotlight .nr-ranked-favorite.is-expanded .flip-body h3{
+  display:block;overflow-wrap:anywhere;font-size:clamp(25px,7vw,37px);
+  line-height:1.15;margin:9px 0 15px
+ }
+ .nr-supporting-spotlight .nr-ranked-favorite.is-expanded .flip-rating{
+  display:flex;min-height:37px;margin:9px 0
+ }
+ .nr-supporting-spotlight .nr-ranked-favorite.is-expanded .flip-rating button{
+  display:inline-block;font-size:29px;padding:3px 2px
+ }
+ .nr-supporting-spotlight .nr-ranked-favorite.is-expanded .flip-rating .rating-text{
+  font-size:11px;margin-left:9px
+ }
+ .nr-supporting-spotlight .nr-ranked-favorite.is-expanded .flip-progress{
+  display:block;font-size:12px;margin:10px 0 15px
+ }
+ .nr-supporting-spotlight .nr-ranked-favorite.is-expanded .flip-actions{display:flex}
+ .nr-supporting-spotlight .nr-ranked-favorite.is-expanded .nr-note-indicator{display:inline-block}
+ .nr-supporting-spotlight .nr-ranked-favorite.is-expanded .flip-back-content{padding:21px}
+}
+/* Very narrow phones: preserve legibility instead of squeezing a 120px tile. */
+@media (max-width:350px){
+ .nr-supporting-spotlight{grid-template-columns:minmax(0,1fr)}
+ .nr-supporting-spotlight .nr-ranked-favorite:not(.is-expanded) .anime-card{
+  height:228px;min-height:228px
+ }
+ .nr-supporting-spotlight .nr-ranked-favorite:not(.is-expanded) .flip-body h3{
+  font-size:20px
+ }
+}
