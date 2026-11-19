@@ -810,3 +810,9 @@
  box-shadow:0 0 0 1px #45263b;
 }
 .nr-chat-head .nr-chat-unread[hidden]{display:none!important}
+
+
+/* The Nightreel placeholder mark belongs ONLY to cards without usable cover art.
+   Keep the fallback in the markup so an image load error can reveal it. */
+.anime-card .flip-face:has(> .card-image) > .nr-cover-standin{display:none!important}
+.anime-card .flip-face:not(:has(> .card-image)) > .nr-cover-standin{display:flex}
