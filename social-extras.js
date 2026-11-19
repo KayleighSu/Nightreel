@@ -459,6 +459,7 @@ profileDialog.querySelector('.extras-menu-actions')?.append(nrSoundToggle);
 let nrSoundEnabled=localStorage.getItem('nightreel-sounds')!=='off';
 let nrAudioContext=null,nrAudioUnlocked=false,nrSeenMessages=new Set(),nrSeenRequests=new Set(),nrSeenAcceptances=new Set(),nrNoticesReady=false,nrUnread=0;
 const nrWindows=new Map();
+const nrChatUnread=new Map();
 function nrIsMobile(){return matchMedia('(max-width: 720px)').matches;}
 function nrPlaySound(kind){
  if(!nrSoundEnabled||!nrAudioUnlocked)return;
@@ -487,9 +488,22 @@ function nrBadgeUpdate(){
  const label=nrUnread>99?'99+':String(nrUnread);nrBadge.textContent=label;nrFabBadge.textContent=label;
  messagesTop.setAttribute('aria-label',nrUnread?label+' new notifications; open messages':'Open messages');
 }
+function nrUpdateChatBadge(id){
+ const win=nrWindows.get(id);if(!win)return;
+ const count=nrChatUnread.get(id)||0,badge=win.querySelector('.nr-chat-unread');
+ if(!badge)return;
+ badge.hidden=count===0;badge.textContent=count>99?'99+':String(count);
+ const toggle=win.querySelector('.nr-chat-head-toggle');
+ if(toggle)toggle.setAttribute('aria-label',(toggle.textContent||'Conversation')+(count?' — '+count+' unread messages':''));
+}
+function nrMarkChatRead(id){
+ const count=nrChatUnread.get(id)||0;
+ nrChatUnread.delete(id);nrUnread=Math.max(0,nrUnread-count);
+ nrUpdateChatBadge(id);nrBadgeUpdate();
+}
 function nrClearUnread(){nrUnread=0;nrBadgeUpdate();}
 async function nrCheckNotifications(){
- if(!loggedIn()){nrRestoredFor='';nrNoticesReady=false;nrSeenMessages.clear();nrSeenRequests.clear();nrSeenAcceptances.clear();nrClearUnread();nrDock.replaceChildren();nrWindows.clear();return;}
+ if(!loggedIn()){nrRestoredFor='';nrNoticesReady=false;nrSeenMessages.clear();nrSeenRequests.clear();nrSeenAcceptances.clear();nrClearUnread();nrDock.replaceChildren();nrWindows.clear();nrChatUnread.clear();return;}
  const uid=state.user.id;
  try{
   const [m,f]=await Promise.all([
@@ -501,11 +515,23 @@ async function nrCheckNotifications(){
   const pending=(f.data||[]).filter(r=>r.status==='pending'&&r.recipient_id===uid).map(r=>r.id);
   const accepted=(f.data||[]).filter(r=>r.status==='accepted'&&r.requester_id===uid).map(r=>r.id);
   if(nrNoticesReady){
-   const fresh=msgs.filter(id=>!nrSeenMessages.has(id));
+   const fresh=(m.data||[]).filter(row=>!nrSeenMessages.has(row.id));
    const requests=pending.filter(id=>!nrSeenRequests.has(id));
    const approvals=accepted.filter(id=>!nrSeenAcceptances.has(id));
    if(fresh.length||requests.length||approvals.length){
-    nrUnread+=fresh.length+requests.length+approvals.length;nrBadgeUpdate();
+    nrUnread+=fresh.length+requests.length+approvals.length;
+    for(const item of fresh){
+     nrChatUnread.set(item.sender_id,(nrChatUnread.get(item.sender_id)||0)+1);
+    }
+    if(fresh.length&&!nrIsMobile()){
+     const senders=[...new Set(fresh.map(item=>item.sender_id))];
+     if(senders.some(id=>!nrWindows.has(id)))await loadFriends();
+     for(const sender of senders){
+      if(!nrWindows.has(sender)&&friends.some(f=>f.id===sender))nrOpenDock(sender,true);
+      nrUpdateChatBadge(sender);
+     }
+    }
+    nrBadgeUpdate();
     nrPlaySound(fresh.length?'message':requests.length?'friend':'accept');
    }
   }
@@ -523,7 +549,7 @@ function nrSetMinimized(win,minimized){
  win.querySelector('.nr-chat-head-toggle')?.setAttribute('aria-expanded',String(!minimized));
  win.querySelector('.nr-chat-head-toggle')?.setAttribute('title',minimized?'Reopen conversation':'Minimize conversation');
  win.querySelector('.nr-chat-minimize')?.setAttribute('aria-label',minimized?'Restore conversation':'Minimize conversation');
- if(!minimized){win.querySelector('textarea')?.focus();nrLoadDockMessages(win);}
+ if(!minimized){nrMarkChatRead(win._friendId);win.querySelector('textarea')?.focus();nrLoadDockMessages(win);}
  nrRememberTabs();
 }
 function nrOpenDock(id,minimized=false){
@@ -538,10 +564,11 @@ function nrOpenDock(id,minimized=false){
  const header=document.createElement('div');header.className='nr-chat-head';
  const toggle=document.createElement('button');toggle.type='button';toggle.className='nr-chat-head-toggle';toggle.textContent=friend.display_name||friend.username||'Friend';
  toggle.setAttribute('aria-expanded',String(!minimized));toggle.onclick=()=>nrSetMinimized(win,!win.classList.contains('nr-chat-minimized'));
+ const chatBadge=document.createElement('span');chatBadge.className='nr-chat-unread';chatBadge.hidden=true;chatBadge.setAttribute('aria-label','Unread messages');
  const minimize=document.createElement('button');minimize.type='button';minimize.className='nr-chat-minimize';minimize.textContent='−';minimize.title='Minimize conversation';
  minimize.onclick=()=>nrSetMinimized(win,!win.classList.contains('nr-chat-minimized'));
  const close=document.createElement('button');close.type='button';close.textContent='×';close.title='Close conversation';close.onclick=()=>{nrWindows.delete(id);win.remove();nrRememberTabs();};
- header.append(toggle,minimize,close);
+ header.append(toggle,chatBadge,minimize,close);
  const thread=document.createElement('div');thread.className='nr-dock-thread';thread.setAttribute('aria-live','polite');
  const form=document.createElement('form');form.className='nr-dock-form';
  const input=document.createElement('textarea');input.rows=1;input.maxLength=2000;input.placeholder='Write a message…';input.setAttribute('aria-label','Message '+(friend.display_name||friend.username));
@@ -557,14 +584,14 @@ function nrOpenDock(id,minimized=false){
   }catch(error){status.textContent='Unable to send: '+error.message;}
   finally{send.disabled=false;}
  };
- form.append(input,send);win.append(header,thread,form,status);win._friendId=id;nrWindows.set(id,win);nrDock.append(win);
+ form.append(input,send);win.append(header,thread,form,status);win._friendId=id;nrWindows.set(id,win);nrDock.append(win);nrUpdateChatBadge(id);
  // Keep every conversation visible as a small clickable tab when minimized.
  if(minimized){win.classList.add('nr-chat-minimized');toggle.title='Reopen conversation';}
  // Limit fully expanded windows without discarding their tabs.
  const expanded=[...nrWindows.values()].filter(w=>!w.classList.contains('nr-chat-minimized'));
  if(expanded.length>2)nrSetMinimized(expanded[0],true);
  nrRememberTabs();
- if(!minimized){nrLoadDockMessages(win);input.focus();}
+ if(!minimized){nrMarkChatRead(id);nrLoadDockMessages(win);input.focus();}
 }
 let nrRestoredFor='';
 async function nrRestoreDockTabs(){
