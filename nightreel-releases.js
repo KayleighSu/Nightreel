@@ -40,9 +40,16 @@ async function fetchMetadata(e){
  return info;
 }
 function makePatch(e,d){
+ const regularEpisodes=isRegularSeries(d.format)&&Number.isSafeInteger(d.episodeTotal)&&d.episodeTotal>0?d.episodeTotal:null;
+ const originalTotal=Number(e.episodes_total)||0;
+ // Reject suspicious season-one undercounts when the user's record clearly covers
+ // several seasons. An official total one or two below the saved value can be
+ // genuine when the saved value includes an OVA.
+ const verifiedCount=regularEpisodes && (!originalTotal || regularEpisodes>=originalTotal-2)
+   ? regularEpisodes : null;
  const result={
   catalog_format:String(d.format||'').trim().toUpperCase().slice(0,30)||null,
-  catalog_episode_total:isRegularSeries(d.format)&&Number.isSafeInteger(d.episodeTotal)&&d.episodeTotal>0?d.episodeTotal:null,
+  catalog_episode_total:verifiedCount,
   catalog_airing_status:String(d.airingStatus||'').slice(0,90)||null,
   catalog_broadcast:String(d.broadcast||'').slice(0,110)||null,
   catalog_premiere_at:d.premiereAt||null,
@@ -116,8 +123,11 @@ function updateCardReleaseInfo(){
   if(progress){
    const watched=Number(e.episodes_watched)||0;
    const regular=isRegularSeries(e.catalog_format);
-   const total=regular?(e.catalog_episode_total||e.episodes_total||null):null;
-   const line=!regular?String(e.catalog_format).replace(/_/g,' ')+' · excluded from episode totals':total?watched+' / '+total+' episodes':watched+' episodes watched';
+   const storedTotal=Number(e.episodes_total)||0,listed=Number(e.catalog_episode_total)||0;
+   const total=regular?(listed&&(!storedTotal||listed>=storedTotal-2)?listed:(storedTotal||listed||null)):null;
+   const line=!regular?String(e.catalog_format).replace(/_/g,' ')+' · excluded from episode totals':
+     total&&watched>total?total+' / '+total+' regular episodes · '+watched+' watched saved':
+     total?watched+' / '+total+' episodes':watched+' episodes watched';
    if(progress.firstChild?.nodeType===Node.TEXT_NODE)progress.firstChild.nodeValue=line;
    const bar=progress.querySelector('.progress-fill');
    if(bar)bar.style.width=(!regular?0:total?Math.min(100,Math.round(100*watched/total)):(e.status==='completed'?100:0))+'%';
