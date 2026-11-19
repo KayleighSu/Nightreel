@@ -18,6 +18,88 @@ friendView.innerHTML=[
 '<div class="social-hero" style="margin-top:16px"><img id="friend-banner" alt="" hidden><div class="social-hero-content"><span class="social-caption">FRIEND’S COLLECTION</span><h2 id="friend-name"></h2><p id="friend-handle"></p></div></div>',
 '<p class="hint">Read-only. Friends cannot edit your anime or ratings. Private notes are never shared.</p><div id="friend-grid" class="anime-grid"></div>'
 ].join('');
+
+// A unique username is required after the first sign-in, not assigned from email.
+// The database's UNIQUE constraint and lowercase-format CHECK are authoritative.
+const handleDialog=document.createElement('dialog');
+handleDialog.id='username-setup-dialog';
+handleDialog.className='modal';
+handleDialog.setAttribute('aria-labelledby','username-setup-title');
+handleDialog.innerHTML=[
+ '<div class="modal-inner">',
+ '<div class="section-kicker">YOUR PUBLIC IDENTITY</div>',
+ '<h2 id="username-setup-title" style="font:700 28px var(--head);margin:12px 0">Choose your username.</h2>',
+ '<p class="modal-note">Friends will search for you using this public username. Every username is unique. Your email address stays private.</p>',
+ '<form id="username-setup-form">',
+ '<label class="social-field" for="username-setup-input">Public username',
+ '<input id="username-setup-input" name="username" required minlength="3" maxlength="32" pattern="[a-z][a-z0-9_]{2,31}" placeholder="animefan_123" autocomplete="off" spellcheck="false"></label>',
+ '<p class="hint">3–32 characters: lowercase letters, numbers and underscores. Start with a letter.</p>',
+ '<p class="form-error" id="username-setup-error" role="alert" hidden></p>',
+ '<div class="modal-actions"><button type="submit" class="btn btn-primary" id="username-setup-save">Save username</button></div>',
+ '</form></div>'
+].join('');
+document.body.append(handleDialog);
+let handleCheckId='',handleCheckRunning=false;
+function needsUsername(profile) {
+ return profile?.username && /^user_[0-9a-f]{24}$/.test(profile.username);
+}
+function askForUsername(profile) {
+ if(!owner() || !profile || !needsUsername(profile) || handleDialog.open)return;
+ handleDialog.showModal();
+ document.getElementById('username-setup-input').focus();
+}
+handleDialog.addEventListener('cancel',e=>{if(owner() && needsUsername(ownProfile))e.preventDefault();});
+handleDialog.addEventListener('click',e=>{if(e.target===handleDialog && owner() && needsUsername(ownProfile)) e.preventDefault();});
+document.getElementById('username-setup-input').addEventListener('input',e=>{
+ const start=e.target.selectionStart;
+ e.target.value=e.target.value.toLowerCase().replace(/[^a-z0-9_]/g,'');
+ if(start!==null) e.target.setSelectionRange(Math.min(start,e.target.value.length),Math.min(start,e.target.value.length));
+});
+document.getElementById('username-setup-form').addEventListener('submit',async e=>{
+ e.preventDefault();
+ if(!owner())return;
+ const username=document.getElementById('username-setup-input').value.trim().toLowerCase();
+ const err=document.getElementById('username-setup-error');
+ err.hidden=true;
+ if(!/^[a-z][a-z0-9_]{2,31}$/.test(username)){
+  err.textContent='Use 3–32 lowercase letters, numbers, or underscores, starting with a letter.';
+  err.hidden=false;return;
+ }
+ const button=document.getElementById('username-setup-save');
+ button.disabled=true;
+ try{
+  const result=await state.supabase.from('profiles').update({username}).eq('id',state.user.id).select('id,username,display_name,banner_path').single();
+  if(result.error)throw result.error;
+  ownProfile=result.data;
+  handleCheckId=state.user.id;
+  if(handleDialog.open)handleDialog.close();
+  document.getElementById('profile-handle').value=username;
+  note('profile-error','Your public username is now @'+username+'.');
+  if(panel==='profile')drawMyBanner();
+  toast('Your public username is @'+username);
+ }catch(error){
+  err.textContent=error.code==='23505'?'That username is already taken. Choose another.':'Could not save your username: '+(error.message||'Please retry.');
+  err.hidden=false;
+ }finally{button.disabled=false;}
+});
+async function checkUsernameSetup(){
+ if(!owner())return;
+ const id=state.user.id;
+ if(handleCheckId===id || handleCheckRunning)return;
+ handleCheckRunning=true;
+ try{
+  const result=await state.supabase.from('profiles').select('id,username,display_name,banner_path').eq('id',id).maybeSingle();
+  if(result.error)throw result.error;
+  if(!result.data)return;
+  if(state.user?.id!==id)return;
+  ownProfile=result.data;
+  currentProfileOwner=id;
+  handleCheckId=id;
+  askForUsername(result.data);
+ }catch(error){console.warn('Unable to check public username',error);}
+ finally{handleCheckRunning=false;}
+}
+
 const col=document.querySelector('.collection-section'), main=document.querySelector('.main-content');
 if(!col||!main)return;
 col.before(social);col.after(friendView);
@@ -25,8 +107,9 @@ const owner=()=>Boolean(state.supabase&&state.user&&!state.demo);
 const lastArt=arr=>[...arr].sort((a,b)=>String(b.updated_at||b.created_at||'').localeCompare(String(a.updated_at||a.created_at||''))).find(x=>cleanedUrl(x.image_url))?.image_url||'';
 function putImage(id,url){const img=$s(id),safe=cleanedUrl(url);if(!img)return;img.hidden=!safe;if(safe)img.src=safe;else img.removeAttribute('src');}
 function drawHero(){
+ if(owner() && (!handleCheckId || handleCheckId!==state.user.id))checkUsernameSetup();
  const account=state.user?.id||'';
- if(account!==displayedAccount){displayedAccount=account;ownProfile=null;ownBanner='';currentProfileOwner='';}
+ if(account!==displayedAccount){displayedAccount=account;ownProfile=null;ownBanner='';currentProfileOwner='';handleCheckId='';if(handleDialog.open)handleDialog.close();}
  putImage('hero-banner-image',ownBanner||lastArt(state.entries));
  if(owner() && (!ownProfile || currentProfileOwner!==state.user.id) && !loadingProfile){
   loadingProfile=true;
@@ -126,6 +209,7 @@ async function loadProfile(){
   if(r.error)throw r.error;
   ownProfile=r.data;
   if(!ownProfile)throw Error('No profile exists. Run the social database migration.');
+  askForUsername(ownProfile);
   $s('profile-handle').value=ownProfile.username;
   $s('profile-display').value=ownProfile.display_name;
   ownBanner=await getSignedBanner(ownProfile);
@@ -164,7 +248,7 @@ $s('profile-editor').addEventListener('submit',async ev=>{
   ownProfile={...ownProfile,username,display_name,banner_path};
   ownBanner=await getSignedBanner(ownProfile);
   drawMyBanner();drawHero();$s('profile-image-file').value='';note('profile-error','Profile saved.');
- }catch(e){note('profile-error','Save failed: '+e.message);}
+ }catch(e){note('profile-error', e.code==='23505'?'That username is already taken. Please choose another.':'Save failed: '+e.message);}
 });
 $s('remove-banner').onclick=async()=>{
  if(!need('profile-error'))return;
