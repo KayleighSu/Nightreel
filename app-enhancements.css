@@ -301,3 +301,6 @@
  .nr-radar-controls{width:100%}
  .nr-radar-controls button{flex:1}
 }
+
+/* Original-art credit belongs on the back, never over the photo on the front. */
+.nr-original-art-credit{font:700 10px/1.4 var(--body,Arial,sans-serif);letter-spacing:.11em;text-transform:uppercase;color:#fac3d7;margin:0 0 2px}
