@@ -792,7 +792,7 @@ async function refreshFriends(){
    const controls=f.status==='pending'&&incoming?'<button data-friend-action="accept" data-friend-row="'+esc(f.id)+'">Accept</button><button data-friend-action="declined" data-friend-row="'+esc(f.id)+'">Decline</button>':
     f.status==='accepted'?'<button data-friend-action="view" data-friend-id="'+esc(id)+'">View profile</button><button data-friend-action="remove" data-friend-row="'+esc(f.id)+'">Unfriend</button>':
     '<button data-friend-action="remove" data-friend-row="'+esc(f.id)+'">Cancel / dismiss</button>';
-   return '<div class="social-row"><div><strong>'+esc(f.display_name)+'</strong><small>@'+esc(f.username)+' · '+esc(f.status)+(incoming?' · incoming':'')+'</small></div><div class="social-toolbar" style="margin:0">'+controls+'</div></div>';
+   return '<div class="social-row"><div><strong>'+esc(f.username||f.display_name||'Anime fan')+'</strong><small>@'+esc(f.username||'unknown')+' · '+esc(f.status)+(incoming?' · incoming':'')+'</small></div><div class="social-toolbar" style="margin:0">'+controls+'</div></div>';
   }).join(''):'<p>No friends or pending requests yet.</p>';
   note('friends-error','');
  }catch(e){note('friends-error','Unable to load friends: '+e.message);}
@@ -844,7 +844,7 @@ async function viewFriend(id){
   friendProfile=p.data;friendItems=e.data||[];
   const image=await getSignedBanner(friendProfile);
   putImage('friend-banner',image||lastArt(friendItems));frameBannerAt('friend-banner',friendProfile);
-  $s('friend-name').textContent=friendProfile.display_name;
+  $s('friend-name').textContent=friendProfile.username||friendProfile.display_name||'Anime fan';
   $s('friend-handle').textContent='@'+friendProfile.username+' · '+friendItems.length+' titles';
   $s('nr-friend-hours').textContent=estimatedHours(friendItems);
   $s('friend-grid').classList.add('nr-grouped-library');
