@@ -1,0 +1,31 @@
+{
+  "id": "./",
+  "name": "Nightreel — Anime Tracker",
+  "short_name": "Nightreel",
+  "description": "Track anime, rank favorites, and share your watchlist with friends.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0e0b19",
+  "theme_color": "#1c1029",
+  "icons": [
+    {
+      "src": "icons/nightreel-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/nightreel-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/nightreel-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
