@@ -92,7 +92,7 @@
       <main class="main-content">
         <section class="hero">
           <img id="hero-banner-image" class="hero-banner-image" alt="" hidden />
-          <div class="hero-text"><div class="eyebrow">CREATED BY YOU <span class="eyebrow-line"></span> <span id="hero-date"></span></div><h1>Your anime.<br><em>Your universe.</em></h1><p id="hero-description">Your hand-picked artwork and all the stories you collected, now in one better library.</p><div class="nr-hero-actions"><div class="nr-watchtime" aria-live="polite" title="Estimated using 24 minutes per watched regular episode, plus completed movies with a saved runtime."><strong id="nr-hours-watched">0 h</strong><span>ESTIMATED WATCH TIME</span></div><button type="button" id="hero-add" class="btn btn-primary">+ &nbsp; Add to collection</button></div></div>
+          <div class="hero-text"><div class="eyebrow">CREATED BY YOU <span class="eyebrow-line"></span> <span id="hero-date"></span></div><h1>Your anime.<br><em>Your universe.</em></h1><p id="hero-description">Your hand-picked artwork and all the stories you collected, now in one better library.</p><div class="nr-hero-actions"><div class="nr-watchtime" aria-live="polite" title="Estimated using each series’ episode length (24 minutes by default), plus completed movies with a saved runtime."><strong id="nr-hours-watched">0 h</strong><span>ESTIMATED WATCH TIME</span></div><button type="button" id="hero-add" class="btn btn-primary">+ &nbsp; Add to collection</button></div></div>
           <div class="hero-design" aria-hidden="true"><span class="hero-orbit orbit-a"></span><span class="hero-orbit orbit-b"></span><span class="hero-asterisk">✳</span><span class="hero-script">stay<br>obsessed.</span><span class="hero-japanese">アニメ・アーカイブ</span><span class="hero-number">01 / ∞</span></div>
         </section>
 
@@ -121,7 +121,7 @@
       <form id="anime-form"><input type="hidden" name="entry-id" id="entry-id" />
         <div class="form-field"><label for="anime-title">Title <span class="required">*</span></label><input id="anime-title" name="title" maxlength="200" required placeholder="e.g. Bungou Stray Dogs" /></div>
         <div class="form-row"><div class="form-field"><label for="anime-status">Watch status</label><select id="anime-status"><option value="untracked">Not sorted yet</option><option value="plan_to_watch">Plan to watch</option><option value="watching">Watching</option><option value="completed">Completed</option><option value="on_hold">On hold</option><option value="dropped">Dropped</option></select></div><div class="form-field"><label for="anime-rating">Your rating</label><select id="anime-rating"><option value="">Not rated</option><option value="10">5 / 5 — masterpiece</option><option value="9">4.5 / 5</option><option value="8">4 / 5</option><option value="7">3.5 / 5</option><option value="6">3 / 5</option><option value="5">2.5 / 5</option><option value="4">2 / 5</option><option value="3">1.5 / 5</option><option value="2">1 / 5</option><option value="1">0.5 / 5</option></select></div></div>
-        <div class="form-row" id="anime-episode-fields"><div class="form-field"><label for="anime-watched">Episodes watched</label><input id="anime-watched" type="number" min="0" max="50000" value="0" /></div><div class="form-field"><label for="anime-total">Total episodes (if known)</label><input id="anime-total" type="number" min="0" max="50000" placeholder="Unknown" /></div></div>
+        <div id="anime-episode-fields"><div class="form-row"><div class="form-field"><label for="anime-watched">Episodes watched</label><input id="anime-watched" type="number" min="0" max="50000" value="0" /></div><div class="form-field"><label for="anime-total">Total episodes (if known)</label><input id="anime-total" type="number" min="0" max="50000" placeholder="Unknown" /></div></div><div class="form-field"><label for="anime-episode-minutes">Episode length (minutes)</label><input id="anime-episode-minutes" type="number" min="1" max="600" step="1" value="24" required inputmode="numeric" /><p class="hint">24 minutes is the default. Change it for this anime if its regular episodes are a different length; your watched-hours total will update.</p></div></div>
         <div class="form-field"><label for="anime-public-notes">Public note <span class="optional">VISIBLE TO ACCEPTED FRIENDS</span></label><textarea id="anime-public-notes" rows="3" maxlength="5000" placeholder="What would you tell a friend about this anime?"></textarea><p class="hint">Only accepted friends can read this note.</p></div>
          <div class="form-field"><label for="anime-notes">Private note <span class="optional">ONLY YOU</span></label><textarea id="anime-notes" rows="3" maxlength="5000" placeholder="Thoughts to keep just for yourself."></textarea><p class="hint">This stays private, including when friends view your list.</p></div>
         <div class="form-field"><label for="anime-imdb">IMDb link or IMDb title ID <span class="optional">OPTIONAL</span></label><input id="anime-imdb" placeholder="https://www.imdb.com/title/tt..." /><div class="hint">If left empty, we'll link to an IMDb title search instead.</div></div>
@@ -235,12 +235,14 @@ function toEntryData(raw) {
   const rawMovie = raw.is_movie ?? raw.movie;
   const isMovie = rawMovie === true || rawMovie === 1 || /^(true|yes|1|movie)$/i.test(String(rawMovie || ''));
   const runtime = num(raw.movie_runtime_minutes ?? raw.runtime_minutes);
+  const duration = num(raw.episode_minutes ?? raw.episode_length_minutes);
   const mal = num(raw.mal_id);
   return {
     title,
     status: statusFrom(raw.status),
     episodes_total: total !== null && total >= 0 && total <= 50000 ? total : null,
     episodes_watched: Math.max(0, Math.min(50000, watched)),
+    episode_minutes: Number.isInteger(duration) && duration>=1 && duration<=600 ? duration : 24,
     rating: score !== null && score >= 1 && score <= 10 ? score : null,
     favorite,
     is_movie: isMovie,
@@ -346,7 +348,9 @@ function watchedMinutes(entries) {
         ? Math.min(1200, runtime) : 0);
     }
     const watched = Number(entry.episodes_watched);
-    return total + (Number.isFinite(watched) ? Math.max(0, Math.min(50000, watched)) * 24 : 0);
+    const minutes = Number(entry.episode_minutes);
+    const duration = Number.isInteger(minutes) && minutes>=1 && minutes<=600 ? minutes : 24;
+    return total + (Number.isFinite(watched) ? Math.max(0, Math.min(50000, watched)) * duration : 0);
   }, 0);
 }
 function estimatedHours(entries) {
@@ -431,6 +435,7 @@ function openAnime(entry = null) {
   $('anime-rating').value = entry?.rating || '';
   $('anime-watched').value = entry?.episodes_watched ?? 0;
   $('anime-total').value = entry?.episodes_total ?? '';
+  $('anime-episode-minutes').value = entry?.episode_minutes ?? 24;
   $('anime-notes').value = entry?.notes || '';
   $('anime-public-notes').value = entry?.public_notes || '';
   $('anime-imdb').value = entry?.imdb_id || '';
@@ -455,7 +460,10 @@ function collectForm() {
   const isMovie = $('anime-is-movie').checked;
   const total = num($('anime-total').value);
   const watched = num($('anime-watched').value, 0);
+  const episodeMinutes = num($('anime-episode-minutes').value);
   if (!isMovie) {
+    if (!Number.isInteger(episodeMinutes) || episodeMinutes < 1 || episodeMinutes > 600)
+      throw new Error('Episode length must be a whole number between 1 and 600 minutes.');
     if (watched < 0 || watched > 50000 || (total !== null && (total < 0 || total > 50000)))
       throw new Error('Episodes must be between 0 and 50,000.');
     if (total && watched > total) throw new Error('Episodes watched cannot exceed total episodes.');
@@ -477,6 +485,7 @@ function collectForm() {
     rating: selectedRating,
     episodes_total: total,
     episodes_watched: watched,
+    episode_minutes: Number.isInteger(episodeMinutes) && episodeMinutes>=1 && episodeMinutes<=600?episodeMinutes:24,
     notes: $('anime-notes').value.trim().slice(0, 5000),
     public_notes: $('anime-public-notes').value.trim().slice(0, 5000),
     imdb_id: imdbId,
