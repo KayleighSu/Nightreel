@@ -411,3 +411,30 @@
 .nr-banner-editor .nr-banner-preview-mode label{font-size:12px;color:#f7d6e4;font-weight:700}
 .nr-banner-editor .nr-banner-preview-mode select{padding:8px 10px;max-width:220px}
 .nr-banner-editor .nr-banner-screen-label{color:#d9bccc;font:600 10px/1.5 Arial,sans-serif;margin:0 0 2px}
+
+
+/* Compact, always-visible release radar placed between Favorites and watch-status groups. */
+.nr-compact-radar{margin:20px 0 32px;padding:18px 20px;background:linear-gradient(130deg,#28202d,#18141f);
+ border:1px solid #80546d;border-radius:15px;min-width:0}
+.nr-compact-radar-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:11px}
+.nr-compact-radar-heading h3{color:#fff;font:750 clamp(19px,2.2vw,25px)/1.2 var(--head);margin:4px 0 0}
+.nr-compact-radar-heading button{flex:0 0 auto;background:none;border:1px solid #85596e;border-radius:7px;
+ padding:9px 12px;color:#ffbfd0;font-size:11px;font-weight:800;cursor:pointer}
+.nr-compact-release-list{display:flex;flex-direction:column}
+.nr-compact-release-row{display:flex;justify-content:space-between;align-items:center;gap:14px;
+ padding:12px 0;border-top:1px solid #ffffff1d}
+.nr-compact-release-name{flex:1 1 60%;min-width:0;font-size:13px;line-height:1.35;color:#fff;font-weight:800}
+.nr-compact-release-name small{display:block;font-size:11px;font-weight:500;color:#c7b3c1;margin-top:3px;line-height:1.35}
+.nr-compact-release-date{flex:0 0 auto;font-size:11px;color:#ffd0dc;text-align:right;font-weight:800;max-width:40%}
+.nr-compact-empty{font-size:12px;line-height:1.6;color:#cbb5c4;margin:8px 0 0}
+.nr-grouped-library>.nr-featured-section+.nr-compact-radar{margin-top:18px}
+@media(max-width:580px){
+ .nr-compact-radar{padding:14px 15px;margin:15px 0 26px}
+ .nr-compact-radar-heading h3{font-size:21px}
+ .nr-compact-radar-heading button{font-size:10px;padding:8px}
+ .nr-compact-release-name{font-size:12px}
+ .nr-compact-release-date{font-size:10px;max-width:36%}
+}
+/* The preview contains a scaled real hero/profile — do not add a second overlay. */
+.nr-banner-stage::after{display:none!important}
+.nr-banner-stage .nr-banner-preview-text{display:none!important}
