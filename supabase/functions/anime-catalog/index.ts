@@ -35,6 +35,30 @@ function isRegularSeries(format:unknown){
  const type=String(format||'').trim().toUpperCase().replace(/[ -]/g,'_');
  return type==='TV'||type==='TV_SHORT'||type==='ONA';
 }
+function durationMinutes(raw:unknown){
+ const v=String(raw||'').trim().toLowerCase();
+ const hrs=Number(v.match(/(\d+)\s*h(?:ours?|rs?)?\b/)?.[1]||0);
+ const min=Number(v.match(/(\d+)\s*m(?:in(?:ute)?s?)?\b/)?.[1]||0);
+ const duration=hrs*60+min;
+ return duration>=1&&duration<=600?duration:null;
+}
+function cleanWatchLinks(raw:any){
+ if(!Array.isArray(raw))return [];
+ const seen=new Set<string>(),links:any[]=[];
+ for(const item of raw){
+  const name=String(item?.name||item?.site||'').trim().slice(0,90);
+  const url=String(item?.url||'').trim();
+  if(!name||!url||seen.has(name.toLowerCase()))continue;
+  try{
+   const parsed=new URL(url);
+   if(parsed.protocol!=='https:' || parsed.username || parsed.password)continue;
+   seen.add(name.toLowerCase());
+   links.push({name,url:parsed.href});
+  }catch{}
+  if(links.length>=15)break;
+ }
+ return links;
+}
 function jikanRecord(data:any,sequel:any){
  const j=data||{};
  return {
@@ -42,6 +66,7 @@ function jikanRecord(data:any,sequel:any){
   title:String(j.title_english||j.title||''),synopsis:trimText(j.synopsis),
   format:String(j.type||'').trim().toUpperCase().replace(/[ -]/g,'_')||null,
   episodeTotal:isRegularSeries(j.type)&&Number.isInteger(j.episodes)&&j.episodes>0?j.episodes:null,
+  durationMinutes:durationMinutes(j.duration),streaming:[],
   airingStatus:String(j.status||'').slice(0,90)||null,
   broadcast:String(j.broadcast?.string||'').slice(0,110)||null,
   premiereAt:dateIso(j.aired?.from),
@@ -162,6 +187,10 @@ async function fromJikan(title:string,id:number|null){
  }
  const record=jikanRecord(full,sequel);
  try{
+  const streaming=await fetchJson('https://api.jikan.moe/v4/anime/'+candidate.mal_id+'/streaming');
+  record.streaming=cleanWatchLinks(streaming?.data);
+ }catch{/* Availability data is optional. */}
+ try{
   const series=await surveyMainSeries(full);
   // Never present the first season's count as an entire series total when
   // traversing its known sequel chain was incomplete or rate-limited.
@@ -177,7 +206,7 @@ async function fromJikan(title:string,id:number|null){
  }catch{/* Preserve the original record rather than claiming a made-up total. */}
  return record;
 }
-const anilistQuery='query($search:String){Media(search:$search,type:ANIME){id idMal format title{romaji english native} description(asHtml:false) episodes status startDate{year month day} nextAiringEpisode{airingAt episode} relations{edges{relationType node{idMal format title{romaji english} status startDate{year month day}}}}}}';
+const anilistQuery='query($search:String){Media(search:$search,type:ANIME){id idMal format duration externalLinks{site url type} title{romaji english native} description(asHtml:false) episodes status startDate{year month day} nextAiringEpisode{airingAt episode} relations{edges{relationType node{idMal format title{romaji english} status startDate{year month day}}}}}}';
 async function fromAniList(title:string){
  const response=await fetchJson('https://graphql.anilist.co',{
   method:'POST',
@@ -205,6 +234,10 @@ async function fromAniList(title:string){
   title:String(m.title?.english||m.title?.romaji||title),synopsis:trimText(m.description),
   format:String(m.format||'').trim().toUpperCase()||null,
   episodeTotal:isRegularSeries(m.format)&&Number.isInteger(m.episodes)&&m.episodes>0?m.episodes:null,
+  durationMinutes:Number.isInteger(m.duration)&&m.duration>=1&&m.duration<=600?m.duration:null,
+  streaming:cleanWatchLinks((m.externalLinks||[]).filter((link:any)=>
+    String(link?.type||'').toUpperCase()==='STREAMING'
+  )),
   airingStatus:label[m.status]||String(m.status||'')||null,
   broadcast:null,premiereAt:calendarDate(m.startDate),
   nextEpisodeAt:next?.airingAt?dateIso(Number(next.airingAt)*1000):null,
@@ -251,6 +284,8 @@ Deno.serve(async(req:Request)=>{
         value.format===airing.format && !value.episodeTotal && airing.episodeTotal)
         value.episodeTotal=airing.episodeTotal;
       if(!value.synopsis && airing.synopsis)value.synopsis=airing.synopsis;
+      if(!value.durationMinutes && airing.durationMinutes)value.durationMinutes=airing.durationMinutes;
+      if(!value.streaming?.length && airing.streaming?.length)value.streaming=airing.streaming;
     }catch{/* AniList lookup can fail independently. */}
   }
   cache.set(key,{expires:Date.now()+12*60*60*1000,value});
