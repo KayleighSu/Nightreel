@@ -293,16 +293,14 @@ function drawHero(){
 }
 function note(id,msg){$s(id).textContent=msg;}
 function need(id){if(owner())return true;note(id,'Connect Nightreel to a Supabase project to use accounts and friends.');return false;}
-/* Streaming links are catalogue leads, not guarantees of regional access. */
+/* Friends see where the account owner watched each title, not external links. */
 function streamingMarkup(entry){
- const curated=Array.isArray(entry.user_streaming)?entry.user_streaming:[];
- const catalogue=Array.isArray(entry.catalog_streaming)?entry.catalog_streaming:[];
- const safeLinks=(links)=>links.slice(0,15).filter(link=>cleanedUrl(link?.url)&&link?.name)
-  .map(link=>'<a href="'+esc(cleanedUrl(link.url))+'" target="_blank" rel="noopener noreferrer">'+esc(String(link.name).slice(0,90))+' ↗</a>');
- const links=safeLinks([...curated,...catalogue.filter(c=>!curated.some(u=>String(u.name).toLowerCase()===String(c.name).toLowerCase()))]);
- return '<strong>Where to watch</strong>'+(links.length?'<div class="nr-watch-links">'+links.join('')+'</div>':
- '<p>No streaming platforms listed yet.</p>')+
- '<small>Streaming catalogues may be incomplete, and availability depends on your country.</small>';
+ const services=Array.isArray(entry.user_streaming)?entry.user_streaming:[];
+ const names=[...new Set(services.map(item=>String(item?.name||'').trim()).filter(Boolean))];
+ return '<strong>Where I watched it</strong>'+
+ (names.length?'<div class="nr-service-pills">'+names.map(name=>'<span class="nr-service-pill">'+esc(name.slice(0,90))+'</span>').join('')+'</div>':
+ '<p>No streaming service added yet.</p>')+
+ '<small>Shared by this user. Availability varies by region and may change over time.</small>';
 }
 window.NightreelStreamingMarkup=streamingMarkup;
 document.addEventListener('error',event=>{
@@ -362,48 +360,103 @@ function buildCard(e,index,readOnly){
  (readOnly?'':'<button type="button" class="nr-edit-watch" data-stream-edit="'+id+'">Edit streaming services</button>')+
  '<div class="back-actions"><button type="button" data-action="flip">↶ Flip back</button><a href="'+esc(imdbLink(e))+'" target="_blank" rel="noopener noreferrer">IMDb ↗</a></div></div></div></div></article>';
 }
-const watchEditor=document.createElement('dialog');watchEditor.id='nr-stream-editor';
-watchEditor.className='nr-rank-dialog';
-watchEditor.innerHTML='<form method="dialog" class="nr-stream-editor-inner"><h2>Where to watch</h2><p>Add the services you know. Catalogue links appear alongside yours.</p>'+
-'<label>Streaming services (one per line)<textarea id="nr-stream-list" rows="6" placeholder="Crunchyroll | https://www.crunchyroll.com/\nNetflix | https://www.netflix.com/"></textarea></label>'+
-'<p id="nr-stream-error" role="status"></p><div class="nr-rank-dialog-buttons">'+
-'<button type="button" data-stream-close>Cancel</button><button type="button" id="nr-stream-save" class="nr-rank-save">Save services</button></div></form>';
+const watchEditor=document.createElement('dialog');
+watchEditor.id='nr-stream-editor';watchEditor.className='nr-stream-modal';
+watchEditor.setAttribute('aria-labelledby','nr-stream-heading');
+watchEditor.innerHTML=[
+ '<div class="nr-stream-modal-inner">',
+ '<header class="nr-stream-header"><div class="nr-stream-icon" aria-hidden="true">▶</div><div>',
+ '<p class="nr-stream-eyebrow">YOUR WATCH HISTORY</p>',
+ '<h2 id="nr-stream-heading">Where did you watch it?</h2>',
+ '<p class="nr-stream-subtitle">Share the streaming services you used so friends know where to look.</p>',
+ '</div><button type="button" class="nr-stream-x" data-stream-close aria-label="Close editor">×</button></header>',
+ '<div class="nr-stream-content">',
+ '<label class="nr-stream-field" for="nr-stream-provider">Streaming service</label>',
+ '<div class="nr-stream-controls"><select id="nr-stream-provider">',
+ '<option value="">Choose a service…</option><option value="Netflix">Netflix</option>',
+ '<option value="Crunchyroll">Crunchyroll</option><option value="Hulu">Hulu</option>',
+ '<option value="Amazon Prime Video">Amazon Prime Video</option><option value="Other">Other…</option>',
+ '</select><button type="button" id="nr-stream-add" class="nr-stream-add">+ Add</button></div>',
+ '<div id="nr-stream-other-wrap" class="nr-stream-other-wrap" hidden>',
+ '<label class="nr-stream-field" for="nr-stream-other">Other service name</label>',
+ '<input id="nr-stream-other" type="text" maxlength="90" placeholder="Enter the name of the service" autocomplete="off"></div>',
+ '<div class="nr-stream-selected-heading"><strong>Selected services</strong><small>You can add more than one.</small></div>',
+ '<div id="nr-stream-selected" class="nr-stream-selected" aria-live="polite"></div>',
+ '<p id="nr-stream-error" class="nr-stream-error" role="status"></p></div>',
+ '<footer class="nr-stream-footer"><button type="button" class="nr-stream-cancel" data-stream-close>Cancel</button>',
+ '<button type="button" id="nr-stream-save" class="nr-stream-save">Save services</button></footer>',
+ '</div>'
+].join('');
 document.body.append(watchEditor);
-let currentStreamEntry=null;
+let currentStreamEntry=null,selectedStreamNames=[];
+const providerField=$s('nr-stream-provider'),otherField=$s('nr-stream-other');
+function renderStreamSelection(){
+ const box=$s('nr-stream-selected');box.replaceChildren();
+ if(!selectedStreamNames.length){
+  const empty=document.createElement('p');empty.className='nr-stream-empty';
+  empty.textContent='No services selected yet.';box.append(empty);return;
+ }
+ for(const [index,name] of selectedStreamNames.entries()){
+  const chip=document.createElement('span');chip.className='nr-stream-chip';
+  const label=document.createElement('span');label.textContent=name;
+  const remove=document.createElement('button');remove.type='button';remove.dataset.streamRemove=String(index);
+  remove.setAttribute('aria-label','Remove '+name);remove.title='Remove '+name;remove.textContent='×';
+  chip.append(label,remove);box.append(chip);
+ }
+}
+providerField.onchange=()=>{
+ $s('nr-stream-other-wrap').hidden=providerField.value!=='Other';
+ if(providerField.value==='Other')otherField.focus();
+ $s('nr-stream-error').textContent='';
+};
+function addSelectedProvider(){
+ const name=(providerField.value==='Other'?otherField.value:providerField.value).trim();
+ const error=$s('nr-stream-error');
+ if(!name){error.textContent=providerField.value==='Other'?'Enter a service name first.':'Choose a service first.';return;}
+ if(name.length>90){error.textContent='Keep the service name under 90 characters.';return;}
+ if(selectedStreamNames.length>=15){error.textContent='You can list up to 15 services.';return;}
+ if(selectedStreamNames.some(item=>item.toLowerCase()===name.toLowerCase())){error.textContent='That service is already listed.';return;}
+ selectedStreamNames.push(name);providerField.value='';otherField.value='';$s('nr-stream-other-wrap').hidden=true;
+ error.textContent='';renderStreamSelection();
+}
+$s('nr-stream-add').onclick=addSelectedProvider;
+otherField.addEventListener('keydown',event=>{
+ if(event.key==='Enter'&&!event.isComposing){event.preventDefault();addSelectedProvider();}
+});
+$s('nr-stream-selected').addEventListener('click',event=>{
+ const button=event.target.closest('[data-stream-remove]');if(!button)return;
+ selectedStreamNames.splice(Number(button.dataset.streamRemove),1);renderStreamSelection();
+});
 document.addEventListener('click',event=>{
  const open=event.target.closest('[data-stream-edit]');
  if(open){
   event.preventDefault();event.stopImmediatePropagation();
-  currentStreamEntry=state.entries.find(e=>String(e.id)===open.dataset.streamEdit);
+  currentStreamEntry=state.entries.find(entry=>String(entry.id)===open.dataset.streamEdit);
   if(!currentStreamEntry)return;
-  $s('nr-stream-list').value=(currentStreamEntry.user_streaming||[]).map(x=>x.name+' | '+x.url).join('\n');
-  $s('nr-stream-error').textContent='';
-  watchEditor.showModal();
+  selectedStreamNames=[...new Set((Array.isArray(currentStreamEntry.user_streaming)?currentStreamEntry.user_streaming:[])
+   .map(item=>String(item?.name||'').trim()).filter(Boolean))];
+  providerField.value='';otherField.value='';$s('nr-stream-other-wrap').hidden=true;
+  $s('nr-stream-error').textContent='';renderStreamSelection();
+  if(!watchEditor.open)watchEditor.showModal();
  }
  if(event.target.closest('[data-stream-close]'))watchEditor.close();
 },true);
+watchEditor.addEventListener('click',event=>{if(event.target===watchEditor)watchEditor.close();});
 $s('nr-stream-save').onclick=async()=>{
  if(!currentStreamEntry)return;
- const lines=$s('nr-stream-list').value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
- if(lines.length>15)return void($s('nr-stream-error').textContent='Maximum 15 services.');
- const links=[];
- for(const line of lines){
-  const i=line.indexOf('|');
-  const name=line.slice(0,i).trim(),url=line.slice(i+1).trim();
-  if(i<1||name.length>90||!cleanedUrl(url))return void($s('nr-stream-error').textContent='Use Service Name | https://example.com for each line.');
-  links.push({name,url});
- }
  const button=$s('nr-stream-save');button.disabled=true;
+ // Retain the existing JSON array storage format, without any outbound URLs.
+ const services=selectedStreamNames.map(name=>({name}));
  try{
   if(!state.demo){
-   const r=await state.supabase.from('anime_entries').update({user_streaming:links}).eq('id',currentStreamEntry.id);
+   const r=await state.supabase.from('anime_entries').update({user_streaming:services}).eq('id',currentStreamEntry.id);
    if(r.error)throw r.error;
   }
-  currentStreamEntry.user_streaming=links;
+  currentStreamEntry.user_streaming=services;
   if(state.demo)storeDemo();
   watchEditor.close();render();toast('Streaming services saved.');
- }catch(e){$s('nr-stream-error').textContent=e.message}
- finally{button.disabled=false}
+ }catch(error){$s('nr-stream-error').textContent='Could not save: '+error.message;}
+ finally{button.disabled=false;}
 };
 
 cardHtml=(e,i)=>buildCard(e,i,false);
