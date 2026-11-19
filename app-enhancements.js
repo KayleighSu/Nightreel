@@ -138,7 +138,7 @@ function repaintBanners(){
 function resetBannerObjectUrl(){if(bannerPendingUrl){URL.revokeObjectURL(bannerPendingUrl);bannerPendingUrl='';}}
 function previewBannerSrc(){return bannerPendingUrl||ownBanner||lastArt(state.entries);}
 function updateBannerEditor(){
- const url=cleanedUrl(previewBannerSrc());
+ const url=bannerPendingUrl||cleanedUrl(ownBanner||lastArt(state.entries));
  for(const mode of ['desktop','mobile']){
   const img=$s('nr-banner-preview-'+mode),frame=bannerFrame(bannerDraft);
   if(!img)continue;
@@ -219,14 +219,14 @@ function drawHero(){
  if(owner() && (!handleCheckId || handleCheckId!==state.user.id))checkUsernameSetup();
  const account=state.user?.id||'';
  if(account!==displayedAccount){displayedAccount=account;ownProfile=null;ownBanner='';currentProfileOwner='';handleCheckId='';if(handleDialog.open)handleDialog.close();}
- putImage('hero-banner-image',ownBanner||lastArt(state.entries));
+ putImage('hero-banner-image',ownBanner||lastArt(state.entries));frameBannerAt('hero-banner-image',ownProfile);
  if(owner() && (!ownProfile || currentProfileOwner!==state.user.id) && !loadingProfile){
   loadingProfile=true;
   state.supabase.from('profiles').select('id,username,display_name,banner_path,avatar_path,banner_desktop_x,banner_desktop_y,banner_desktop_zoom,banner_mobile_x,banner_mobile_y,banner_mobile_zoom').eq('id',state.user.id).maybeSingle().then(async r=>{
    if(!r.error && r.data && state.user?.id===r.data.id){
     ownProfile=r.data;currentProfileOwner=r.data.id;
     ownBanner=await getSignedBanner(ownProfile);
-    putImage('hero-banner-image',ownBanner||lastArt(state.entries));
+    putImage('hero-banner-image',ownBanner||lastArt(state.entries));frameBannerAt('hero-banner-image',ownProfile);
    }
   }).finally(()=>{loadingProfile=false;});
  }
@@ -422,6 +422,7 @@ async function loadProfile(){
   $s('profile-display').value=ownProfile.display_name;
   ownBanner=await getSignedBanner(ownProfile);
   currentProfileOwner=ownProfile.id;
+  bannerDraft=bannerFrame(ownProfile);updateBannerEditor();
   drawMyBanner();drawHero();
   refreshAccountAvatar();
   note('profile-error','Only accepted friends can see your profile.');
@@ -430,7 +431,7 @@ async function loadProfile(){
 function drawMyBanner(){
  $s('profile-name').textContent=ownProfile?.display_name||'Anime fan';
  refreshAccountAvatar();
- putImage('profile-banner',ownBanner||lastArt(state.entries));
+ putImage('profile-banner',ownBanner||lastArt(state.entries));frameBannerAt('profile-banner',ownProfile);
 }
 async function getSignedBanner(p){
  if(!p?.banner_path||!owner())return '';
@@ -462,18 +463,18 @@ $s('profile-editor').addEventListener('submit',async ev=>{
    const uploaded=await state.supabase.storage.from('nightreel-banners').upload(banner_path,file,{upsert:false,contentType:file.type});
    if(uploaded.error)throw uploaded.error;
   }
-  const r=await state.supabase.from('profiles').update({username,display_name,banner_path,avatar_path}).eq('id',state.user.id);
+  const r=await state.supabase.from('profiles').update({username,display_name,banner_path,avatar_path,...bannerFrame(bannerDraft)}).eq('id',state.user.id);
   if(r.error)throw r.error;
-  ownProfile={...ownProfile,username,display_name,banner_path,avatar_path};
+  ownProfile={...ownProfile,username,display_name,banner_path,avatar_path,...bannerFrame(bannerDraft)};
   ownBanner=await getSignedBanner(ownProfile);
-  drawMyBanner();drawHero();$s('profile-image-file').value='';$s('profile-avatar-file').value='';refreshAccountAvatar();note('profile-error','Profile saved.');
+  drawMyBanner();drawHero();resetBannerObjectUrl();updateBannerEditor();$s('profile-image-file').value='';$s('profile-avatar-file').value='';refreshAccountAvatar();note('profile-error','Profile saved.');
  }catch(e){note('profile-error', e.code==='23505'?'That username is already taken. Please choose another.':'Save failed: '+e.message);}
 });
 $s('remove-banner').onclick=async()=>{
  if(!need('profile-error'))return;
  const r=await state.supabase.from('profiles').update({banner_path:null}).eq('id',state.user.id);
  if(r.error){note('profile-error',r.error.message);return;}
- ownProfile.banner_path=null;ownBanner='';drawMyBanner();drawHero();note('profile-error','Using your most recently edited anime image.');
+ ownProfile.banner_path=null;ownBanner='';resetBannerObjectUrl();$s('profile-image-file').value='';updateBannerEditor();drawMyBanner();drawHero();note('profile-error','Using your most recently edited anime image.');
 };
 async function refreshFriends(){
  if(!need('friends-error'))return;
@@ -538,7 +539,7 @@ async function viewFriend(id){
   if(p.error)throw p.error;if(e.error)throw e.error;
   friendProfile=p.data;friendItems=e.data||[];
   const image=await getSignedBanner(friendProfile);
-  putImage('friend-banner',image||lastArt(friendItems));
+  putImage('friend-banner',image||lastArt(friendItems));frameBannerAt('friend-banner',friendProfile);
   $s('friend-name').textContent=friendProfile.display_name;
   $s('friend-handle').textContent='@'+friendProfile.username+' · '+friendItems.length+' anime';
   $s('friend-grid').classList.add('nr-grouped-library');
@@ -551,7 +552,7 @@ async function viewFriend(id){
 setInterval(async()=>{
  if(!owner())return;
  if(ownProfile?.banner_path){ownBanner=await getSignedBanner(ownProfile);drawHero();if(panel==='profile')drawMyBanner();}
- if(panel==='friend' && friendProfile?.banner_path){const url=await getSignedBanner(friendProfile);putImage('friend-banner',url||lastArt(friendItems));}
+ if(panel==='friend' && friendProfile?.banner_path){const url=await getSignedBanner(friendProfile);putImage('friend-banner',url||lastArt(friendItems));frameBannerAt('friend-banner',friendProfile);}
 },240000);
 const header=document.querySelector('.topbar-right');
 if(header){
@@ -570,4 +571,5 @@ async function refreshAccountAvatar(){
   if(!r.error && r.data?.signedUrl){const img=document.createElement('img');img.alt='';img.src=r.data.signedUrl;img.className='nr-round-avatar';avatar.replaceChildren(img);}
  }
 }
+initializeBannerEditor();
 })();
