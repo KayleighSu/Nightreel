@@ -139,12 +139,12 @@ function buildCard(e,index,readOnly){
   ? '<span class="status-pill">'+esc(statuses[e.status]||'Not sorted yet')+'</span>'
   : '<select class="nr-status-select status-pill" data-action="quick-status" data-id="'+id+'" aria-label="Change watch status of '+title+'" title="Change watch status without opening Edit">'+Object.entries(statuses).map(([value,text])=>'<option value="'+value+'"'+(e.status===value?' selected':'')+'>'+esc(text)+'</option>').join('')+'</select>')+
  (readOnly?'':'<button type="button" class="favorite-icon '+(e.favorite?'active':'')+'" data-action="favorite" data-id="'+id+'" aria-label="Toggle favorite"><span class="nr-heart-glyph" aria-hidden="true">♥</span></button>')+'</div>'+
- '<div class="flip-body"><div class="art-label">'+(originalByTitle.has(canonicalTitle(e.title))?'ORIGINAL HAND-PICKED ART':'YOUR ANIME LIBRARY')+'</div>'+(e.public_notes?'<span class="nr-note-indicator">✎ Public note</span>':'')+'<h3>'+title+'</h3>'+
+ '<div class="flip-body">'+(e.public_notes?'<span class="nr-note-indicator">✎ Public note</span>':'')+'<h3>'+title+'</h3>'+
  '<div class="flip-rating">'+stars+'<span class="rating-text">'+(rating?(rating/2)+'/5':'Not rated')+'</span></div>'+
  '<div class="flip-progress">'+esc(progress)+'<div class="progress-track"><div class="progress-fill" style="width:'+percent+'%"></div></div></div>'+
  '<div class="flip-actions">'+(readOnly?'':'<button type="button" data-action="edit" data-id="'+id+'">Edit</button>')+
  '<button type="button" data-action="flip">Story ↻</button><a href="'+esc(imdbLink(e))+'" target="_blank" rel="noopener noreferrer">IMDb ↗</a></div></div></div>'+
- '<div class="flip-face back">'+pic+'<div class="flip-back-content"><span class="synopsis-heading">ABOUT THIS ANIME</span><h3>'+title+'</h3>'+
+ '<div class="flip-face back">'+pic+'<div class="flip-back-content">'+(originalByTitle.has(canonicalTitle(e.title))?'<span class="nr-original-art-credit">Your original artwork</span>':'')+'<span class="synopsis-heading">ABOUT THIS ANIME</span><h3>'+title+'</h3>'+
  '<p class="synopsis">'+synopsis+'</p>'+publicNote+
  '<div class="back-actions"><button type="button" data-action="flip">↶ Flip back</button><a href="'+esc(imdbLink(e))+'" target="_blank" rel="noopener noreferrer">IMDb ↗</a></div></div></div></div></article>';
 }
