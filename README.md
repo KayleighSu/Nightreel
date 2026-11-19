@@ -130,3 +130,14 @@ In the [Nightreel Supabase dashboard](https://supabase.com/dashboard/project/hgn
 ### Limits / verification
 
 The interface code and schema have been syntax-checked and the database RLS/column restrictions have been checked. **Two-account end-to-end verification and mobile-browser acceptance testing are still required before describing this as production-ready.** Card descriptions are fetched from Jikan/MyAnimeList, not scraped from IMDb; IMDb title links remain available. Because these are remote catalogue descriptions, availability is dependent on Jikan and matching by title may need manual correction. The app uses a pinned Supabase JS CDN version.
+
+## Messaging, friend QR codes and profile pictures
+
+- **Messages:** Accepted friends can exchange messages via the envelope icon. Database RLS checks the participants and accepted friendship for every read/write. Only recipient_id and body are client-insertable; the sender is taken from the authenticated session. Recent messages are polled while a chat is open. Messages are **not** end-to-end encrypted.
+- **Top-right profile menu:** Shows a public username and profile photo instead of the user's email. Includes profile editing, QR, scanner, Messages, photo upload, and logout.
+- **Profile photos:** JPG/PNG/WebP up to 2 MB, stored in the *private* nightreel-avatars bucket. Signed access is limited to the owner and accepted friends.
+- **Friend QR:** Contains only the public username and a Nightreel link; no email, session ID, or authentication token. Scanning a QR lets someone send a request, not automatically become a friend.
+- **Scan QR:** In-app camera reader; fallback supports a QR image upload or pasted link. Camera permission is required.
+- **Mobile:** Styles load after the original CSS. Cards use a single full-width column at phone widths, and the compact header keeps profile/messages controls visible.
+- **Applied migrations:** supabase-messages-avatar.sql and supabase-messages-policy-fix.sql in the dedicated Nightreel Supabase project.
+- **Important:** Keep the avatar bucket private and message RLS enforced. Test actual Safari/iOS sign-in, camera access, friend requests, private messages and image upload before a public launch.
