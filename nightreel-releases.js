@@ -97,7 +97,7 @@ async function refreshEntry(entry,force=false){
    if(r.error)throw r.error;
    Object.assign(e,patch);
    cached.set(key,details);failedUntil.delete(key);
-   updateCardReleaseInfo();drawDashboard();
+   updateCardReleaseInfo();drawCompactRadar();drawDashboard();
    return details;
   }catch(error){failedUntil.set(key,Date.now()+45*60*1000);throw error;}
   finally{inFlight.delete(key);}
@@ -192,6 +192,63 @@ function timelineCard(e,what,eventAt){
  (e.catalog_sequel_title?'<p>Season / sequel: '+safe(e.catalog_sequel_title)+'</p>':'')+
  '</div></article>';
 }
+
+/* Compact release list beneath Favorites; no duplicates when the library rerenders. */
+function releaseWindowSort(text){
+ const v=String(text||'').trim();
+ if(/^\d{4}$/.test(v))return Date.UTC(Number(v),0,1);
+ const parsed=Date.parse('1 '+v);
+ return Number.isFinite(parsed)?parsed:Infinity;
+}
+function compactEvents(){
+ const now=Date.now(),events=[];
+ for(const e of state.entries||[]){
+  if(e.catalog_sequel_title&&(isConfirmedFuture(e.catalog_sequel_premiere_at)||
+    e.catalog_sequel_window||/not yet aired|not yet released|upcoming/i.test(e.catalog_sequel_status||''))){
+   events.push({
+    title:e.title,description:e.catalog_sequel_title,
+    when:isConfirmedFuture(e.catalog_sequel_premiere_at)?shortDate(e.catalog_sequel_premiere_at):
+      e.catalog_sequel_window||'Date TBA',
+    sort:validDate(e.catalog_sequel_premiere_at)?.getTime()||
+      releaseWindowSort(e.catalog_sequel_window)
+   });
+  }
+  const air=validDate(e.catalog_next_episode_at)?.getTime();
+  if(air&&air>now){
+   events.push({title:e.title,description:'Episode '+(e.catalog_next_episode_number||'upcoming'),
+    when:dateLabel(e.catalog_next_episode_at),sort:air});
+  }
+  const premiere=validDate(e.catalog_premiere_at)?.getTime();
+  if(/not yet aired|not yet released/i.test(e.catalog_airing_status||'')&&(!premiere||premiere>now)){
+   events.push({title:e.title,description:'Series premiere',
+    when:premiere?shortDate(e.catalog_premiere_at):'Date TBA',sort:premiere||Infinity});
+  }
+ }
+ events.sort((a,b)=>a.sort-b.sort||a.title.localeCompare(b.title));
+ return events.slice(0,8);
+}
+function drawCompactRadar(){
+ const grid=$('anime-grid');if(!grid)return;
+ grid.querySelector('#nr-compact-radar')?.remove();
+ if(state.filter!=='all'||String(state.search||'').trim())return;
+ const events=compactEvents();
+ const block=document.createElement('section');
+ block.id='nr-compact-radar';block.className='nr-compact-radar';
+ block.setAttribute('aria-label','Upcoming anime releases');
+ const rows=events.map(e=>
+  '<div class="nr-compact-release-row"><span class="nr-compact-release-name">'+
+  safe(e.title)+'<small>'+safe(e.description)+'</small></span>'+
+  '<span class="nr-compact-release-date">'+safe(e.when)+'</span></div>'
+ ).join('');
+ block.innerHTML='<div class="nr-compact-radar-heading"><div>'+
+   '<span class="nr-section-eyebrow">COMING UP IN YOUR COLLECTION</span><h3>Release Radar</h3></div>'+
+   '<button type="button" data-radar-full aria-label="Open full release calendar">View all ↗</button></div>'+
+   (events.length?'<div class="nr-compact-release-list">'+rows+'</div>':
+    '<p class="nr-compact-empty">No upcoming dates found yet. Check the full radar to refresh your collection.</p>');
+ const featured=grid.querySelector('.nr-featured-section');
+ if(featured)featured.after(block);else grid.prepend(block);
+}
+
 function drawDashboard(){
  const area=$('nr-radar-results');if(!area)return;
  const entries=state.entries||[],now=Date.now();
@@ -228,8 +285,11 @@ btn.onclick=showRadar;
 $('nr-radar-close').onclick=()=>{radar.hidden=true;library.scrollIntoView({behavior:'smooth',block:'start'});};
 navigation.addEventListener('click',e=>{if(e.target.closest('[data-social-view]'))radar.hidden=true;},true);
 const originalRender=render;
-render=function(){originalRender();updateCardReleaseInfo();if(!radar.hidden)drawDashboard();};
-updateCardReleaseInfo();drawDashboard();
+render=function(){originalRender();updateCardReleaseInfo();drawCompactRadar();if(!radar.hidden)drawDashboard();};
+updateCardReleaseInfo();drawCompactRadar();drawDashboard();
+$('anime-grid').addEventListener('click',event=>{
+ if(event.target.closest('[data-radar-full]')){event.preventDefault();showRadar();}
+});
 const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 let refreshRunning=false,autoProcessed=0,autoUser='';
 function sortForUpdate(){
