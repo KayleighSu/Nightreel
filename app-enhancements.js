@@ -138,7 +138,7 @@ function buildCard(e,index,readOnly){
  '<div class="flip-face front">'+pic+'<div class="flip-top">'+(readOnly
   ? '<span class="status-pill">'+esc(statuses[e.status]||'Not sorted yet')+'</span>'
   : '<select class="nr-status-select status-pill" data-action="quick-status" data-id="'+id+'" aria-label="Change watch status of '+title+'" title="Change watch status without opening Edit">'+Object.entries(statuses).map(([value,text])=>'<option value="'+value+'"'+(e.status===value?' selected':'')+'>'+esc(text)+'</option>').join('')+'</select>')+
- (readOnly?'':'<button type="button" class="favorite-icon '+(e.favorite?'active':'')+'" data-action="favorite" data-id="'+id+'" aria-label="Toggle favorite">♥</button>')+'</div>'+
+ (readOnly?'':'<button type="button" class="favorite-icon '+(e.favorite?'active':'')+'" data-action="favorite" data-id="'+id+'" aria-label="Toggle favorite"><span class="nr-heart-glyph" aria-hidden="true">♥</span></button>')+'</div>'+
  '<div class="flip-body"><div class="art-label">'+(originalByTitle.has(canonicalTitle(e.title))?'ORIGINAL HAND-PICKED ART':'YOUR ANIME LIBRARY')+'</div>'+(e.public_notes?'<span class="nr-note-indicator">✎ Public note</span>':'')+'<h3>'+title+'</h3>'+
  '<div class="flip-rating">'+stars+'<span class="rating-text">'+(rating?(rating/2)+'/5':'Not rated')+'</span></div>'+
  '<div class="flip-progress">'+esc(progress)+'<div class="progress-track"><div class="progress-fill" style="width:'+percent+'%"></div></div></div>'+
