@@ -97,3 +97,36 @@ Nightreel accepts JSON arrays, JSON exports containing an `entries` array, and C
 - `legacy-export-snippet.js` — optional one-time browser-console export of the original localStorage ratings, notes, and progress
 
 Made for anime you love, and the endings that don't love you back.
+
+## Nightreel v2 · Photo cards, real accounts and friends
+
+The original 83 anime and their 83 hand-selected background images are preserved in `original-collection.js`, referencing the untouched original `KayleighSu/anime-tracker` repository. The app now overlays information on dimmed artwork, offers five-star ratings (stored on the 10-point scale), flips cards to show a summary from the Jikan/MyAnimeList catalogue, and sorts by title A–Z by default.
+
+### Auth and data setup
+
+**This repository already targets a separate Nightreel Supabase project.** Do not re-use or modify ToteHome's database. Only the public Supabase project URL and **publishable** key belong in `config.js`. Never expose a database password, service-role key, or `sb_secret_` key in GitHub.
+
+The Supabase schema is stored in `supabase.sql`, `supabase-social.sql`, and `supabase-security-hardening.sql`. Each must be applied **once**, in that order, to a new project. They are already installed on the existing Nightreel project. Avoid re-running migrations unnecessarily.
+
+In the [Nightreel Supabase dashboard](https://supabase.com/dashboard/project/hgnbpiqlwrkomxjqceyk), finish **Authentication → URL Configuration**:
+- **Site URL:** `https://kayleighsu.github.io/Nightreel/`
+- **Additional Redirect URL:** `https://kayleighsu.github.io/Nightreel/` (exact URL)
+- In **Authentication → Providers → Email**, keep email confirmation enabled.
+- Set a strong **server-side minimum password length** (12+ characters recommended) and review authentication rate limits and attack-protection options. Front-end password validation alone does **not** enforce password security.
+- Email sending on Supabase's built-in provider may have limitations and quotas. Configure supported SMTP as needed before wider rollout.
+
+**Test with two newly created accounts**: each signs up, confirms email, logs in, changes their public display name/username, imports anime using **Original collection** (if desired), rates entries, and adds both public and private notes. Search for the second username, send request, accept in second account, and verify read-only profile sharing. Check that private notes, email addresses, and edit buttons are never exposed through friend views; attempting direct cross-user database modification must fail via RLS.
+
+### Friends and privacy
+
+- Profiles: searchable usernames and display names only. Friend requests require explicit recipient approval.
+- Only **accepted friends** can view full profiles, custom banners, the anime list, ratings, episode progress, and **public notes**.
+- **Private notes** stay in `anime_entries.notes`. The friend-facing `get_friend_anime` RPC never selects that column and checks friendship server-side.
+- An owner can add/edit/remove their own anime and change their own profile. A friend cannot edit either, enforced by RLS and column grants.
+- Custom banners are limited to JPG/PNG/WebP, 4 MB, and owner-namespaced paths in a **private** Supabase Storage bucket; only accepted friends can retrieve signed links. The default banner is the most recently edited anime's background.
+- Three authenticated-only, security-definer RPC functions are intentionally used to provide selective friend/search data while preventing direct cross-user access. They validate `auth.uid()`, limit results, and expose no private-note field. Supabase's security advisor flags these as requiring review; do not treat the flag as a guarantee of safety or disable it without a substitute.
+- To revoke friend access, remove that friendship. Previously generated short-lived banner URLs may remain usable until they expire.
+
+### Limits / verification
+
+The interface code and schema have been syntax-checked and the database RLS/column restrictions have been checked. **Two-account end-to-end verification and mobile-browser acceptance testing are still required before describing this as production-ready.** Card descriptions are fetched from Jikan/MyAnimeList, not scraped from IMDb; IMDb title links remain available. Because these are remote catalogue descriptions, availability is dependent on Jikan and matching by title may need manual correction. The app uses a pinned Supabase JS CDN version.
