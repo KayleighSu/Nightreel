@@ -10,7 +10,7 @@ const social=document.createElement('section');social.id='social-ui';
 social.innerHTML=[
 '<div class="social-toolbar" id="social-navigation"><button type="button" data-social-view="library">◈ My library</button><button type="button" data-social-view="friends">♡ Friends</button><button type="button" data-social-view="profile">◉ My profile</button></div>',
 '<div class="social-panel" id="social-friends-panel" hidden><h2>Find your people.</h2><p>Search usernames or names. Only accepted friends can see your anime and public notes.</p><div class="social-row"><label class="social-field" style="flex:1">Find a friend<input id="find-person" type="search" maxlength="32" placeholder="Search at least 2 letters"></label><button type="button" id="find-person-btn">Search</button></div><div id="people-results"></div><h2 style="margin-top:20px">Friends and requests</h2><div id="friends-results"></div><p class="social-message" id="friends-error" role="status"></p></div>',
-'<div class="social-panel" id="social-profile-panel" hidden><h2>My public profile.</h2><p>Friends see your anime, ratings and public notes, never your email or private notes.</p><div class="social-hero"><img id="profile-banner" alt="" hidden><div class="social-hero-content"><span class="social-caption">STAY OBSESSED.</span><h2 id="profile-name">Anime fan</h2></div></div><form id="profile-editor"><div class="social-grid"><label class="social-field">Username<input id="profile-handle" pattern="[a-z][a-z0-9_]{2,31}" maxlength="32" required></label><label class="social-field">Display name<input id="profile-display" maxlength="60" required></label></div><p>Banner uses your most recently edited anime artwork unless you upload your own.</p><label class="social-field">Custom banner: JPG, PNG or WebP (maximum 4 MB)<input id="profile-image-file" type="file" accept="image/jpeg,image/png,image/webp"></label><div class="social-toolbar" style="margin-top:15px"><button type="submit">Save profile</button><button type="button" id="remove-banner">Use latest anime image</button></div></form><p class="social-message" id="profile-error" role="status"></p></div>'
+'<div class="social-panel" id="social-profile-panel" hidden><h2>My public profile.</h2><p>Friends see your anime, ratings and public notes, never your email or private notes.</p><div class="social-hero"><img id="profile-banner" alt="" hidden><div class="social-hero-content"><span class="social-caption">STAY OBSESSED.</span><h2 id="profile-name">Anime fan</h2></div></div><form id="profile-editor"><div class="social-grid"><label class="social-field">Username<input id="profile-handle" pattern="[A-Za-z][A-Za-z0-9_]{2,31}" maxlength="32" required></label><label class="social-field">Display name<input id="profile-display" maxlength="60" required></label></div><p>Banner uses your most recently edited anime artwork unless you upload your own.</p><label class="social-field">Custom banner: JPG, PNG or WebP (maximum 4 MB)<input id="profile-image-file" type="file" accept="image/jpeg,image/png,image/webp"></label><div class="social-toolbar" style="margin-top:15px"><button type="submit">Save profile</button><button type="button" id="remove-banner">Use latest anime image</button></div></form><p class="social-message" id="profile-error" role="status"></p></div>'
 ].join('');
 const friendView=document.createElement('section');friendView.id='friend-view';friendView.hidden=true;
 friendView.innerHTML=[
@@ -32,8 +32,8 @@ handleDialog.innerHTML=[
  '<p class="modal-note">Friends will search for you using this public username. Every username is unique. Your email address stays private.</p>',
  '<form id="username-setup-form">',
  '<label class="social-field" for="username-setup-input">Public username',
- '<input id="username-setup-input" name="username" required minlength="3" maxlength="32" pattern="[a-z][a-z0-9_]{2,31}" placeholder="animefan_123" autocomplete="off" spellcheck="false"></label>',
- '<p class="hint">3–32 characters: lowercase letters, numbers and underscores. Start with a letter.</p>',
+ '<input id="username-setup-input" name="username" required minlength="3" maxlength="32" pattern="[A-Za-z][A-Za-z0-9_]{2,31}" placeholder="animefan_123" autocomplete="off" spellcheck="false"></label>',
+ '<p class="hint">3–32 characters: letters (uppercase allowed), numbers and underscores. Start with a letter. Capitalization is preserved.</p>',
  '<p class="form-error" id="username-setup-error" role="alert" hidden></p>',
  '<div class="modal-actions"><button type="submit" class="btn btn-primary" id="username-setup-save">Save username</button></div>',
  '</form></div>'
@@ -52,17 +52,17 @@ handleDialog.addEventListener('cancel',e=>{if(owner() && needsUsername(ownProfil
 handleDialog.addEventListener('click',e=>{if(e.target===handleDialog && owner() && needsUsername(ownProfile)) e.preventDefault();});
 document.getElementById('username-setup-input').addEventListener('input',e=>{
  const start=e.target.selectionStart;
- e.target.value=e.target.value.toLowerCase().replace(/[^a-z0-9_]/g,'');
+ e.target.value=e.target.value.replace(/[^A-Za-z0-9_]/g,'');
  if(start!==null) e.target.setSelectionRange(Math.min(start,e.target.value.length),Math.min(start,e.target.value.length));
 });
 document.getElementById('username-setup-form').addEventListener('submit',async e=>{
  e.preventDefault();
  if(!owner())return;
- const username=document.getElementById('username-setup-input').value.trim().toLowerCase();
+ const username=document.getElementById('username-setup-input').value.trim();
  const err=document.getElementById('username-setup-error');
  err.hidden=true;
- if(!/^[a-z][a-z0-9_]{2,31}$/.test(username)){
-  err.textContent='Use 3–32 lowercase letters, numbers, or underscores, starting with a letter.';
+ if(!/^[A-Za-z][A-Za-z0-9_]{2,31}$/.test(username)){
+  err.textContent='Use 3–32 letters (uppercase allowed), numbers, or underscores, starting with a letter.';
   err.hidden=false;return;
  }
  const button=document.getElementById('username-setup-save');
@@ -231,8 +231,8 @@ async function getSignedBanner(p){
 }
 $s('profile-editor').addEventListener('submit',async ev=>{
  ev.preventDefault();if(!need('profile-error'))return;
- const username=$s('profile-handle').value.trim().toLowerCase(),display_name=$s('profile-display').value.trim();
- if(!/^[a-z][a-z0-9_]{2,31}$/.test(username)||!display_name||display_name.length>60){note('profile-error','Invalid username or display name.');return;}
+ const username=$s('profile-handle').value.trim(),display_name=$s('profile-display').value.trim();
+ if(!/^[A-Za-z][A-Za-z0-9_]{2,31}$/.test(username)||!display_name||display_name.length>60){note('profile-error','Invalid username or display name.');return;}
  const file=$s('profile-image-file').files?.[0];
  if(file && (!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>4194304)){note('profile-error','Choose a JPG, PNG or WebP under 4 MB.');return;}
  try{
