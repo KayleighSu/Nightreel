@@ -15,7 +15,7 @@ social.innerHTML=[
 const friendView=document.createElement('section');friendView.id='friend-view';friendView.hidden=true;
 friendView.innerHTML=[
 '<button type="button" class="btn btn-ghost btn-small" id="friend-back">← Friends</button>',
-'<div class="social-hero" style="margin-top:16px"><img id="friend-banner" alt="" hidden><div class="social-hero-content"><span class="social-caption">FRIEND’S COLLECTION</span><h2 id="friend-name"></h2><p id="friend-handle"></p></div></div>',
+'<div class="social-hero" style="margin-top:16px"><img id="friend-banner" alt="" hidden><div class="social-hero-content"><span class="social-caption">FRIEND’S COLLECTION</span><h2 id="friend-name"></h2><p id="friend-handle"></p><div class="nr-watchtime nr-friend-watchtime"><strong id="nr-friend-hours">0 h</strong><span>ESTIMATED WATCH TIME</span></div></div></div>',
 '<p class="hint">Read-only. Friends cannot edit your anime or ratings. Private notes are never shared.</p><div id="friend-grid" class="anime-grid"></div>'
 ].join('');
 
@@ -297,10 +297,14 @@ function buildCard(e,index,readOnly){
  const isRegular=!e.catalog_format||['TV','TV_SHORT','ONA'].includes(String(e.catalog_format).toUpperCase());
  const catalogCount=Number(e.catalog_episode_total)||0,savedCount=Number(e.episodes_total)||0;
  const total=isRegular?(catalogCount && (!savedCount||catalogCount>=savedCount-2)?catalogCount:(savedCount||catalogCount||null)):null;
- const progress=!isRegular?String(e.catalog_format).replace(/_/g,' ')+' · excluded from episode totals':
+ const movieMinutes=Number(e.movie_runtime_minutes)||0;
+ const progress=e.is_movie?('Movie'+(movieMinutes>0?' · '+movieMinutes+' min':'')+
+   (e.status==='completed'?' · Watched':'')):
+  !isRegular?String(e.catalog_format).replace(/_/g,' ')+' · excluded from episode totals':
   total&&watched>total?total+' / '+total+' regular episodes · '+watched+' watched saved':
   total?watched+' / '+total+' episodes':watched+' episodes watched';
- const percent=!isRegular?0:total?Math.min(100,Math.round(100*watched/total)):(e.status==='completed'?100:0);
+ const percent=e.is_movie?(e.status==='completed'?100:0):
+  !isRegular?0:total?Math.min(100,Math.round(100*watched/total)):(e.status==='completed'?100:0);
  const pic=cleanedUrl(e.image_url)?'<img class="card-image" loading="lazy" src="'+esc(cleanedUrl(e.image_url))+'" alt="">':'';
  const stars=[1,2,3,4,5].map(n=>'<button type="button" '+(readOnly?'disabled':'data-action="rate" data-id="'+id+'" data-rating="'+(n*2)+'"')+' class="'+(rating&&n<=Math.floor(rating/2)?'rated':rating&&n===Math.ceil(rating/2)?'half-rated':'unrated')+'" title="'+(readOnly?'Rating':'Rate '+n+' stars')+'">★</button>').join('');
  const synopsis=esc(e.synopsis||summaries.get(canonicalTitle(e.title))||'Tap here to load a story summary, or follow the IMDb link.');
@@ -323,10 +327,10 @@ function buildCard(e,index,readOnly){
 }
 cardHtml=(e,i)=>buildCard(e,i,false);
 const nrStatusOrder=[
+ ['untracked','Not sorted yet'],
  ['watching','Currently watching'],
  ['plan_to_watch','Plan to watch'],
  ['on_hold','On hold'],
- ['untracked','Not sorted yet'],
  ['dropped','Dropped'],
  ['completed','Completed']
 ];
@@ -336,12 +340,16 @@ function organizedMarkup(entries,readOnly){
  if(favorites.length)sections.push({key:'featured',name:'Favorite anime',items:favorites,featured:true});
  const regular=entries.filter(e=>!e.favorite);
  for(const [key,name] of nrStatusOrder){
-  const items=regular.filter(e=>e.status===key);
+  if(key==='completed'){
+   const films=regular.filter(e=>e.is_movie);
+   if(films.length)sections.push({key:'movies',name:'Movies',items:films,featured:false,movies:true});
+  }
+  const items=regular.filter(e=>!e.is_movie && e.status===key);
   if(items.length)sections.push({key,name,items,featured:false});
  }
  return sections.map(section=>
   '<section class="nr-library-section'+(section.featured?' nr-featured-section':'')+'" data-library-section="'+section.key+'">'+
-  '<div class="nr-section-heading"><div><span class="nr-section-eyebrow">'+(section.featured?'✦ TOP PICKS':'WATCH STATUS')+'</span>'+
+  '<div class="nr-section-heading"><div><span class="nr-section-eyebrow">'+(section.featured?'✦ TOP PICKS':section.movies?'FEATURE FILMS':'WATCH STATUS')+'</span>'+
   '<h3>'+section.name+' <small>'+section.items.length+'</small></h3></div></div>'+
   '<div class="anime-grid nr-section-grid">'+section.items.map((entry,i)=>buildCard(entry,i,readOnly)).join('')+'</div></section>'
  ).join('');
@@ -596,14 +604,15 @@ async function viewFriend(id){
  try{
   const [p,e]=await Promise.all([
    state.supabase.from('profiles').select('id,username,display_name,banner_path,avatar_path,banner_desktop_x,banner_desktop_y,banner_desktop_zoom,banner_mobile_x,banner_mobile_y,banner_mobile_zoom').eq('id',id).single(),
-   state.supabase.rpc('get_friend_anime',{p_friend_id:id})
+   state.supabase.rpc('get_friend_anime_v3',{p_friend_id:id})
   ]);
   if(p.error)throw p.error;if(e.error)throw e.error;
   friendProfile=p.data;friendItems=e.data||[];
   const image=await getSignedBanner(friendProfile);
   putImage('friend-banner',image||lastArt(friendItems));frameBannerAt('friend-banner',friendProfile);
   $s('friend-name').textContent=friendProfile.display_name;
-  $s('friend-handle').textContent='@'+friendProfile.username+' · '+friendItems.length+' anime';
+  $s('friend-handle').textContent='@'+friendProfile.username+' · '+friendItems.length+' titles';
+  $s('nr-friend-hours').textContent=estimatedHours(friendItems);
   $s('friend-grid').classList.add('nr-grouped-library');
   $s('friend-grid').innerHTML=organizedMarkup([...friendItems].sort((a,b)=>a.title.localeCompare(b.title)),true);
   show('friend');
