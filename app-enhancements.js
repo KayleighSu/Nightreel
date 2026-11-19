@@ -126,8 +126,10 @@ function note(id,msg){$s(id).textContent=msg;}
 function need(id){if(owner())return true;note(id,'Connect Nightreel to a Supabase project to use accounts and friends.');return false;}
 function buildCard(e,index,readOnly){
  const title=esc(e.title),id=esc(e.id),rating=Number(e.rating)||0,watched=e.episodes_watched||0;
- const total=e.catalog_episode_total||e.episodes_total,progress=total?watched+' / '+total+' episodes':watched+' episodes watched';
- const percent=total?Math.min(100,Math.round(100*watched/total)):(e.status==='completed'?100:0);
+ const isRegular=!e.catalog_format||['TV','TV_SHORT','ONA'].includes(String(e.catalog_format).toUpperCase());
+ const total=isRegular?(e.catalog_episode_total||e.episodes_total):null;
+ const progress=!isRegular?String(e.catalog_format).replace(/_/g,' ')+' · excluded from episode totals':total?watched+' / '+total+' episodes':watched+' episodes watched';
+ const percent=!isRegular?0:total?Math.min(100,Math.round(100*watched/total)):(e.status==='completed'?100:0);
  const pic=cleanedUrl(e.image_url)?'<img class="card-image" loading="lazy" src="'+esc(cleanedUrl(e.image_url))+'" alt="">':'';
  const stars=[1,2,3,4,5].map(n=>'<button type="button" '+(readOnly?'disabled':'data-action="rate" data-id="'+id+'" data-rating="'+(n*2)+'"')+' class="'+(rating&&n<=Math.floor(rating/2)?'rated':rating&&n===Math.ceil(rating/2)?'half-rated':'unrated')+'" title="'+(readOnly?'Rating':'Rate '+n+' stars')+'">★</button>').join('');
  const synopsis=esc(e.synopsis||summaries.get(canonicalTitle(e.title))||'Tap here to load a story summary, or follow the IMDb link.');
