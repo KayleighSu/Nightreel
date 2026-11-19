@@ -137,7 +137,7 @@ $('extra-invite').onclick=()=>{
 };
 $('extra-scan-qr').onclick=()=>{profileDialog.close();show(scanDialog);};
 $('extra-open-messages').onclick=()=>{profileDialog.close();openMessages();};
-messagesTop.onclick=openMessages;
+messagesTop.onclick=()=>{nrClearUnread();openMessages();};
 async function uploadAvatar(){
  if(!ensureLogin($('extra-profile-status')))return;
  const file=$('extra-avatar-file').files?.[0];
@@ -284,6 +284,8 @@ async function loadFriends(){
  return friends;
 }
 async function openMessages(friendId){
+ nrClearUnread();
+ if(!nrIsMobile()&&typeof friendId==='string'){await loadFriends();nrOpenDock(friendId);return;}
  if(!ensureLogin($('extra-messages-status')))return;
  show(chatDialog);
  message($('extra-messages-status'),'Loading friends…');
@@ -297,7 +299,7 @@ async function openMessages(friendId){
    for(const f of friends){
     const row=document.createElement('div');row.className='extras-convo';
     const label=document.createElement('span');label.textContent='@'+(f.username||f.display_name||'Anime fan');
-    const btn=document.createElement('button');btn.textContent='Message';btn.type='button';btn.onclick=()=>openConversation(f.id);
+    const btn=document.createElement('button');btn.textContent='Message';btn.type='button';btn.onclick=()=>{if(nrIsMobile()){openConversation(f.id);}else{chatDialog.close();nrOpenDock(f.id);}};
     row.append(label,btn);listing.append(row);
    }
   }
@@ -399,4 +401,122 @@ async function pendingInvite(){
  await findQRPerson(name);
 }
 setInterval(pendingInvite,1800);
+}
+/* Messenger-style desktop dock and mobile floating entry point. */
+const nrDock=document.createElement('aside');nrDock.id='nr-chat-dock';nrDock.setAttribute('aria-label','Open conversations');document.body.append(nrDock);
+const nrBubble=document.createElement('button');nrBubble.id='nr-chat-fab';nrBubble.type='button';nrBubble.setAttribute('aria-label','Open messages');nrBubble.textContent='✉';document.body.append(nrBubble);
+const nrBadge=document.createElement('span');nrBadge.className='nr-notification-badge';nrBadge.hidden=true;messagesTop.append(nrBadge);
+const nrFabBadge=document.createElement('span');nrFabBadge.className='nr-notification-badge';nrFabBadge.hidden=true;nrBubble.append(nrFabBadge);
+const nrSoundToggle=document.createElement('button');nrSoundToggle.type='button';nrSoundToggle.className='extras-secondary';nrSoundToggle.textContent='🔊 Notification sounds on';
+profileDialog.querySelector('.extras-menu-actions')?.append(nrSoundToggle);
+let nrSoundEnabled=localStorage.getItem('nightreel-sounds')!=='off';
+let nrAudioContext=null,nrAudioUnlocked=false,nrSeenMessages=new Set(),nrSeenRequests=new Set(),nrSeenAcceptances=new Set(),nrNoticesReady=false,nrUnread=0;
+const nrWindows=new Map();
+function nrIsMobile(){return matchMedia('(max-width: 720px)').matches;}
+function nrPlaySound(kind){
+ if(!nrSoundEnabled||!nrAudioUnlocked)return;
+ try{
+  const C=window.AudioContext||window.webkitAudioContext;if(!C)return;
+  nrAudioContext ||= new C();
+  const now=nrAudioContext.currentTime;
+  const pitches=kind==='friend'?[659,880,988]:kind==='accept'?[523,784,1047]:[880,659];
+  pitches.forEach((pitch,i)=>{
+   const osc=nrAudioContext.createOscillator(),gain=nrAudioContext.createGain(),t=now+i*.095;
+   osc.type=kind==='message'?'sine':'triangle';osc.frequency.setValueAtTime(pitch,t);
+   gain.gain.setValueAtTime(.0001,t);gain.gain.exponentialRampToValueAtTime(.055,t+.012);gain.gain.exponentialRampToValueAtTime(.0001,t+.14);
+   osc.connect(gain).connect(nrAudioContext.destination);osc.start(t);osc.stop(t+.15);
+  });
+ }catch{}
+}
+document.addEventListener('pointerdown',()=>{nrAudioUnlocked=true;},{once:true});
+nrSoundToggle.onclick=()=>{
+ nrSoundEnabled=!nrSoundEnabled;localStorage.setItem('nightreel-sounds',nrSoundEnabled?'on':'off');
+ nrSoundToggle.textContent=nrSoundEnabled?'🔊 Notification sounds on':'🔇 Notification sounds off';
+ if(nrSoundEnabled)nrPlaySound('accept');
+};
+nrSoundToggle.textContent=nrSoundEnabled?'🔊 Notification sounds on':'🔇 Notification sounds off';
+function nrBadgeUpdate(){
+ nrBadge.hidden=nrUnread===0;nrFabBadge.hidden=nrUnread===0;
+ const label=nrUnread>99?'99+':String(nrUnread);nrBadge.textContent=label;nrFabBadge.textContent=label;
+ messagesTop.setAttribute('aria-label',nrUnread?label+' new notifications; open messages':'Open messages');
+}
+function nrClearUnread(){nrUnread=0;nrBadgeUpdate();}
+async function nrCheckNotifications(){
+ if(!loggedIn()){nrNoticesReady=false;nrSeenMessages.clear();nrSeenRequests.clear();nrSeenAcceptances.clear();nrClearUnread();nrDock.replaceChildren();nrWindows.clear();return;}
+ const uid=state.user.id;
+ try{
+  const [m,f]=await Promise.all([
+   state.supabase.from('direct_messages').select('id,sender_id,created_at').eq('recipient_id',uid).order('created_at',{ascending:false}).limit(40),
+   state.supabase.from('friendships').select('id,status,requester_id,recipient_id').or('requester_id.eq.'+uid+',recipient_id.eq.'+uid).limit(200)
+  ]);
+  if(m.error||f.error)return;
+  const msgs=(m.data||[]).map(r=>r.id);
+  const pending=(f.data||[]).filter(r=>r.status==='pending'&&r.recipient_id===uid).map(r=>r.id);
+  const accepted=(f.data||[]).filter(r=>r.status==='accepted'&&r.requester_id===uid).map(r=>r.id);
+  if(nrNoticesReady){
+   const fresh=msgs.filter(id=>!nrSeenMessages.has(id));
+   const requests=pending.filter(id=>!nrSeenRequests.has(id));
+   const approvals=accepted.filter(id=>!nrSeenAcceptances.has(id));
+   if(fresh.length||requests.length||approvals.length){
+    nrUnread+=fresh.length+requests.length+approvals.length;nrBadgeUpdate();
+    nrPlaySound(fresh.length?'message':requests.length?'friend':'accept');
+   }
+  }
+  nrSeenMessages=new Set(msgs);nrSeenRequests=new Set(pending);nrSeenAcceptances=new Set(accepted);nrNoticesReady=true;
+  for(const win of nrWindows.values())if(!win.hidden)nrLoadDockMessages(win);
+ }catch{}
+}
+function nrOpenDock(id){
+ if(nrIsMobile()){openMessages(id);return;}
+ const friend=friends.find(f=>f.id===id);if(!friend)return;
+ if(nrWindows.has(id)){const w=nrWindows.get(id);w.hidden=false;w.querySelector('textarea')?.focus();nrLoadDockMessages(w);return;}
+ const win=document.createElement('section');win.className='nr-chat-window';win.setAttribute('aria-label','Chat with @'+friend.username);
+ const header=document.createElement('div');header.className='nr-chat-head';
+ const name=document.createElement('strong');name.textContent='@'+friend.username;
+ const minimize=document.createElement('button');minimize.type='button';minimize.textContent='−';minimize.title='Minimize chat';minimize.onclick=()=>{win.hidden=true;};
+ const close=document.createElement('button');close.type='button';close.textContent='×';close.title='Close chat';close.onclick=()=>{nrWindows.delete(id);win.remove();};
+ header.append(name,minimize,close);
+ const thread=document.createElement('div');thread.className='nr-dock-thread';thread.setAttribute('aria-live','polite');
+ const form=document.createElement('form');form.className='nr-dock-form';
+ const input=document.createElement('textarea');input.rows=1;input.maxLength=2000;input.placeholder='Write a message…';input.setAttribute('aria-label','Message @'+friend.username);
+ const send=document.createElement('button');send.type='submit';send.textContent='➤';send.setAttribute('aria-label','Send message');
+ const status=document.createElement('small');status.className='nr-dock-status';
+ input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();form.requestSubmit();}});
+ form.onsubmit=async e=>{
+  e.preventDefault();const body=input.value.trim();if(!body||!loggedIn())return;
+  send.disabled=true;
+  try{
+   const r=await state.supabase.from('direct_messages').insert({sender_id:state.user.id,recipient_id:id,body});
+   if(r.error)throw r.error;input.value='';status.textContent='';await nrLoadDockMessages(win);
+  }catch(error){status.textContent='Unable to send: '+error.message;}
+  finally{send.disabled=false;}
+ };
+ form.append(input,send);win.append(header,thread,form,status);win._friendId=id;nrWindows.set(id,win);nrDock.append(win);
+ while([...nrWindows.values()].filter(w=>!w.hidden).length>3){const oldest=[...nrWindows.values()].find(w=>w!==win&&!w.hidden);if(!oldest)break;oldest.hidden=true;}
+ nrLoadDockMessages(win);input.focus();
+}
+async function nrLoadDockMessages(win){
+ if(!loggedIn()||!win.isConnected||win.hidden||win._busy)return;
+ win._busy=true;
+ const id=win._friendId,user=state.user.id;
+ const query='and(sender_id.eq.'+user+',recipient_id.eq.'+id+'),and(sender_id.eq.'+id+',recipient_id.eq.'+user+')';
+ try{
+  const r=await state.supabase.from('direct_messages').select('id,sender_id,body,created_at').or(query).order('created_at',{ascending:false}).limit(100);
+  if(r.error)throw r.error;
+  if(!win.isConnected)return;
+  const thread=win.querySelector('.nr-dock-thread');const pinned=thread.scrollTop+thread.clientHeight>=thread.scrollHeight-60;
+  thread.replaceChildren();
+  for(const m of (r.data||[]).reverse()){
+   const bubble=document.createElement('div');bubble.className='message-bubble'+(m.sender_id===user?' mine':'');
+   const body=document.createElement('span');body.textContent=m.body;
+   const when=document.createElement('small');when.textContent=timeLabel(m.created_at);
+   bubble.append(body,when);thread.append(bubble);
+  }
+  if(pinned)thread.scrollTop=thread.scrollHeight;
+ }catch(error){win.querySelector('.nr-dock-status').textContent=error.message;}
+ finally{win._busy=false;}
+}
+nrBubble.onclick=()=>{nrClearUnread();openMessages();};
+setInterval(nrCheckNotifications,8000);
+nrCheckNotifications();
 })();
