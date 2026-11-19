@@ -438,3 +438,22 @@
 /* The preview contains a scaled real hero/profile — do not add a second overlay. */
 .nr-banner-stage::after{display:none!important}
 .nr-banner-stage .nr-banner-preview-text{display:none!important}
+
+/* Small, transparent estimate on the user's and friends' banners. */
+.nr-watchtime{display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap;max-width:100%;
+ background:rgba(18,12,24,.77);border:1px solid rgba(248,167,197,.52);
+ border-radius:9px;padding:8px 12px;color:#fff;backdrop-filter:blur(6px);
+ text-shadow:0 1px 4px rgba(0,0,0,.45)}
+.nr-watchtime strong{color:#ffe1ec;font:800 20px/1.15 var(--head);font-variant-numeric:tabular-nums}
+.nr-watchtime span{font-size:9px;letter-spacing:.10em;color:#fbd0dd;font-weight:800}
+.hero .nr-watchtime{position:relative;z-index:3;margin:0 0 14px}
+.nr-friend-watchtime{margin:8px 0 3px}
+.nr-friend-watchtime strong{font-size:18px}
+.nr-library-section[data-library-section="movies"] .nr-section-heading h3{color:#ffe4ef}
+.nr-library-section[data-library-section="movies"] .nr-section-eyebrow{color:#efb2cc}
+#anime-movie-runtime-field[hidden]{display:none!important}
+@media(max-width:580px){
+ .nr-watchtime{padding:7px 10px;gap:8px}
+ .nr-watchtime strong{font-size:17px}
+ .nr-watchtime span{font-size:8px;letter-spacing:.06em}
+}
