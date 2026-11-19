@@ -13,7 +13,7 @@ function reply(value:unknown,status=200){return new Response(JSON.stringify(valu
 function canon(value:unknown){return String(value||'').normalize('NFKD').toLowerCase().replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'');}
 function dateIso(value:unknown){
  if(!value)return null;
- const d=new Date(String(value));return Number.isFinite(d.valueOf())?d.toISOString():null;
+ const d=typeof value==='number'?new Date(value):new Date(String(value));return Number.isFinite(d.valueOf())?d.toISOString():null;
 }
 function calendarDate(d:any){
  const y=Number(d?.year),m=Number(d?.month),day=Number(d?.day);
