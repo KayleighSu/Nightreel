@@ -307,3 +307,30 @@
 
 /* On narrow screens, the old decorative orbit/asterisk artwork must never cover the chosen banner. */
 @media(max-width:780px){.hero .hero-design{display:none!important}}
+
+
+/* Owner-operated banner cropping editor, with independent desktop/phone framing. */
+.nr-banner-editor{margin:16px 0 20px;padding:18px;border:1px solid #5f4558;border-radius:12px;background:#17131c}
+.nr-banner-editor h3{font:700 20px var(--head);margin:0 0 7px;color:#fff}
+.nr-banner-editor>p{font-size:12px;line-height:1.6;color:#d0bdcb;margin:0 0 15px}
+.nr-banner-previews{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(230px,1fr);gap:16px;align-items:start}
+.nr-banner-panel{border:1px solid #61495b;border-radius:11px;padding:12px;min-width:0;display:flex;flex-direction:column;gap:11px;background:#201926}
+.nr-banner-panel legend{font-size:12px;font-weight:800;color:#ffd7e5;padding:0 6px}
+.nr-banner-stage{position:relative;width:100%;overflow:hidden;border-radius:9px;background:linear-gradient(135deg,#352538,#140d1d);border:1px solid #7b526e;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
+.nr-banner-stage:active{cursor:grabbing}
+.nr-banner-stage-desktop{aspect-ratio:3.6/1;min-height:110px}
+.nr-banner-stage-mobile{aspect-ratio:1.65/1;max-width:360px;margin:0 auto}
+.nr-banner-stage img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.72;pointer-events:none;user-select:none;max-width:none;will-change:transform}
+.nr-banner-stage::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(13,9,19,.72),rgba(12,8,18,.10) 100%);pointer-events:none}
+.nr-banner-preview-text{position:absolute;z-index:2;left:13px;bottom:12px;pointer-events:none;display:flex;flex-direction:column;gap:3px;text-shadow:0 2px 5px #000}
+.nr-banner-preview-text span{font:800 clamp(11px,1.4vw,19px)/1.2 var(--head);color:#fff}
+.nr-banner-preview-text strong{font-size:9px;color:#f8cfdd;letter-spacing:.04em}
+.nr-banner-panel label{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px;align-items:center;color:#efdae6;font-size:11px;font-weight:700}
+.nr-banner-panel output{font-variant-numeric:tabular-nums;color:#fff}
+.nr-banner-panel input[type=range]{display:block;width:100%;flex:0 0 100%;accent-color:#f28ba9;cursor:pointer}
+.nr-banner-reset{font-size:11px;font-weight:800;color:#ffd9e4;background:#392437;border:1px solid #85516b;border-radius:8px;padding:9px 12px;cursor:pointer;align-self:flex-start}
+.nr-banner-hint{margin:13px 0 0!important;font-size:11px!important;color:#dfc3cf!important}
+.hero,.social-hero{isolation:isolate}
+.hero .hero-banner-image,.social-hero>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;max-width:none;will-change:transform}
+@media(max-width:800px){.nr-banner-previews{grid-template-columns:minmax(0,1fr)}.nr-banner-stage-mobile{max-width:340px;width:100%}}
+@media(max-width:580px){.nr-banner-editor{padding:12px}.nr-banner-panel{padding:10px}.nr-banner-stage-desktop{min-height:100px}.nr-banner-stage-mobile{max-width:290px}.nr-banner-panel legend{font-size:11px}}
