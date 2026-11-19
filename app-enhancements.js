@@ -236,8 +236,11 @@ function need(id){if(owner())return true;note(id,'Connect Nightreel to a Supabas
 function buildCard(e,index,readOnly){
  const title=esc(e.title),id=esc(e.id),rating=Number(e.rating)||0,watched=e.episodes_watched||0;
  const isRegular=!e.catalog_format||['TV','TV_SHORT','ONA'].includes(String(e.catalog_format).toUpperCase());
- const total=isRegular?(e.catalog_episode_total||e.episodes_total):null;
- const progress=!isRegular?String(e.catalog_format).replace(/_/g,' ')+' · excluded from episode totals':total?watched+' / '+total+' episodes':watched+' episodes watched';
+ const catalogCount=Number(e.catalog_episode_total)||0,savedCount=Number(e.episodes_total)||0;
+ const total=isRegular?(catalogCount && (!savedCount||catalogCount>=savedCount-2)?catalogCount:(savedCount||catalogCount||null)):null;
+ const progress=!isRegular?String(e.catalog_format).replace(/_/g,' ')+' · excluded from episode totals':
+  total&&watched>total?total+' / '+total+' regular episodes · '+watched+' watched saved':
+  total?watched+' / '+total+' episodes':watched+' episodes watched';
  const percent=!isRegular?0:total?Math.min(100,Math.round(100*watched/total)):(e.status==='completed'?100:0);
  const pic=cleanedUrl(e.image_url)?'<img class="card-image" loading="lazy" src="'+esc(cleanedUrl(e.image_url))+'" alt="">':'';
  const stars=[1,2,3,4,5].map(n=>'<button type="button" '+(readOnly?'disabled':'data-action="rate" data-id="'+id+'" data-rating="'+(n*2)+'"')+' class="'+(rating&&n<=Math.floor(rating/2)?'rated':rating&&n===Math.ceil(rating/2)?'half-rated':'unrated')+'" title="'+(readOnly?'Rating':'Rate '+n+' stars')+'">★</button>').join('');
