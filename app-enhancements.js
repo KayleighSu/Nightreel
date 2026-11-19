@@ -349,4 +349,16 @@ if(header){
  const b=document.createElement('button');b.className='btn btn-ghost btn-small';b.type='button';b.textContent='Friends ♡';
  b.addEventListener('click',()=>show('friends'));header.prepend(b);
 }
+
+async function refreshAccountAvatar(){
+ if(!owner() || !ownProfile || ownProfile.id!==state.user.id)return;
+ const label=document.getElementById('account-label'),avatar=document.getElementById('account-avatar');
+ if(label)label.textContent='@'+ownProfile.username;
+ if(!avatar)return;
+ avatar.textContent=(ownProfile.username||'?')[0].toUpperCase();
+ if(ownProfile.avatar_path){
+  const r=await state.supabase.storage.from('nightreel-avatars').createSignedUrl(ownProfile.avatar_path,300);
+  if(!r.error && r.data?.signedUrl){const img=document.createElement('img');img.alt='';img.src=r.data.signedUrl;img.className='nr-round-avatar';avatar.replaceChildren(img);}
+ }
+}
 })();
