@@ -38,8 +38,8 @@
 @media(max-width:1050px){.anime-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:780px){.anime-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:580px){
- .anime-grid{grid-template-columns:minmax(0,1fr);gap:16px;scroll-snap-type:y proximity}
- .anime-card{min-height:min(77svh,770px);scroll-snap-align:start}
+ .anime-grid{grid-template-columns:minmax(0,1fr);gap:16px;scroll-snap-type:none}
+ .anime-card{min-height:min(77svh,770px);scroll-snap-align:none}
  .flip-inner{min-height:min(77svh,770px)}
  .flip-body{padding:23px}
  .flip-body h3{font-size:clamp(26px,8vw,39px)}
@@ -250,7 +250,7 @@
 .nr-public-note textarea{min-height:70px;max-height:160px;resize:vertical;padding:9px 10px;background:#211926;color:#fff;border:1px solid #806072;border-radius:7px;font:500 12px/1.5 var(--body,Arial,sans-serif);width:100%}
 .nr-public-note button{padding:9px 11px;border:1px solid #d786a7;background:#5a293f;color:#fff;border-radius:7px;font-weight:800;font-size:11px;align-self:flex-start;cursor:pointer}
 .nr-public-note textarea:focus-visible,.nr-public-note button:focus-visible{outline:2px solid #ffb6ca;outline-offset:2px}
-.flip-face.back{overflow-y:auto;overscroll-behavior:contain}
+.flip-face.back{overflow-y:auto;overscroll-behavior:auto;-webkit-overflow-scrolling:touch}
 .flip-back-content{height:auto;min-height:100%}
 @media(max-width:580px){
  .nr-library-section{margin-bottom:26px}
@@ -316,7 +316,7 @@
 .nr-banner-previews{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(230px,1fr);gap:16px;align-items:start}
 .nr-banner-panel{border:1px solid #61495b;border-radius:11px;padding:12px;min-width:0;display:flex;flex-direction:column;gap:11px;background:#201926}
 .nr-banner-panel legend{font-size:12px;font-weight:800;color:#ffd7e5;padding:0 6px}
-.nr-banner-stage{position:relative;width:100%;overflow:hidden;border-radius:9px;background:linear-gradient(135deg,#352538,#140d1d);border:1px solid #7b526e;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
+.nr-banner-stage{position:relative;width:100%;overflow:hidden;border-radius:9px;background:linear-gradient(135deg,#352538,#140d1d);border:1px solid #7b526e;touch-action:pan-y;cursor:grab;user-select:none;-webkit-user-select:none}
 .nr-banner-stage:active{cursor:grabbing}
 .nr-banner-stage-desktop{aspect-ratio:3.6/1;min-height:110px}
 .nr-banner-stage-mobile{aspect-ratio:1.65/1;max-width:360px;margin:0 auto}
@@ -366,3 +366,48 @@
  .nr-banner-stage-desktop{min-height:105px}
  .nr-banner-stage-mobile{width:min(100%,260px)}
 }
+
+
+/* Scroll the phone page normally after any pause, even when starting on a card. */
+@media (pointer:coarse){
+  .anime-grid,.nr-grouped-library,.nr-section-grid,.anime-card,
+  .flip-inner,.flip-face,.flip-body{scroll-snap-type:none!important;scroll-snap-align:none!important}
+  .anime-card,.flip-inner,.flip-face{touch-action:pan-y}
+  .anime-card:hover{transform:none}
+  .anime-card:not(.is-flipped) .flip-face.back{pointer-events:none;overflow-y:hidden}
+  .anime-card.is-flipped .flip-face.front{pointer-events:none}
+  .anime-card.is-flipped .flip-face.back{overflow-y:auto;overscroll-behavior:auto}
+}
+/* The preview is the actual banner markup, scaled from representative screen widths. */
+.nr-banner-stage{min-height:0!important;padding:0;touch-action:pan-y}
+.nr-banner-stage-desktop{aspect-ratio:1140/278}
+.nr-banner-stage-mobile{aspect-ratio:354/230;max-width:360px}
+.nr-banner-viewport{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.nr-banner-stage .nr-banner-simulation{
+  position:absolute;left:0;top:0;
+  width:var(--nr-source-width);height:var(--nr-source-height);
+  min-height:var(--nr-source-height)!important;
+  max-width:none;max-height:none;
+  margin:0!important;
+  transform:scale(var(--nr-preview-scale,1));
+  transform-origin:0 0;
+  pointer-events:none;
+  border-radius:0;
+}
+.nr-banner-stage .nr-banner-simulation .hero-banner-image,
+.nr-banner-stage .nr-banner-simulation>img{width:100%;height:100%;max-width:none}
+.nr-banner-stage-desktop .nr-banner-simulation.hero .hero-text{padding:33px 41px 31px!important;max-width:560px!important}
+.nr-banner-stage-desktop .nr-banner-simulation.hero h1{font-size:53px!important}
+.nr-banner-stage-desktop .nr-banner-simulation.hero p{font-size:12px!important;max-width:410px!important}
+.nr-banner-stage-desktop .nr-banner-simulation.hero .hero-design{right:0!important;opacity:1!important}
+.nr-banner-stage-mobile .nr-banner-simulation.hero .hero-text{padding:24px!important;max-width:none!important}
+.nr-banner-stage-mobile .nr-banner-simulation.hero h1{font-size:35px!important}
+.nr-banner-stage-mobile .nr-banner-simulation.hero p{font-size:11px!important;max-width:280px!important}
+.nr-banner-stage-mobile .nr-banner-simulation.hero .hero-design{right:-130px!important;opacity:.4!important}
+.nr-banner-stage .nr-banner-simulation.social-hero{display:flex!important;align-items:end!important}
+.nr-banner-stage-desktop .nr-banner-simulation.social-hero{min-height:210px!important}
+.nr-banner-stage-mobile .nr-banner-simulation.social-hero{min-height:200px!important}
+.nr-banner-editor .nr-banner-preview-mode{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:15px}
+.nr-banner-editor .nr-banner-preview-mode label{font-size:12px;color:#f7d6e4;font-weight:700}
+.nr-banner-editor .nr-banner-preview-mode select{padding:8px 10px;max-width:220px}
+.nr-banner-editor .nr-banner-screen-label{color:#d9bccc;font:600 10px/1.5 Arial,sans-serif;margin:0 0 2px}
