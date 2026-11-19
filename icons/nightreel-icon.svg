@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Nightreel sushi film reel">
+<defs>
+ <radialGradient id="night" cx="46%" cy="40%" r="79%"><stop stop-color="#362039"/><stop offset=".54" stop-color="#1c1029"/><stop offset="1" stop-color="#0e0b19"/></radialGradient>
+ <linearGradient id="moon" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff3dd"/><stop offset="1" stop-color="#ff92af"/></linearGradient>
+ <linearGradient id="nori" x1="0" y1="0" x2=".9" y2="1"><stop stop-color="#443043"/><stop offset=".55" stop-color="#211827"/><stop offset="1" stop-color="#0f0e1b"/></linearGradient>
+ <linearGradient id="salmon" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffb1a6"/><stop offset=".6" stop-color="#ff7b8d"/><stop offset="1" stop-color="#ee577c"/></linearGradient>
+ <filter id="glow"><feGaussianBlur stdDeviation="17"/></filter>
+</defs>
+<rect width="512" height="512" rx="100" fill="url(#night)"/>
+<ellipse cx="256" cy="267" rx="164" ry="146" fill="#fd718f" opacity=".12" filter="url(#glow)"/>
+<path d="M124 273C72 190 138 100 234 91c40-4 78 7 108 29-76-31-144-1-171 59-14 32-17 58-11 91z" fill="url(#moon)"/>
+<g fill="#ffd0b7"><path d="m403 97 10 29 28 10-28 10-10 29-10-29-28-10 28-10z"/><path d="m447 179 5 15 15 5-15 5-5 15-5-15-15-5 15-5z"/></g>
+<g stroke-linecap="round">
+ <path d="M191 423 448 330" stroke="#aa466d" stroke-width="17"/>
+ <path d="M202 443 454 357" stroke="#f48a95" stroke-width="17"/>
+ <path d="M191 417 443 325" stroke="#f3a49b" stroke-width="7"/>
+ <path d="M202 438 451 352" stroke="#ffc1ae" stroke-width="7"/>
+</g>
+<g transform="rotate(-10 258 266)">
+ <path d="M116 242c-15 84-6 148 52 174 86 39 227-6 253-80 11-31 8-82-2-113l-60 13-184 40z" fill="url(#nori)" stroke="#594058" stroke-width="7"/>
+ <path d="M123 288c2 45 28 95 82 112M414 277c-6 57-36 88-83 111" fill="none" stroke="#7b5367" stroke-width="6" opacity=".3"/>
+ <ellipse cx="261" cy="228" rx="164" ry="128" fill="#2b1a2c" stroke="#785065" stroke-width="7"/>
+ <ellipse cx="261" cy="219" rx="144" ry="108" fill="#ffe5d8"/>
+ <g fill="#fff3e6" opacity=".98">
+  <circle cx="156" cy="159" r="20"/><circle cx="179" cy="139" r="21"/><circle cx="214" cy="125" r="20"/>
+  <circle cx="247" cy="116" r="21"/><circle cx="282" cy="117" r="21"/><circle cx="315" cy="129" r="22"/>
+  <circle cx="346" cy="143" r="22"/><circle cx="371" cy="172" r="23"/><circle cx="390" cy="201" r="21"/>
+  <circle cx="383" cy="236" r="22"/><circle cx="368" cy="270" r="22"/><circle cx="338" cy="296" r="22"/>
+  <circle cx="303" cy="310" r="22"/><circle cx="268" cy="314" r="21"/><circle cx="227" cy="312" r="21"/>
+  <circle cx="194" cy="304" r="22"/><circle cx="159" cy="281" r="20"/><circle cx="141" cy="253" r="21"/>
+  <circle cx="129" cy="222" r="20"/><circle cx="136" cy="191" r="19"/>
+ </g>
+ <ellipse cx="263" cy="216" rx="114" ry="88" fill="url(#salmon)" stroke="#9e3c59" stroke-width="6"/>
+ <path d="M184 177q33-39 71-34" fill="none" stroke="#fff6e3" stroke-linecap="round" stroke-width="13" opacity=".85"/>
+ <g fill="#392039" stroke="#fdb5b0" stroke-width="4">
+  <ellipse cx="257" cy="173" rx="32" ry="21" transform="rotate(-8 257 173)"/>
+  <ellipse cx="197" cy="211" rx="31" ry="21" transform="rotate(-25 197 211)"/>
+  <ellipse cx="326" cy="202" rx="32" ry="22" transform="rotate(10 326 202)"/>
+  <ellipse cx="241" cy="266" rx="29" ry="22" transform="rotate(-10 241 266)"/>
+  <ellipse cx="312" cy="261" rx="28" ry="21" transform="rotate(-20 312 261)"/>
+ </g>
+ <circle cx="268" cy="224" r="12" fill="#55283f"/>
+</g>
+<g transform="translate(117 368)">
+ <g fill="#f9a0af" stroke="#ffc1c2" stroke-width="2">
+  <ellipse rx="24" ry="47" cy="-32"/>
+  <ellipse rx="24" ry="47" cy="-32" transform="rotate(72)"/>
+  <ellipse rx="24" ry="47" cy="-32" transform="rotate(144)"/>
+  <ellipse rx="24" ry="47" cy="-32" transform="rotate(216)"/>
+  <ellipse rx="24" ry="47" cy="-32" transform="rotate(288)"/>
+ </g>
+ <circle r="13" fill="#b55d75"/>
+ <g stroke="#873c64" stroke-width="3" stroke-linecap="round">
+  <path d="M0 0-18-24M0 0 19-20M0 0 30 4M0 0 0 28M0 0-24 11"/>
+ </g>
+ <g fill="#72314f"><circle cx="-18" cy="-24" r="5"/><circle cx="19" cy="-20" r="5"/><circle cx="30" cy="4" r="5"/><circle cx="0" cy="28" r="5"/><circle cx="-24" cy="11" r="5"/></g>
+</g>
+<path d="M437 255c20-23 31-23 36-18-5 21-18 27-36 29z" fill="#ffa6b9"/>
+</svg>
