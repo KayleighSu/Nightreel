@@ -68,7 +68,7 @@ document.getElementById('username-setup-form').addEventListener('submit',async e
  const button=document.getElementById('username-setup-save');
  button.disabled=true;
  try{
-  const result=await state.supabase.from('profiles').update({username}).eq('id',state.user.id).select('id,username,display_name,banner_path,avatar_path').single();
+  const result=await state.supabase.from('profiles').update({username}).eq('id',state.user.id).select('id,username,display_name,banner_path,avatar_path,banner_desktop_x,banner_desktop_y,banner_desktop_zoom,banner_mobile_x,banner_mobile_y,banner_mobile_zoom').single();
   if(result.error)throw result.error;
   ownProfile=result.data;
   handleCheckId=state.user.id;
@@ -88,7 +88,7 @@ async function checkUsernameSetup(){
  if(handleCheckId===id || handleCheckRunning)return;
  handleCheckRunning=true;
  try{
-  const result=await state.supabase.from('profiles').select('id,username,display_name,banner_path,avatar_path').eq('id',id).maybeSingle();
+  const result=await state.supabase.from('profiles').select('id,username,display_name,banner_path,avatar_path,banner_desktop_x,banner_desktop_y,banner_desktop_zoom,banner_mobile_x,banner_mobile_y,banner_mobile_zoom').eq('id',id).maybeSingle();
   if(result.error)throw result.error;
   if(!result.data)return;
   if(state.user?.id!==id)return;
@@ -106,6 +106,115 @@ col.before(social);col.after(friendView);
 const owner=()=>Boolean(state.supabase&&state.user&&!state.demo);
 const lastArt=arr=>[...arr].sort((a,b)=>String(b.updated_at||b.created_at||'').localeCompare(String(a.updated_at||a.created_at||''))).find(x=>cleanedUrl(x.image_url))?.image_url||'';
 function putImage(id,url){const img=$s(id),safe=cleanedUrl(url);if(!img)return;img.hidden=!safe;if(safe)img.src=safe;else img.removeAttribute('src');}
+
+/* Custom banner framing: independently positioned for phone and desktop, stored per owner. */
+const bannerDefaults={banner_desktop_x:50,banner_desktop_y:50,banner_desktop_zoom:1,banner_mobile_x:50,banner_mobile_y:50,banner_mobile_zoom:1};
+let bannerDraft={...bannerDefaults},bannerPendingUrl='';
+const bannerClamp=(val,min,max,fallback)=>Math.max(min,Math.min(max,Number.isFinite(Number(val))?Number(val):fallback));
+function bannerFrame(profile) {
+ const out={};
+ for(const mode of ['desktop','mobile']){
+  out['banner_'+mode+'_x']=Math.round(bannerClamp(profile?.['banner_'+mode+'_x'],0,100,50));
+  out['banner_'+mode+'_y']=Math.round(bannerClamp(profile?.['banner_'+mode+'_y'],0,100,50));
+  out['banner_'+mode+'_zoom']=Math.round(bannerClamp(profile?.['banner_'+mode+'_zoom'],1,3,1)*100)/100;
+ }
+ return out;
+}
+function activeBannerMode(){return window.matchMedia('(max-width: 580px)').matches?'mobile':'desktop';}
+function positionBanner(img,profile,mode){
+ if(!img)return;
+ const f=bannerFrame(profile),which=mode||activeBannerMode();
+ const x=f['banner_'+which+'_x'],y=f['banner_'+which+'_y'],zoom=f['banner_'+which+'_zoom'];
+ img.style.objectPosition=x+'% '+y+'%';
+ img.style.transformOrigin=x+'% '+y+'%';
+ img.style.transform='scale('+zoom+')';
+}
+function frameBannerAt(id,profile,mode){positionBanner($s(id),profile,mode);}
+function repaintBanners(){
+ frameBannerAt('hero-banner-image',ownProfile);
+ frameBannerAt('profile-banner',ownProfile);
+ frameBannerAt('friend-banner',friendProfile);
+}
+function resetBannerObjectUrl(){if(bannerPendingUrl){URL.revokeObjectURL(bannerPendingUrl);bannerPendingUrl='';}}
+function previewBannerSrc(){return bannerPendingUrl||ownBanner||lastArt(state.entries);}
+function updateBannerEditor(){
+ const url=cleanedUrl(previewBannerSrc());
+ for(const mode of ['desktop','mobile']){
+  const img=$s('nr-banner-preview-'+mode),frame=bannerFrame(bannerDraft);
+  if(!img)continue;
+  if(url){img.src=url;img.hidden=false;}else{img.removeAttribute('src');img.hidden=true;}
+  positionBanner(img,frame,mode);
+  for(const axis of ['x','y','zoom']){
+   const val=frame['banner_'+mode+'_'+axis];
+   const input=$s('nr-banner-'+mode+'-'+axis);
+   if(input)input.value=String(axis==='zoom'?Math.round(val*100):val);
+   const output=$s('nr-banner-'+mode+'-'+axis+'-value');
+   if(output)output.textContent=axis==='zoom'?Math.round(val*100)+'%':val+'%';
+  }
+ }
+}
+function initializeBannerEditor(){
+ const fileInput=$s('profile-image-file');
+ if(!fileInput || $s('nr-banner-editor'))return;
+ const editor=document.createElement('section');
+ editor.id='nr-banner-editor';editor.className='nr-banner-editor';
+ editor.innerHTML='<h3>Position your banner</h3><p>Drag or swipe to position your picture, then zoom. Your desktop and phone previews are adjusted separately.</p>'+
+  '<div class="nr-banner-previews">'+['desktop','mobile'].map(mode=>
+   '<fieldset class="nr-banner-panel nr-banner-panel-'+mode+'"><legend>'+(mode==='desktop'?'Desktop preview':'Phone preview')+'</legend>'+
+   '<div class="nr-banner-stage nr-banner-stage-'+mode+'" data-banner-stage="'+mode+'" aria-label="'+mode+' banner; drag to reposition">'+
+   '<img id="nr-banner-preview-'+mode+'" alt="" draggable="false" hidden>'+
+   '<div class="nr-banner-preview-text"><span>STAY OBSESSED.</span><strong>Your anime. Your story.</strong></div></div>'+
+   '<label>Zoom <output id="nr-banner-'+mode+'-zoom-value">100%</output><input type="range" id="nr-banner-'+mode+'-zoom" min="100" max="300" step="5" value="100"></label>'+
+   '<label>Left / right <output id="nr-banner-'+mode+'-x-value">50%</output><input type="range" id="nr-banner-'+mode+'-x" min="0" max="100" step="1" value="50"></label>'+
+   '<label>Up / down <output id="nr-banner-'+mode+'-y-value">50%</output><input type="range" id="nr-banner-'+mode+'-y" min="0" max="100" step="1" value="50"></label>'+
+   '<button type="button" data-banner-reset="'+mode+'" class="nr-banner-reset">Reset '+mode+' position</button></fieldset>'
+  ).join('')+'</div><p class="nr-banner-hint">Preview changes are saved with <strong>Save profile</strong>. Friends see your chosen layout on their screen size.</p>';
+ fileInput.closest('label').after(editor);
+ for(const mode of ['desktop','mobile']){
+  for(const axis of ['zoom','x','y']){
+   $s('nr-banner-'+mode+'-'+axis).addEventListener('input',e=>{
+    bannerDraft['banner_'+mode+'_'+axis]=axis==='zoom'?Number(e.target.value)/100:Number(e.target.value);
+    updateBannerEditor();
+   });
+  }
+ }
+ editor.addEventListener('click',e=>{
+  const reset=e.target.closest('[data-banner-reset]');if(!reset)return;
+  const mode=reset.dataset.bannerReset;
+  for(const axis of ['x','y','zoom'])bannerDraft['banner_'+mode+'_'+axis]=bannerDefaults['banner_'+mode+'_'+axis];
+  updateBannerEditor();
+ });
+ for(const stage of editor.querySelectorAll('[data-banner-stage]')){
+  const mode=stage.dataset.bannerStage;
+  let start=null;
+  stage.addEventListener('pointerdown',e=>{
+   if(e.button!==0 || !owner())return;
+   start={x:e.clientX,y:e.clientY,left:bannerDraft['banner_'+mode+'_x'],top:bannerDraft['banner_'+mode+'_y']};
+   stage.setPointerCapture(e.pointerId);
+   e.preventDefault();
+  });
+  stage.addEventListener('pointermove',e=>{
+   if(!start || !stage.hasPointerCapture(e.pointerId))return;
+   const rect=stage.getBoundingClientRect();
+   const zoom=bannerDraft['banner_'+mode+'_zoom']||1;
+   bannerDraft['banner_'+mode+'_x']=bannerClamp(start.left-(e.clientX-start.x)*100/(rect.width*zoom),0,100,50);
+   bannerDraft['banner_'+mode+'_y']=bannerClamp(start.top-(e.clientY-start.y)*100/(rect.height*zoom),0,100,50);
+   updateBannerEditor();
+  });
+  for(const evt of ['pointerup','pointercancel','lostpointercapture'])stage.addEventListener(evt,()=>{start=null;});
+ }
+ fileInput.addEventListener('change',()=>{
+  resetBannerObjectUrl();
+  const file=fileInput.files?.[0];
+  if(file && ['image/jpeg','image/png','image/webp'].includes(file.type)&&file.size<=4194304)
+   bannerPendingUrl=URL.createObjectURL(file);
+  updateBannerEditor();
+ });
+ updateBannerEditor();
+}
+window.addEventListener('resize',repaintBanners);
+window.addEventListener('pagehide',resetBannerObjectUrl);
+
 function drawHero(){
  if(owner() && (!handleCheckId || handleCheckId!==state.user.id))checkUsernameSetup();
  const account=state.user?.id||'';
@@ -113,7 +222,7 @@ function drawHero(){
  putImage('hero-banner-image',ownBanner||lastArt(state.entries));
  if(owner() && (!ownProfile || currentProfileOwner!==state.user.id) && !loadingProfile){
   loadingProfile=true;
-  state.supabase.from('profiles').select('id,username,display_name,banner_path,avatar_path').eq('id',state.user.id).maybeSingle().then(async r=>{
+  state.supabase.from('profiles').select('id,username,display_name,banner_path,avatar_path,banner_desktop_x,banner_desktop_y,banner_desktop_zoom,banner_mobile_x,banner_mobile_y,banner_mobile_zoom').eq('id',state.user.id).maybeSingle().then(async r=>{
    if(!r.error && r.data && state.user?.id===r.data.id){
     ownProfile=r.data;currentProfileOwner=r.data.id;
     ownBanner=await getSignedBanner(ownProfile);
@@ -304,7 +413,7 @@ $s('friend-back').onclick=()=>show('friends');
 async function loadProfile(){
  if(!need('profile-error'))return;
  try{
-  const r=await state.supabase.from('profiles').select('id,username,display_name,banner_path,avatar_path').eq('id',state.user.id).maybeSingle();
+  const r=await state.supabase.from('profiles').select('id,username,display_name,banner_path,avatar_path,banner_desktop_x,banner_desktop_y,banner_desktop_zoom,banner_mobile_x,banner_mobile_y,banner_mobile_zoom').eq('id',state.user.id).maybeSingle();
   if(r.error)throw r.error;
   ownProfile=r.data;
   if(!ownProfile)throw Error('No profile exists. Run the social database migration.');
@@ -423,7 +532,7 @@ async function viewFriend(id){
  if(!links.some(f=>f.status==='accepted'&&(f.requester_id===state.user.id?f.recipient_id:f.requester_id)===id))return;
  try{
   const [p,e]=await Promise.all([
-   state.supabase.from('profiles').select('id,username,display_name,banner_path,avatar_path').eq('id',id).single(),
+   state.supabase.from('profiles').select('id,username,display_name,banner_path,avatar_path,banner_desktop_x,banner_desktop_y,banner_desktop_zoom,banner_mobile_x,banner_mobile_y,banner_mobile_zoom').eq('id',id).single(),
    state.supabase.rpc('get_friend_anime',{p_friend_id:id})
   ]);
   if(p.error)throw p.error;if(e.error)throw e.error;
