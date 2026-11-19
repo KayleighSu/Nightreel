@@ -107,6 +107,15 @@ function updateCardReleaseInfo(){
  document.querySelectorAll('#anime-grid .anime-card[data-card-id]').forEach(card=>{
   const e=state.entries.find(x=>String(x.id)===card.dataset.cardId);
   if(!e)return;
+  const progress=card.querySelector('.flip-progress');
+  if(progress){
+   const watched=Number(e.episodes_watched)||0;
+   const total=e.catalog_episode_total||e.episodes_total||null;
+   const line=total?watched+' / '+total+' episodes':watched+' episodes watched';
+   if(progress.firstChild?.nodeType===Node.TEXT_NODE)progress.firstChild.nodeValue=line;
+   const bar=progress.querySelector('.progress-fill');
+   if(bar)bar.style.width=(total?Math.min(100,Math.round(100*watched/total)):(e.status==='completed'?100:0))+'%';
+  }
   const back=card.querySelector('.flip-back-content');
   if(back){
    let box=back.querySelector('.nr-card-release-summary');
@@ -159,7 +168,11 @@ function drawDashboard(){
  const area=$('nr-radar-results');if(!area)return;
  const entries=state.entries||[],now=Date.now();
  const scheduled=entries.filter(e=>validDate(e.catalog_next_episode_at)?.getTime()>now).sort((a,b)=>new Date(a.catalog_next_episode_at)-new Date(b.catalog_next_episode_at));
- const sequels=entries.filter(e=>e.catalog_sequel_title).sort((a,b)=>{
+ const sequels=entries.filter(e=>e.catalog_sequel_title && (
+   (validDate(e.catalog_sequel_premiere_at)?.getTime()||0)>now ||
+   /not yet aired|not yet released|upcoming/i.test(e.catalog_sequel_status||'') ||
+   (!e.catalog_sequel_premiere_at && !/finished|released|completed/i.test(e.catalog_sequel_status||''))
+ )).sort((a,b)=>{
   const d=a.catalog_sequel_premiere_at?new Date(a.catalog_sequel_premiere_at).getTime():Infinity;
   const f=b.catalog_sequel_premiere_at?new Date(b.catalog_sequel_premiere_at).getTime():Infinity;
   return d-f;
@@ -193,8 +206,8 @@ const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 let refreshRunning=false,autoProcessed=0,autoUser='';
 function sortForUpdate(){
  const priorities={watching:0,plan_to_watch:1,on_hold:2,untracked:3,completed:4,dropped:5};
- return [...state.entries].sort((a,b)=>(priorities[a.status]??4)-(priorities[b.status]??4)||
- (Date.parse(a.catalog_checked_at)||0)-(Date.parse(b.catalog_checked_at)||0));
+ return [...state.entries].sort((a,b)=>(Date.parse(a.catalog_checked_at)||0)-(Date.parse(b.catalog_checked_at)||0) ||
+ (priorities[a.status]??4)-(priorities[b.status]??4));
 }
 async function refreshBatch(max,manual){
  if(refreshRunning||!authenticated())return;
