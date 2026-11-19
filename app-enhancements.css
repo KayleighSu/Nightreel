@@ -464,3 +464,98 @@
 .hero .nr-hero-actions .nr-watchtime{margin:0}
 .hero .nr-hero-actions #hero-add{margin:0;flex:0 0 auto}
 #anime-episode-fields[hidden]{display:none!important}
+
+
+/* Owner-defined Top Five: an oversized #1 centerpiece and four supporting cards.
+   Remaining favorites appear as ordinary cards in the "More favorites" section. */
+.nr-featured-section{background:linear-gradient(145deg,#302035 0%,#16131e 75%);border-color:#81536d}
+.nr-featured-section .nr-section-heading{gap:12px;flex-wrap:wrap}
+.nr-manage-favorites{background:#573149;border:1px solid #cb87a4;color:#fff;
+ border-radius:9px;font-size:12px;font-weight:800;padding:10px 14px;cursor:pointer}
+.nr-manage-favorites:hover{background:#74425c}
+.nr-manage-favorites:focus-visible{outline:2px solid #ffc0d5;outline-offset:2px}
+.nr-rank-tip{font-size:12px;line-height:1.55;color:#dec9d4;margin:-3px 0 17px}
+.nr-featured-layout{display:grid;grid-template-columns:minmax(0,1.23fr) minmax(0,2fr);gap:14px;min-width:0}
+.nr-primary-spotlight,.nr-supporting-spotlight{min-width:0}
+.nr-supporting-spotlight{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;min-width:0}
+.nr-ranked-favorite{position:relative;display:flex;flex-direction:column;gap:7px;min-width:0;height:100%}
+.nr-ranked-favorite .anime-card{width:100%;flex:1 1 auto;min-height:0;height:auto;border:1px solid rgba(245,157,190,.28)}
+.nr-ranked-favorite .flip-inner{min-height:0;height:100%}
+.nr-primary-spotlight .nr-ranked-favorite{min-height:680px}
+.nr-primary-spotlight .nr-ranked-favorite .anime-card{border:2px solid #f3a5c5;box-shadow:0 0 28px rgba(249,138,189,.15)}
+.nr-primary-spotlight .flip-face .card-image{opacity:.58}
+.nr-primary-spotlight .flip-body{padding:26px 27px 29px}
+.nr-primary-spotlight .flip-body h3{font-size:clamp(34px,3.4vw,56px);line-height:1.04}
+.nr-primary-spotlight .flip-rating button{font-size:32px}
+.nr-rank-heading{display:flex;align-items:center;gap:8px;padding:5px 2px 2px;color:#ffe6ee}
+.nr-rank-heading>span{display:inline-flex;align-items:center;justify-content:center;
+ border-radius:7px;background:#fac0d5;color:#32121f;font:900 14px/1.2 var(--head);padding:7px 9px;min-width:43px}
+.nr-rank-heading>small{font-size:10px;letter-spacing:.12em;font-weight:900;color:#ffcbdc}
+.nr-primary-spotlight .nr-rank-heading>span{font-size:19px;background:#ffc8a6;padding:8px 12px}
+.nr-primary-spotlight .nr-rank-heading>small{color:#ffd4bf}
+.nr-supporting-spotlight .nr-ranked-favorite{min-height:326px}
+.nr-supporting-spotlight .flip-top{padding:10px 11px}
+.nr-supporting-spotlight .flip-body{padding:12px 12px 15px}
+.nr-supporting-spotlight .flip-body h3{font-size:clamp(17px,1.8vw,24px);margin:7px 0 9px}
+.nr-supporting-spotlight .flip-rating{min-height:26px;margin:5px 0}
+.nr-supporting-spotlight .flip-rating button{font-size:20px;padding:1px}
+.nr-supporting-spotlight .flip-rating .rating-text{font-size:10px;margin-left:6px}
+.nr-supporting-spotlight .flip-progress{font-size:10px;margin:7px 0 9px}
+.nr-supporting-spotlight .flip-actions{gap:5px;flex-wrap:wrap}
+.nr-supporting-spotlight .flip-actions button,.nr-supporting-spotlight .flip-actions a{font-size:10px;padding:7px 8px}
+.nr-supporting-spotlight .nr-note-indicator{font-size:9px}
+.nr-supporting-spotlight .flip-top .status-pill{font-size:10px;padding:6px 7px}
+.nr-supporting-spotlight .flip-back-content{padding:14px}
+.nr-supporting-spotlight .flip-back-content h3{font-size:22px}
+.nr-supporting-spotlight .nr-public-note{padding:10px}
+.nr-library-section[data-library-section="other-favorites"] .nr-section-eyebrow{color:#ffbdd1}
+/* Rank editor uses ordinary controls rather than drag only, for phone and keyboard. */
+.nr-rank-dialog{width:min(760px,calc(100vw - 20px));max-width:760px;max-height:min(85dvh,900px);
+ padding:0;border:1px solid #865a73;border-radius:17px;color:#f7ecf2;background:#1b1721;
+ box-shadow:0 24px 90px #000c}
+.nr-rank-dialog::backdrop{background:#06040ac9;backdrop-filter:blur(5px)}
+.nr-rank-dialog-content{padding:24px;overflow-y:auto;max-height:inherit}
+.nr-rank-dialog-head{display:flex;align-items:flex-start;justify-content:space-between;gap:15px}
+.nr-rank-dialog-head h2{font:800 clamp(24px,3vw,32px)/1.2 var(--head);margin:6px 0 10px}
+.nr-rank-dialog-head button{border:1px solid #82556e;color:#fff;background:#2d202e;border-radius:8px;font-size:23px;width:36px;height:36px;cursor:pointer}
+.nr-rank-dialog-content>p{color:#d9c1d0;font-size:12px;line-height:1.65}
+.nr-rank-list{display:flex;flex-direction:column;gap:8px;max-height:50dvh;overflow-y:auto;margin:17px 0}
+.nr-rank-row{display:flex;align-items:center;gap:11px;min-width:0;padding:9px;border:1px solid #594257;background:#28202c;border-radius:10px}
+.nr-rank-number{color:#ffd3e3;font:900 17px var(--head);min-width:29px;text-align:center}
+.nr-rank-thumb{width:43px;height:56px;border-radius:6px;object-fit:cover;flex:0 0 43px}
+.nr-rank-title{font-size:13px;font-weight:800;flex:1;min-width:0;overflow-wrap:anywhere}
+.nr-rank-controls{display:flex;align-items:center;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+.nr-rank-controls select,.nr-rank-controls button,.nr-rank-dialog-buttons button{
+ color:#fff;background:#472d40;border:1px solid #97657f;border-radius:8px;padding:8px 10px;font-size:12px;font-weight:700;cursor:pointer}
+.nr-rank-controls button:disabled,.nr-rank-dialog-buttons button:disabled{opacity:.4;cursor:default}
+.nr-rank-controls select{min-width:55px}
+.nr-rank-error{color:#ffd4d4!important;font-weight:700}
+.nr-rank-dialog-buttons{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin-top:15px}
+.nr-rank-dialog-buttons .nr-rank-save{color:#26131c;background:#f4a6c3;border-color:#f4a6c3}
+@media(max-width:1040px){
+ .nr-featured-layout{grid-template-columns:minmax(0,1fr)}
+ .nr-primary-spotlight .nr-ranked-favorite{min-height:540px}
+ .nr-supporting-spotlight .nr-ranked-favorite{min-height:345px}
+}
+@media(max-width:580px){
+ .nr-featured-section{padding:12px}
+ .nr-featured-section .nr-section-heading{align-items:flex-start}
+ .nr-manage-favorites{font-size:11px;padding:9px 12px}
+ .nr-featured-layout{display:flex;flex-direction:column;gap:15px}
+ .nr-primary-spotlight .nr-ranked-favorite{min-height:min(77svh,770px)}
+ .nr-supporting-spotlight{grid-template-columns:minmax(0,1fr);gap:16px}
+ .nr-supporting-spotlight .nr-ranked-favorite{min-height:min(77svh,770px)}
+ .nr-supporting-spotlight .flip-top{padding:15px}
+ .nr-supporting-spotlight .flip-body{padding:22px}
+ .nr-supporting-spotlight .flip-body h3{font-size:clamp(25px,8vw,39px)}
+ .nr-supporting-spotlight .flip-rating button{font-size:29px;padding:3px 2px}
+ .nr-supporting-spotlight .flip-progress{font-size:12px}
+ .nr-supporting-spotlight .flip-actions button,.nr-supporting-spotlight .flip-actions a{font-size:12px;padding:9px}
+ .nr-primary-spotlight .flip-body h3{font-size:clamp(31px,9vw,44px)}
+ .nr-rank-dialog-content{padding:15px}
+ .nr-rank-row{flex-wrap:wrap;gap:8px}
+ .nr-rank-title{flex:1 1 calc(100% - 110px)}
+ .nr-rank-controls{width:100%;justify-content:space-between}
+ .nr-rank-list{max-height:58dvh}
+}
+@media(prefers-reduced-motion:reduce){.nr-ranked-favorite .flip-inner{transition:none}}
