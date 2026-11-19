@@ -559,3 +559,10 @@
  .nr-rank-list{max-height:58dvh}
 }
 @media(prefers-reduced-motion:reduce){.nr-ranked-favorite .flip-inner{transition:none}}
+
+/* Favorites 6+ keep their place in the archive and show their saved rank. */
+.nr-more-ranked{display:flex;flex-direction:column;gap:7px;min-width:0}
+.nr-more-ranked .anime-card{flex:1}
+.nr-more-ranked-number{display:inline-flex;align-self:flex-start;align-items:center;justify-content:center;
+ min-width:43px;border-radius:7px;padding:6px 10px;background:#4b2d40;
+ border:1px solid #916078;color:#fbd3df;font:900 13px/1.2 var(--head)}
