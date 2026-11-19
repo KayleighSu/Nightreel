@@ -79,20 +79,20 @@
       <aside class="sidebar">
         <div class="sidebar-top"><div class="section-kicker">YOUR SPACE</div><nav id="filters-nav" class="side-nav" aria-label="Library filters">
           <button type="button" data-filter="all" class="selected"><span>◈ &nbsp; All anime</span><span data-count="all">0</span></button>
+          <button type="button" data-filter="untracked"><span>◇ &nbsp; Not sorted yet</span><span data-count="untracked">0</span></button>
           <button type="button" data-filter="watching"><span>◉ &nbsp; Watching</span><span data-count="watching">0</span></button>
           <button type="button" data-filter="completed"><span>✓ &nbsp; Completed</span><span data-count="completed">0</span></button>
-          <button type="button" data-filter="untracked"><span>◇ &nbsp; Not sorted yet</span><span data-count="untracked">0</span></button>
           <button type="button" data-filter="plan_to_watch"><span>⌁ &nbsp; Plan to watch</span><span data-count="plan_to_watch">0</span></button>
           <button type="button" data-filter="on_hold"><span>Ⅱ &nbsp; On hold</span><span data-count="on_hold">0</span></button>
           <button type="button" data-filter="dropped"><span>× &nbsp; Dropped</span><span data-count="dropped">0</span></button>
-        </nav><div class="section-kicker second-kicker">SOMETHING SPECIAL</div><nav class="side-nav"><button type="button" data-filter="favorites"><span><span class="mini-heart">♥</span> &nbsp; Favorites</span><span data-count="favorites">0</span></button></nav></div>
+        </nav><div class="section-kicker second-kicker">SOMETHING SPECIAL</div><nav class="side-nav"><button type="button" data-filter="favorites"><span><span class="mini-heart">♥</span> &nbsp; Favorites</span><span data-count="favorites">0</span></button><button type="button" data-filter="movies"><span>◈ &nbsp; Movies</span><span data-count="movies">0</span></button></nav></div>
         <div class="side-footer"><div class="side-footer-icon">✴</div><h3>Your taste is a story.</h3><p>Keep the good ones close.</p><span>EST. 2026 · NIGHTREEL</span></div>
       </aside>
 
       <main class="main-content">
         <section class="hero">
           <img id="hero-banner-image" class="hero-banner-image" alt="" hidden />
-          <div class="hero-text"><div class="eyebrow">CURATED BY YOU <span class="eyebrow-line"></span> <span id="hero-date"></span></div><h1>Your anime.<br><em>Your universe.</em></h1><p>Your hand-picked artwork and all the stories you collected, now in one better library.</p><button type="button" id="hero-add" class="btn btn-primary">+ &nbsp; Add to collection</button></div>
+          <div class="hero-text"><div class="eyebrow">CREATED BY YOU <span class="eyebrow-line"></span> <span id="hero-date"></span></div><h1>Your anime.<br><em>Your universe.</em></h1><p id="hero-description">Your hand-picked artwork and all the stories you collected, now in one better library.</p><div class="nr-watchtime" aria-live="polite" title="Estimated using 24 minutes per watched regular episode, plus completed movies with a saved runtime."><strong id="nr-hours-watched">0 h</strong><span>ESTIMATED WATCH TIME</span></div><button type="button" id="hero-add" class="btn btn-primary">+ &nbsp; Add to collection</button></div>
           <div class="hero-design" aria-hidden="true"><span class="hero-orbit orbit-a"></span><span class="hero-orbit orbit-b"></span><span class="hero-asterisk">✳</span><span class="hero-script">stay<br>obsessed.</span><span class="hero-japanese">アニメ・アーカイブ</span><span class="hero-number">01 / ∞</span></div>
         </section>
 
@@ -127,6 +127,8 @@
         <div class="form-field"><label for="anime-imdb">IMDb link or IMDb title ID <span class="optional">OPTIONAL</span></label><input id="anime-imdb" placeholder="https://www.imdb.com/title/tt..." /><div class="hint">If left empty, we'll link to an IMDb title search instead.</div></div>
         <div class="form-field"><label for="anime-image">Poster image URL <span class="optional">OPTIONAL</span></label><input id="anime-image" type="url" placeholder="https://..." /></div>
         <div class="favorite-line"><label><input id="anime-favorite" type="checkbox" /><span>♥ &nbsp; Mark as a favorite</span></label></div>
+        <div class="favorite-line"><label><input id="anime-is-movie" type="checkbox" /><span>🎬 &nbsp; This is a movie</span></label></div>
+        <div class="form-field" id="anime-movie-runtime-field" hidden><label for="anime-movie-runtime">Movie runtime in minutes <span class="optional">OPTIONAL</span></label><input id="anime-movie-runtime" type="number" min="1" max="1200" placeholder="e.g. 120" /><p class="hint">Completed movies with a runtime contribute to your watched-hours total.</p></div>
         <div class="form-error" id="anime-error" role="alert" hidden></div>
         <div class="modal-actions"><button id="delete-entry" class="btn btn-delete" type="button" hidden>Delete</button><div class="action-spacer"></div><button class="btn btn-ghost" type="button" data-close="anime-dialog">Cancel</button><button class="btn btn-primary" id="save-anime" type="submit">Save anime ↗</button></div>
       </form>
@@ -230,6 +232,9 @@ function toEntryData(raw) {
   const score = num(raw.rating ?? raw.score);
   const rawFav = raw.favorite ?? raw.favourite ?? raw.favorites;
   const favorite = rawFav === true || rawFav === 1 || /^(true|yes|1|favorite)$/i.test(String(rawFav || ''));
+  const rawMovie = raw.is_movie ?? raw.movie;
+  const isMovie = rawMovie === true || rawMovie === 1 || /^(true|yes|1|movie)$/i.test(String(rawMovie || ''));
+  const runtime = num(raw.movie_runtime_minutes ?? raw.runtime_minutes);
   const mal = num(raw.mal_id);
   return {
     title,
@@ -238,6 +243,8 @@ function toEntryData(raw) {
     episodes_watched: Math.max(0, Math.min(50000, watched)),
     rating: score !== null && score >= 1 && score <= 10 ? score : null,
     favorite,
+    is_movie: isMovie,
+    movie_runtime_minutes: isMovie && runtime !== null && runtime >= 1 && runtime <= 1200 ? runtime : null,
     notes: String(raw.notes ?? raw.comment ?? raw.review ?? '').slice(0, 5000),
     public_notes: String(raw.public_notes ?? '').slice(0, 5000),
     imdb_id: parseImdbId(raw.imdb_id ?? raw.imdb_url ?? raw.imdb),
@@ -252,8 +259,10 @@ function toast(message) {
   const el = $('toast'); el.textContent = String(message); el.classList.add('show');
   clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 4000);
 }
-function prettyDate() {
-  return new Intl.DateTimeFormat('en-US', { month: 'short', year: 'numeric' }).format(new Date()).toUpperCase();
+function prettyDate(value) {
+  const date = value ? new Date(value) : new Date();
+  return new Intl.DateTimeFormat('en-US', { month: 'short', year: 'numeric' })
+    .format(Number.isFinite(date.valueOf()) ? date : new Date()).toUpperCase();
 }
 function showWorkspace() {
   const boot = $('startup-warning'); if (boot) boot.hidden = true;
@@ -263,7 +272,11 @@ function showWorkspace() {
   const display = state.demo ? 'Guest preview' : (state.user?.email || 'My account');
   $('account-label').textContent = display;
   $('account-avatar').textContent = (state.demo ? 'G' : state.user?.email?.[0] || '?').toUpperCase();
-  $('hero-date').textContent = prettyDate();
+  $('hero-date').textContent = prettyDate(state.demo ? null : state.user?.created_at);
+  const creatorId = '46251ce0-c674-4973-b359-53d65ab537b0'; // Public profile ID of original tracker creator; not an email.
+  $('hero-description').textContent = (state.demo || state.user?.id === creatorId)
+    ? 'Your hand-picked artwork and all the stories you collected, now in one better library.'
+    : 'Every watchlist, every favorite, every story. A collection that is entirely yours.';
   render();
 }
 function showAuth(mode = 'signin') {
@@ -322,7 +335,23 @@ function storeDemo() {
 function countBy(filter) {
   if (filter === 'all') return state.entries.length;
   if (filter === 'favorites') return state.entries.filter((e) => e.favorite).length;
-  return state.entries.filter((e) => e.status === filter).length;
+  if (filter === 'movies') return state.entries.filter((e) => e.is_movie).length;
+  return state.entries.filter((e) => e.status === filter && !e.is_movie).length;
+}
+function watchedMinutes(entries) {
+  return (entries || []).reduce((total, entry) => {
+    if (entry.is_movie) {
+      const runtime = Number(entry.movie_runtime_minutes);
+      return total + (entry.status === 'completed' && Number.isFinite(runtime) && runtime > 0
+        ? Math.min(1200, runtime) : 0);
+    }
+    const watched = Number(entry.episodes_watched);
+    return total + (Number.isFinite(watched) ? Math.max(0, Math.min(50000, watched)) * 24 : 0);
+  }, 0);
+}
+function estimatedHours(entries) {
+  return new Intl.NumberFormat('en-US', { maximumFractionDigits: 1 })
+    .format(Math.round(watchedMinutes(entries) / 6) / 10) + ' h';
 }
 function searchNormalize(value) {
   return String(value || '').normalize('NFKD')
@@ -332,7 +361,8 @@ function searchNormalize(value) {
 function filteredEntries() {
   const words = searchNormalize(state.search).split(/\s+/).filter(Boolean);
   const list = state.entries.filter((e) => {
-    const group = state.filter === 'all' || (state.filter === 'favorites' ? e.favorite : e.status === state.filter);
+    const group = state.filter === 'all' || (state.filter === 'favorites'
+      ? e.favorite : state.filter === 'movies' ? e.is_movie : e.status === state.filter && !e.is_movie);
     if (!group || !words.length) return group;
     const text = searchNormalize([e.title, e.notes, e.public_notes, e.synopsis,
       statuses[e.status] || '', e.catalog_sequel_title || ''].join(' '));
@@ -370,13 +400,14 @@ function render() {
   $('stat-completed').textContent = String(countBy('completed'));
   $('stat-watching').textContent = String(countBy('watching'));
   $('stat-favorites').textContent = String(countBy('favorites'));
+  $('nr-hours-watched').textContent = estimatedHours(state.entries);
   document.querySelectorAll('[data-count]').forEach((node) => { node.textContent = String(countBy(node.dataset.count)); });
   document.querySelectorAll('[data-filter]').forEach((button) => {
     const active = button.dataset.filter === state.filter;
     button.classList.toggle('selected', active);
     if (active) button.setAttribute('aria-current', 'page'); else button.removeAttribute('aria-current');
   });
-  const niceLabel = state.filter === 'all' ? 'My collection' : state.filter === 'favorites' ? 'My favorites' : statuses[state.filter];
+  const niceLabel = state.filter === 'all' ? 'My collection' : state.filter === 'favorites' ? 'My favorites' : state.filter === 'movies' ? 'My movies' : statuses[state.filter];
   $('collection-title').innerHTML = `${escapeHtml(niceLabel)}<span class="accent-dot">.</span>`;
   $('filter-label-small').textContent = state.filter === 'all' ? 'ALL TITLES' : niceLabel.toUpperCase();
   const results = filteredEntries();
@@ -405,8 +436,14 @@ function openAnime(entry = null) {
   $('anime-imdb').value = entry?.imdb_id || '';
   $('anime-image').value = entry?.image_url || '';
   $('anime-favorite').checked = Boolean(entry?.favorite);
+  $('anime-is-movie').checked = Boolean(entry?.is_movie);
+  $('anime-movie-runtime').value = entry?.movie_runtime_minutes ?? '';
+  toggleMovieRuntimeField();
   $('delete-entry').hidden = !entry;
   showDialog('anime-dialog');
+}
+function toggleMovieRuntimeField() {
+  $('anime-movie-runtime-field').hidden = !$('anime-is-movie').checked;
 }
 function collectForm() {
   const title = $('anime-title').value.trim();
@@ -422,6 +459,10 @@ function collectForm() {
   const imageUrl = cleanedUrl(imageValue);
   if (imageValue && !imageUrl) throw new Error('Poster image links must start with https://.');
   const selectedRating = num($('anime-rating').value);
+  const isMovie = $('anime-is-movie').checked;
+  const runtime = isMovie ? num($('anime-movie-runtime').value) : null;
+  if (isMovie && runtime !== null && (!Number.isInteger(runtime) || runtime < 1 || runtime > 1200))
+    throw new Error('Movie runtime must be between 1 and 1,200 minutes.');
   return {
     ...state.modalMetadata,
     title: title.slice(0, 200),
@@ -434,6 +475,8 @@ function collectForm() {
     imdb_id: imdbId,
     image_url: imageUrl || null,
     favorite: $('anime-favorite').checked,
+    is_movie: isMovie,
+    movie_runtime_minutes: runtime,
   };
 }
 function showFormError(msg) { $('anime-error').textContent = msg; $('anime-error').hidden = false; }
@@ -732,6 +775,7 @@ function wireEvents() {
   $('sort-select').addEventListener('change', (e) => { state.sort = e.target.value; render(); });
   ['add-btn', 'hero-add', 'empty-add'].forEach((id) => $(id).addEventListener('click', () => openAnime()));
   $('anime-form').addEventListener('submit', saveEntry);
+  $('anime-is-movie').addEventListener('change', toggleMovieRuntimeField);
   $('delete-entry').addEventListener('click', deleteEntry);
   $('anime-grid').addEventListener('click', (event) => {
     const btn = event.target.closest('[data-action]'); if (!btn) return;
