@@ -951,3 +951,18 @@ body:has(#account-menu-button) #account-avatar{display:none!important}
  #nr-stream-editor .nr-stream-icon{flex-basis:34px;height:34px}
  #nr-stream-editor .nr-stream-selected-heading{flex-direction:column;gap:4px}
 }
+
+
+/* Pending friend requests live in Messages as well as Friends. */
+#extra-friend-requests[hidden]{display:none!important}
+#extra-friend-requests{margin:15px 0 23px;padding:14px 16px;background:#251b2b;border:1px solid #714d65;border-radius:13px}
+#extra-friend-requests h3{display:flex;align-items:center;gap:9px;margin:0 0 10px;font-size:15px;color:#ffe1ee}
+#extra-request-count{display:inline-grid;place-items:center;min-width:21px;height:21px;padding:0 5px;border-radius:100px;background:#db86ae;color:#241222;font-size:11px;font-weight:800}
+.nr-request-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-top:1px solid #4a3549}
+.nr-request-row strong{font-size:13px;color:#fff;min-width:0;overflow-wrap:anywhere}
+.nr-request-actions{display:flex;gap:8px;flex-shrink:0}
+.nr-request-actions button{min-height:37px;padding:8px 12px;border-radius:8px;font:700 12px/1.2 var(--body,system-ui);cursor:pointer}
+.nr-request-accept{background:#ec9dbb;color:#291321;border:1px solid #ffc5d9}
+.nr-request-decline{background:#36263a;color:#e9d4df;border:1px solid #805d73}
+.nr-request-actions button:disabled{opacity:.55;cursor:wait}
+@media(max-width:440px){.nr-request-row{flex-wrap:wrap}.nr-request-actions{width:100%}.nr-request-actions button{flex:1}}
