@@ -845,3 +845,30 @@
 @media(display-mode:standalone){
  .app-shell{padding-top:env(safe-area-inset-top,0px)}
 }
+
+
+/* Reliable mobile action for the featured #1, including when artwork is blocked. */
+.nr-primary-mobile-open{display:none}
+@media(max-width:580px){
+ .nr-primary-mobile-open{
+  display:block;width:100%;min-height:44px;margin-top:8px;padding:12px;
+  border-radius:10px;border:1px solid #d98db0;background:#60334f;
+  color:#fff;font:800 13px/1.2 var(--body,Arial,sans-serif);cursor:pointer
+ }
+ .nr-primary-mobile-open:focus-visible{outline:3px solid #ffd4e2;outline-offset:2px}
+ .nr-primary-spotlight .anime-card .card-image{pointer-events:none}
+ .nr-primary-spotlight .anime-card .flip-face::before{pointer-events:none}
+}
+/* Native-style overscroll refresh indicator only in the installed phone app. */
+#nr-pull-refresh{
+ position:fixed;top:calc(4px + env(safe-area-inset-top));left:50%;z-index:1000;
+ transform:translate(-50%,0);opacity:0;pointer-events:none;
+ background:#3f2940;color:#fff;border:1px solid #a77390;
+ border-radius:999px;padding:8px 16px;font:700 12px/1.2 system-ui;
+ box-shadow:0 4px 20px #0007;transition:opacity .12s
+}
+#nr-pull-refresh.nr-pull-active{opacity:1}
+#nr-pull-refresh.nr-pull-ready{background:#75415e}
+/* The account menu is the single authoritative display-name label. */
+body:has(#account-menu-button) #account-label,
+body:has(#account-menu-button) #account-avatar{display:none!important}
