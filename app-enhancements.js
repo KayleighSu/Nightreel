@@ -789,6 +789,19 @@ function show(which){
  if(!library)main.scrollIntoView({block:'start',behavior:'smooth'});
  if(library)render();
 }
+// Sidebar filters always navigate to the library, even from Friends or My Profile.
+// The existing app handler changes the selected filter; run this before it so
+// the collection is visible and then scroll to the filtered results.
+document.querySelector('.sidebar')?.addEventListener('click',event=>{
+ const button=event.target.closest('button[data-filter]');
+ if(!button)return;
+ if(panel!=='library')show('library');
+ window.requestAnimationFrame(()=>{
+  document.querySelector('.collection-section')?.scrollIntoView({
+   block:'start',behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'
+  });
+ });
+},true);
 social.querySelectorAll('[data-social-view]').forEach(b=>b.addEventListener('click',()=>show(b.dataset.socialView)));
 $s('friend-back').onclick=()=>show('friends');
 async function loadProfile(){
