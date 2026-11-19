@@ -131,11 +131,15 @@ function buildCard(e,index,readOnly){
  const pic=cleanedUrl(e.image_url)?'<img class="card-image" loading="lazy" src="'+esc(cleanedUrl(e.image_url))+'" alt="">':'';
  const stars=[1,2,3,4,5].map(n=>'<button type="button" '+(readOnly?'disabled':'data-action="rate" data-id="'+id+'" data-rating="'+(n*2)+'"')+' class="'+(rating&&n<=Math.floor(rating/2)?'rated':rating&&n===Math.ceil(rating/2)?'half-rated':'unrated')+'" title="'+(readOnly?'Rating':'Rate '+n+' stars')+'">★</button>').join('');
  const synopsis=esc(e.synopsis||summaries.get(canonicalTitle(e.title))||'Tap here to load a story summary, or follow the IMDb link.');
- const publicNote=readOnly&&e.public_notes?'<div class="public-note"><strong>Public note:</strong> '+esc(e.public_notes)+'</div>':'';
+ const publicNote=readOnly
+  ? '<section class="nr-public-note"><strong>Public note</strong><p>'+(e.public_notes?esc(e.public_notes):'No public note added yet.')+'</p></section>'
+  : '<section class="nr-public-note nr-note-editor"><label for="nr-note-'+id+'">Public note <small>Visible to accepted friends</small></label><textarea id="nr-note-'+id+'" data-public-note maxlength="5000" rows="3" placeholder="Share your thoughts with friends…">'+esc(e.public_notes||'')+'</textarea><button type="button" data-action="save-public-note" data-id="'+id+'">Save public note</button></section>';
  return '<article class="anime-card" data-card-id="'+id+'"><div class="flip-inner">'+
- '<div class="flip-face front">'+pic+'<div class="flip-top"><span class="status-pill">'+esc(statuses[e.status]||'Not sorted yet')+'</span>'+
+ '<div class="flip-face front">'+pic+'<div class="flip-top">'+(readOnly
+  ? '<span class="status-pill">'+esc(statuses[e.status]||'Not sorted yet')+'</span>'
+  : '<select class="nr-status-select status-pill" data-action="quick-status" data-id="'+id+'" aria-label="Change watch status of '+title+'" title="Change watch status without opening Edit">'+Object.entries(statuses).map(([value,text])=>'<option value="'+value+'"'+(e.status===value?' selected':'')+'>'+esc(text)+'</option>').join('')+'</select>')+
  (readOnly?'':'<button type="button" class="favorite-icon '+(e.favorite?'active':'')+'" data-action="favorite" data-id="'+id+'" aria-label="Toggle favorite">♥</button>')+'</div>'+
- '<div class="flip-body"><div class="art-label">'+(originalByTitle.has(canonicalTitle(e.title))?'ORIGINAL HAND-PICKED ART':'YOUR ANIME LIBRARY')+'</div><h3>'+title+'</h3>'+
+ '<div class="flip-body"><div class="art-label">'+(originalByTitle.has(canonicalTitle(e.title))?'ORIGINAL HAND-PICKED ART':'YOUR ANIME LIBRARY')+'</div>'+(e.public_notes?'<span class="nr-note-indicator">✎ Public note</span>':'')+'<h3>'+title+'</h3>'+
  '<div class="flip-rating">'+stars+'<span class="rating-text">'+(rating?(rating/2)+'/5':'Not rated')+'</span></div>'+
  '<div class="flip-progress">'+esc(progress)+'<div class="progress-track"><div class="progress-fill" style="width:'+percent+'%"></div></div></div>'+
  '<div class="flip-actions">'+(readOnly?'':'<button type="button" data-action="edit" data-id="'+id+'">Edit</button>')+
@@ -145,7 +149,37 @@ function buildCard(e,index,readOnly){
  '<div class="back-actions"><button type="button" data-action="flip">↶ Flip back</button><a href="'+esc(imdbLink(e))+'" target="_blank" rel="noopener noreferrer">IMDb ↗</a></div></div></div></div></article>';
 }
 cardHtml=(e,i)=>buildCard(e,i,false);
-render=function(){sourceRender();drawHero();if(panel==='profile')drawMyBanner();};
+const nrStatusOrder=[
+ ['watching','Currently watching'],
+ ['plan_to_watch','Plan to watch'],
+ ['on_hold','On hold'],
+ ['untracked','Not sorted yet'],
+ ['dropped','Dropped'],
+ ['completed','Completed']
+];
+function organizedMarkup(entries,readOnly){
+ const sections=[];
+ const favorites=entries.filter(e=>e.favorite);
+ if(favorites.length)sections.push({key:'featured',name:'Favorite anime',items:favorites,featured:true});
+ const regular=entries.filter(e=>!e.favorite);
+ for(const [key,name] of nrStatusOrder){
+  const items=regular.filter(e=>e.status===key);
+  if(items.length)sections.push({key,name,items,featured:false});
+ }
+ return sections.map(section=>
+  '<section class="nr-library-section'+(section.featured?' nr-featured-section':'')+'" data-library-section="'+section.key+'">'+
+  '<div class="nr-section-heading"><div><span class="nr-section-eyebrow">'+(section.featured?'✦ TOP PICKS':'WATCH STATUS')+'</span>'+
+  '<h3>'+section.name+' <small>'+section.items.length+'</small></h3></div></div>'+
+  '<div class="anime-grid nr-section-grid">'+section.items.map((entry,i)=>buildCard(entry,i,readOnly)).join('')+'</div></section>'
+ ).join('');
+}
+function displayOrganizedLibrary(){
+ const grid=$s('anime-grid');
+ const all=state.filter==='all';
+ grid.classList.toggle('nr-grouped-library',all);
+ if(all)grid.innerHTML=organizedMarkup(filteredEntries(),false);
+}
+render=function(){sourceRender();displayOrganizedLibrary();drawHero();if(panel==='profile')drawMyBanner();};
 state.sort='title';$s('sort-select').value='title';render();
 function flip(card,e){
  card.classList.toggle('is-flipped');
@@ -183,6 +217,51 @@ async function cardClick(ev,readOnly){
  else if(!readOnly&&action?.dataset.action==='rate'){ev.stopImmediatePropagation();await rate(e,Number(action.dataset.rating));}
  else if(!ev.target.closest('button,a,input,select,textarea'))flip(card,e);
 }
+async function saveQuickStatus(event){
+ const select=event.target.closest('[data-action="quick-status"]');
+ if(!select||state.busy)return;
+ const entry=state.entries.find(e=>String(e.id)===select.dataset.id);
+ if(!entry||!Object.prototype.hasOwnProperty.call(statuses,select.value))return;
+ if(entry.status===select.value)return;
+ const previous=entry.status,next=select.value;
+ state.busy=true;select.disabled=true;
+ try{
+  if(!state.demo){
+   const r=await state.supabase.from('anime_entries').update({status:next}).eq('id',entry.id);
+   if(r.error)throw r.error;
+  }
+  entry.status=next;entry.updated_at=new Date().toISOString();
+  if(state.demo)storeDemo();
+  render();toast('Moved to '+statuses[next]+'.');
+ }catch(error){entry.status=previous;render();toast('Status not saved: '+error.message);}
+ finally{state.busy=false;}
+}
+async function savePublicNote(event){
+ const button=event.target.closest('[data-action="save-public-note"]');
+ if(!button||state.busy)return;
+ const card=button.closest('.anime-card');
+ const entry=state.entries.find(e=>String(e.id)===button.dataset.id);
+ const textarea=card?.querySelector('[data-public-note]');
+ if(!entry||!textarea)return;
+ const text=textarea.value.trim().slice(0,5000);
+ state.busy=true;button.disabled=true;
+ try{
+  if(!state.demo){
+   const r=await state.supabase.from('anime_entries').update({public_notes:text}).eq('id',entry.id);
+   if(r.error)throw r.error;
+  }
+  entry.public_notes=text;entry.updated_at=new Date().toISOString();
+  if(state.demo)storeDemo();
+  render();
+  const cards=Array.from($s('anime-grid').querySelectorAll('.anime-card'));
+  const restored=cards.find(node=>node.dataset.cardId===String(entry.id));
+  restored?.classList.add('is-flipped');
+  toast(text?'Public note saved for accepted friends.':'Public note cleared.');
+ }catch(error){button.disabled=false;toast('Note was not saved: '+error.message);}
+ finally{state.busy=false;}
+}
+$s('anime-grid').addEventListener('change',saveQuickStatus,true);
+$s('anime-grid').addEventListener('click',savePublicNote,true);
 $s('anime-grid').addEventListener('click',e=>cardClick(e,false),true);
 $s('friend-grid').addEventListener('click',e=>cardClick(e,true));
 function show(which){
@@ -333,7 +412,8 @@ async function viewFriend(id){
   putImage('friend-banner',image||lastArt(friendItems));
   $s('friend-name').textContent=friendProfile.display_name;
   $s('friend-handle').textContent='@'+friendProfile.username+' · '+friendItems.length+' anime';
-  $s('friend-grid').innerHTML=[...friendItems].sort((a,b)=>a.title.localeCompare(b.title)).map((a,i)=>buildCard(a,i,true)).join('');
+  $s('friend-grid').classList.add('nr-grouped-library');
+  $s('friend-grid').innerHTML=organizedMarkup([...friendItems].sort((a,b)=>a.title.localeCompare(b.title)),true);
   show('friend');
  }catch(err){note('friends-error','Could not load friend profile: '+err.message);}
 }
