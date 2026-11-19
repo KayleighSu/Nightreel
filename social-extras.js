@@ -31,7 +31,7 @@ messagesTop.type='button';messagesTop.className='btn btn-ghost btn-small';messag
 messagesTop.textContent='✉';messagesTop.title='Messages';
 document.body.append(messagesTop);
 const profileDialog=createDialog('extra-account-dialog','Your Nightreel profile',[
- '<div class="extras-profile-heading"><div class="extras-avatar-large" id="extra-avatar-large">?</div><div><strong id="extra-profile-handle">@username</strong><p id="extra-profile-name">Your anime, your universe.</p></div></div>',
+ '<div class="extras-profile-heading"><div class="extras-avatar-large" id="extra-avatar-large">?</div><div><strong id="extra-profile-name">Your display name</strong><p id="extra-profile-handle">@username</p><button type="button" id="extra-copy-user-id" class="extras-secondary" title="Copy unique username">Copy user ID</button></div></div>',
  '<div class="extras-menu-actions">',
  '<button type="button" id="extra-edit-profile">Edit profile</button>',
  '<button type="button" id="extra-show-qr" class="extras-secondary">My friend QR</button>',
@@ -98,6 +98,12 @@ async function loadOwnProfile(){
  setPicture($('account-button-photo'),myAvatarUrl,label);
  setPicture($('extra-avatar-large'),myAvatarUrl,label);
 }
+$('extra-copy-user-id').onclick=async()=>{
+ const id=myProfile?.username;
+ if(!id)return;
+ try{await navigator.clipboard.writeText(id);message($('extra-profile-status'),'User ID copied: @'+id);}
+ catch{message($('extra-profile-status'),'Your user ID is @'+id);}
+};
 function clearAccount(){
  myProfile=null;myAvatarUrl='';friends=[];conversationId=null;currentUserId='';
  $('account-button-name').textContent='Profile';
@@ -105,7 +111,14 @@ function clearAccount(){
 }
 async function refreshAccount(){
  if(!loggedIn()){if(currentUserId)clearAccount();return;}
- if(currentUserId===state.user.id)return;
+ if(currentUserId===state.user.id){
+  if(myProfile){
+   const label=document.getElementById('account-label');
+   if(label)label.textContent=myProfile.display_name||myProfile.username;
+   $('account-button-name').textContent=myProfile.display_name||myProfile.username||'Profile';
+  }
+  return;
+ }
  currentUserId=state.user.id;
  try{await loadOwnProfile();}catch(e){message($('extra-profile-status'),'Profile unavailable: '+e.message);}
 }
