@@ -1,6 +1,6 @@
-// Configure Nightreel with a Supabase project to enable real accounts.
-// Only use a public/publishable or legacy anon key. NEVER commit a secret or service_role key.
+// Public browser credentials only. Authorization is enforced by Supabase RLS.
+// This file must NEVER contain service_role or sb_secret_ keys.
 window.NIGHTREEL_CONFIG = {
-  supabaseUrl: '',
-  supabaseAnonKey: '',
+  supabaseUrl: 'https://hgnbpiqlwrkomxjqceyk.supabase.co',
+  supabaseAnonKey: 'sb_publishable_XStp2vT3HA6gxS0pJ7FDJQ_Yn5yQ-FQ',
 };
