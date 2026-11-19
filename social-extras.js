@@ -35,6 +35,7 @@ const profileDialog=createDialog('extra-account-dialog','Your Nightreel profile'
  '<div class="extras-menu-actions">',
  '<button type="button" id="extra-edit-profile">Edit profile</button>',
  '<button type="button" id="extra-show-qr" class="extras-secondary">My friend QR</button>',
+ '<button type="button" id="extra-invite" class="extras-primary">✦ Invite to Nightreel</button>',
  '<button type="button" id="extra-scan-qr" class="extras-secondary">Scan a QR</button>',
  '<button type="button" id="extra-open-messages" class="extras-secondary">Messages</button>',
  '<button type="button" id="extra-logout" class="extras-secondary">Log out</button></div>',
@@ -118,6 +119,22 @@ account.addEventListener('click',async()=>{
 $('extra-edit-profile').onclick=()=>{profileDialog.close();document.querySelector('[data-social-view="profile"]')?.click();};
 $('extra-logout').onclick=()=>{profileDialog.close();$('signout-btn')?.click();};
 $('extra-show-qr').onclick=async()=>{profileDialog.close();await showQR();};
+$('extra-invite').onclick=()=>{
+ const link=myProfile?.username?appUrl+'?friend='+encodeURIComponent(myProfile.username):appUrl;
+ const invitation=myProfile?.username
+  ?'Come track anime with me on Nightreel! Create your own watchlist, rank favorites, and find me @'+myProfile.username+'.'
+  :'Come track anime with me on Nightreel! Create your own library and find friends.';
+ profileDialog.close();
+ if(typeof navigator.share==='function'){
+  navigator.share({title:'Nightreel',text:invitation,url:link}).catch(async error=>{
+   if(error?.name==='AbortError')return;
+   try{await navigator.clipboard.writeText(link);toast('Invite link copied!');}
+   catch{toast('Invite link: '+link);}
+  });
+ }else if(navigator.clipboard?.writeText){
+  navigator.clipboard.writeText(link).then(()=>toast('Invite link copied!')).catch(()=>toast('Invite: '+link));
+ }else{toast('Invite: '+link);}
+};
 $('extra-scan-qr').onclick=()=>{profileDialog.close();show(scanDialog);};
 $('extra-open-messages').onclick=()=>{profileDialog.close();openMessages();};
 messagesTop.onclick=openMessages;
