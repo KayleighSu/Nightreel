@@ -192,10 +192,30 @@
   #messages-top-button{min-width:35px;width:35px}
 }
 
-/* Five visible stars are a five-point score; odd legacy values show half a star. */
+/* A true hard-edged half star: same glyph overlaid with exactly 50% clipped fill. */
 .anime-card .flip-rating button.half-rated{
-  background:linear-gradient(90deg,#ffc17a 50%,rgba(255,255,255,.42) 50%);
-  -webkit-background-clip:text;background-clip:text;color:transparent;
+  position:relative;
+  display:inline-grid;
+  place-items:center;
+  color:rgba(255,255,255,.42);
+  background:transparent;
+  -webkit-background-clip:border-box;
+  background-clip:border-box;
+  -webkit-text-fill-color:currentColor;
+  text-shadow:none;
+}
+.anime-card .flip-rating button.half-rated::before{
+  content:"★";
+  position:absolute;
+  inset:0;
+  display:grid;
+  place-items:center;
+  font:inherit;
+  line-height:inherit;
+  color:#ffc17a;
+  -webkit-text-fill-color:#ffc17a;
+  clip-path:inset(0 50% 0 0);
+  pointer-events:none;
 }
 .nr-round-avatar{width:100%;height:100%;object-fit:cover;border-radius:50%}
 .nr-profile-preview{width:70px;height:70px;border-radius:50%;background:#56374a;display:grid;place-items:center;overflow:hidden;margin-bottom:8px}
