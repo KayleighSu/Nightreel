@@ -27,6 +27,7 @@ const detailKeys=[
 ];
 function cacheData(e){return {
   title:e.title,malId:e.mal_id||null,synopsis:e.synopsis||'',format:e.catalog_format||null,
+  durationMinutes:e.catalog_duration_minutes||null,streaming:e.catalog_streaming||[],
   episodeTotal:e.catalog_episode_total,airingStatus:e.catalog_airing_status,
   broadcast:e.catalog_broadcast,premiereAt:e.catalog_premiere_at,
   nextEpisodeAt:e.catalog_next_episode_at,nextEpisodeNumber:e.catalog_next_episode_number,
@@ -54,6 +55,12 @@ function makePatch(e,d){
    ? regularEpisodes : null;
  const result={
   catalog_format:String(d.format||'').trim().toUpperCase().slice(0,30)||null,
+  catalog_duration_minutes:Number.isInteger(d.durationMinutes)&&d.durationMinutes>=1&&d.durationMinutes<=600
+    ?d.durationMinutes:null,
+  catalog_streaming:Array.isArray(d.streaming)?d.streaming.slice(0,15).filter(link=>{
+    try{return !!link?.name&&new URL(link.url).protocol==='https:'}catch{return false}
+  }).map(link=>({name:String(link.name).slice(0,90),url:String(link.url).slice(0,1200)})):[],
+
   catalog_episode_total:verifiedCount,
   catalog_airing_status:String(d.airingStatus||'').slice(0,90)||null,
   catalog_broadcast:String(d.broadcast||'').slice(0,110)||null,
@@ -72,6 +79,10 @@ function makePatch(e,d){
   catalog_source:String(d.source||'Anime catalogue').slice(0,90),
   catalog_checked_at:new Date().toISOString()
  };
+ // Infer typical episode length only while the user has not manually overridden it.
+ if(!e.is_movie && !e.episode_minutes_manual &&
+    Number.isInteger(d.durationMinutes)&&d.durationMinutes>=1&&d.durationMinutes<=600)
+   result.episode_minutes=d.durationMinutes;
  // Persist an identified synopsis only when the user hasn't previously saved one.
  // Never replace a personal edit or incorrectly assign a speculative MAL match.
  if(!e.synopsis && d.synopsis)result.synopsis=String(d.synopsis).slice(0,6500);
@@ -107,9 +118,14 @@ async function refreshEntry(entry,force=false){
 function summary(e){
  const pieces=[];
  const episodes=isRegularSeries(e.catalog_format)?Number(e.catalog_episode_total)||null:null;
- if(!isRegularSeries(e.catalog_format))pieces.push(safe(e.catalog_format)+' · excluded from episode totals');
+ if(e.is_movie){
+  const minutes=Number(e.movie_runtime_minutes)||Number(e.catalog_duration_minutes)||null;
+  pieces.push(minutes?'Movie · '+minutes+' min':'Movie');
+ }else if(!isRegularSeries(e.catalog_format))pieces.push(safe(e.catalog_format).replaceAll('_',' '));
  else if(episodes)pieces.push('<strong>'+episodes+' regular episodes</strong> (catalogue)');
  else if(e.episodes_total)pieces.push('<strong>'+e.episodes_total+' episodes</strong> (saved)');
+ if(!e.is_movie && (e.episode_minutes||e.catalog_duration_minutes))
+  pieces.push(String(e.episode_minutes||e.catalog_duration_minutes)+' min/episode');
  if(e.catalog_airing_status)pieces.push(safe(e.catalog_airing_status));
  if(e.catalog_broadcast)pieces.push(safe(e.catalog_broadcast));
  if(e.catalog_next_episode_at){
@@ -155,6 +171,9 @@ function updateCardReleaseInfo(){
     if(body)body.before(box);else back.append(box);
    }
    box.innerHTML='<strong>Release info</strong>'+summary(e);
+   const watch=back.querySelector('.nr-where-watch');
+   if(watch && window.NightreelStreamingMarkup)
+     watch.innerHTML=window.NightreelStreamingMarkup(e);
    let refresh=box.querySelector('button[data-release-refresh]');
    if(!refresh){
     refresh=document.createElement('button');refresh.type='button';refresh.dataset.releaseRefresh=e.id;
