@@ -10,7 +10,7 @@ const social=document.createElement('section');social.id='social-ui';
 social.innerHTML=[
 '<div class="social-toolbar" id="social-navigation"><button type="button" data-social-view="library">◈ My library</button><button type="button" data-social-view="friends">♡ Friends</button><button type="button" data-social-view="profile">◉ My profile</button></div>',
 '<div class="social-panel" id="social-friends-panel" hidden><h2>Find your people.</h2><p>Search usernames or names. Only accepted friends can see your anime and public notes.</p><div class="social-row"><label class="social-field" style="flex:1">Find a friend<input id="find-person" type="search" maxlength="32" placeholder="Search at least 2 letters"></label><button type="button" id="find-person-btn">Search</button></div><div id="people-results"></div><h2 style="margin-top:20px">Friends and requests</h2><div id="friends-results"></div><p class="social-message" id="friends-error" role="status"></p></div>',
-'<div class="social-panel" id="social-profile-panel" hidden><h2>My public profile.</h2><p>Friends see your anime, ratings and public notes, never your email or private notes.</p><div class="social-hero"><img id="profile-banner" alt="" hidden><div class="social-hero-content"><span class="social-caption">STAY OBSESSED.</span><h2 id="profile-name">Anime fan</h2></div></div><form id="profile-editor"><div class="social-grid"><label class="social-field">Username<input id="profile-handle" pattern="[A-Za-z][A-Za-z0-9_]{2,31}" maxlength="32" required></label><label class="social-field">Display name<input id="profile-display" maxlength="60" required></label></div><p>Banner uses your most recently edited anime artwork unless you upload your own.</p><label class="social-field">Custom banner: JPG, PNG or WebP (maximum 4 MB)<input id="profile-image-file" type="file" accept="image/jpeg,image/png,image/webp"></label><div class="social-toolbar" style="margin-top:15px"><button type="submit">Save profile</button><button type="button" id="remove-banner">Use latest anime image</button></div></form><p class="social-message" id="profile-error" role="status"></p></div>'
+'<div class="social-panel" id="social-profile-panel" hidden><h2>My public profile.</h2><p>Friends see your anime, ratings and public notes, never your email or private notes.</p><div class="social-hero"><img id="profile-banner" alt="" hidden><div class="social-hero-content"><span class="social-caption">STAY OBSESSED.</span><h2 id="profile-name">Anime fan</h2></div></div><form id="profile-editor"><div class="social-grid"><label class="social-field">Username<input id="profile-handle" pattern="[A-Za-z][A-Za-z0-9_]{2,31}" maxlength="32" required></label><label class="social-field">Display name<input id="profile-display" maxlength="60" required></label></div><p>Banner uses your most recently edited anime artwork unless you upload your own.</p><label class="social-field">Custom banner: JPG, PNG or WebP (maximum 4 MB)<input id="profile-image-file" type="file" accept="image/jpeg,image/png,image/webp"></label><label class="social-field">Profile picture (JPG, PNG or WebP, max 2 MB)<input id="profile-avatar-file" type="file" accept="image/jpeg,image/png,image/webp"></label><div class="social-toolbar" style="margin-top:15px"><button type="submit">Save profile</button><button type="button" id="remove-banner">Use latest anime image</button></div></form><p class="social-message" id="profile-error" role="status"></p></div>'
 ].join('');
 const friendView=document.createElement('section');friendView.id='friend-view';friendView.hidden=true;
 friendView.innerHTML=[
@@ -68,7 +68,7 @@ document.getElementById('username-setup-form').addEventListener('submit',async e
  const button=document.getElementById('username-setup-save');
  button.disabled=true;
  try{
-  const result=await state.supabase.from('profiles').update({username}).eq('id',state.user.id).select('id,username,display_name,banner_path').single();
+  const result=await state.supabase.from('profiles').update({username}).eq('id',state.user.id).select('id,username,display_name,banner_path,avatar_path').single();
   if(result.error)throw result.error;
   ownProfile=result.data;
   handleCheckId=state.user.id;
@@ -88,7 +88,7 @@ async function checkUsernameSetup(){
  if(handleCheckId===id || handleCheckRunning)return;
  handleCheckRunning=true;
  try{
-  const result=await state.supabase.from('profiles').select('id,username,display_name,banner_path').eq('id',id).maybeSingle();
+  const result=await state.supabase.from('profiles').select('id,username,display_name,banner_path,avatar_path').eq('id',id).maybeSingle();
   if(result.error)throw result.error;
   if(!result.data)return;
   if(state.user?.id!==id)return;
@@ -113,7 +113,7 @@ function drawHero(){
  putImage('hero-banner-image',ownBanner||lastArt(state.entries));
  if(owner() && (!ownProfile || currentProfileOwner!==state.user.id) && !loadingProfile){
   loadingProfile=true;
-  state.supabase.from('profiles').select('id,username,display_name,banner_path').eq('id',state.user.id).maybeSingle().then(async r=>{
+  state.supabase.from('profiles').select('id,username,display_name,banner_path,avatar_path').eq('id',state.user.id).maybeSingle().then(async r=>{
    if(!r.error && r.data && state.user?.id===r.data.id){
     ownProfile=r.data;currentProfileOwner=r.data.id;
     ownBanner=await getSignedBanner(ownProfile);
@@ -205,7 +205,7 @@ $s('friend-back').onclick=()=>show('friends');
 async function loadProfile(){
  if(!need('profile-error'))return;
  try{
-  const r=await state.supabase.from('profiles').select('id,username,display_name,banner_path').eq('id',state.user.id).maybeSingle();
+  const r=await state.supabase.from('profiles').select('id,username,display_name,banner_path,avatar_path').eq('id',state.user.id).maybeSingle();
   if(r.error)throw r.error;
   ownProfile=r.data;
   if(!ownProfile)throw Error('No profile exists. Run the social database migration.');
@@ -215,11 +215,13 @@ async function loadProfile(){
   ownBanner=await getSignedBanner(ownProfile);
   currentProfileOwner=ownProfile.id;
   drawMyBanner();drawHero();
+  refreshAccountAvatar();
   note('profile-error','Only accepted friends can see your profile.');
  }catch(err){note('profile-error','Profile unavailable: '+err.message);}
 }
 function drawMyBanner(){
  $s('profile-name').textContent=ownProfile?.display_name||'Anime fan';
+ refreshAccountAvatar();
  putImage('profile-banner',ownBanner||lastArt(state.entries));
 }
 async function getSignedBanner(p){
@@ -234,20 +236,29 @@ $s('profile-editor').addEventListener('submit',async ev=>{
  const username=$s('profile-handle').value.trim(),display_name=$s('profile-display').value.trim();
  if(!/^[A-Za-z][A-Za-z0-9_]{2,31}$/.test(username)||!display_name||display_name.length>60){note('profile-error','Invalid username or display name.');return;}
  const file=$s('profile-image-file').files?.[0];
+ const avatarFile=$s('profile-avatar-file').files?.[0];
+ if(avatarFile && (!['image/png','image/jpeg','image/webp'].includes(avatarFile.type)||avatarFile.size>2097152)){note('profile-error','Profile picture must be JPG, PNG or WebP and under 2 MB.');return;}
  if(file && (!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>4194304)){note('profile-error','Choose a JPG, PNG or WebP under 4 MB.');return;}
  try{
   let banner_path=ownProfile?.banner_path||null;
+  let avatar_path=ownProfile?.avatar_path||null;
+  if(avatarFile){
+   const ext={'image/png':'png','image/jpeg':'jpg','image/webp':'webp'}[avatarFile.type];
+   avatar_path=state.user.id+'/'+newLocalId()+'.'+ext;
+   const uploaded=await state.supabase.storage.from('nightreel-avatars').upload(avatar_path,avatarFile,{upsert:false,contentType:avatarFile.type});
+   if(uploaded.error)throw uploaded.error;
+  }
   if(file){
    const ext={'image/png':'png','image/jpeg':'jpg','image/webp':'webp'}[file.type];
    banner_path=state.user.id+'/'+newLocalId()+'.'+ext;
    const uploaded=await state.supabase.storage.from('nightreel-banners').upload(banner_path,file,{upsert:false,contentType:file.type});
    if(uploaded.error)throw uploaded.error;
   }
-  const r=await state.supabase.from('profiles').update({username,display_name,banner_path}).eq('id',state.user.id);
+  const r=await state.supabase.from('profiles').update({username,display_name,banner_path,avatar_path}).eq('id',state.user.id);
   if(r.error)throw r.error;
-  ownProfile={...ownProfile,username,display_name,banner_path};
+  ownProfile={...ownProfile,username,display_name,banner_path,avatar_path};
   ownBanner=await getSignedBanner(ownProfile);
-  drawMyBanner();drawHero();$s('profile-image-file').value='';note('profile-error','Profile saved.');
+  drawMyBanner();drawHero();$s('profile-image-file').value='';$s('profile-avatar-file').value='';refreshAccountAvatar();note('profile-error','Profile saved.');
  }catch(e){note('profile-error', e.code==='23505'?'That username is already taken. Please choose another.':'Save failed: '+e.message);}
 });
 $s('remove-banner').onclick=async()=>{
@@ -313,7 +324,7 @@ async function viewFriend(id){
  if(!links.some(f=>f.status==='accepted'&&(f.requester_id===state.user.id?f.recipient_id:f.requester_id)===id))return;
  try{
   const [p,e]=await Promise.all([
-   state.supabase.from('profiles').select('id,username,display_name,banner_path').eq('id',id).single(),
+   state.supabase.from('profiles').select('id,username,display_name,banner_path,avatar_path').eq('id',id).single(),
    state.supabase.rpc('get_friend_anime',{p_friend_id:id})
   ]);
   if(p.error)throw p.error;if(e.error)throw e.error;
