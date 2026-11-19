@@ -32,7 +32,7 @@
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important}}
 
 </style>
-  <link rel="stylesheet" href="app-enhancements.css?v=9" />
+  <link rel="stylesheet" href="app-enhancements.css?v=10" />
 </head>
 <body>
   <section id="startup-warning" role="status" style="max-width:700px;margin:64px auto 20px;padding:24px;color:#eee;background:#27212c;border:1px solid #805362;border-radius:12px;font:15px/1.55 Arial,sans-serif">
@@ -348,7 +348,7 @@ function cardHtml(entry, index) {
   const status = statuses[entry.status] || statuses.plan_to_watch;
   const posterUrl = cleanedUrl(entry.image_url);
   const poster = posterUrl ? `<img src="${escapeHtml(posterUrl)}" alt="Cover art for ${escapeHtml(entry.title)}" loading="lazy" referrerpolicy="no-referrer" />` : '';
-  const meta = originalByTitle.has(canonicalTitle(entry.title)) ? 'YOUR ORIGINAL ARTWORK' : (entry.year ? `${entry.year} · ANIME` : 'MY COLLECTION');
+  const meta = originalByTitle.has(canonicalTitle(entry.title)) ? 'YOUR ANIME LIBRARY' : (entry.year ? `${entry.year} · ANIME` : 'MY COLLECTION');
   const progress = total ? `${watched} / ${total} eps` : (watched ? `${watched} eps watched` : 'No progress yet');
   return `<article class="anime-card">
     <div class="poster poster-${(index % 5) + 1}"><div class="poster-fallback">${escapeHtml(entry.title)}</div>${poster}<div class="poster-top"><span class="status-pill ${escapeHtml(entry.status)}">${escapeHtml(status)}</span><button type="button" class="favorite-icon ${entry.favorite ? 'active' : ''}" data-action="favorite" data-id="${escapeHtml(entry.id)}" aria-label="${entry.favorite ? 'Remove from' : 'Add to'} favorites: ${escapeHtml(entry.title)}" title="Toggle favorite">♥</button></div></div>
@@ -748,8 +748,8 @@ start();
 <script defer src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-<script defer src="app-enhancements.js?v=9"></script>
-<script defer src="nightreel-releases.js?v=2"></script>
+<script defer src="app-enhancements.js?v=10"></script>
+<script defer src="nightreel-releases.js?v=3"></script>
 <script defer src="social-extras.js?v=2"></script>
 </body>
 </html>
