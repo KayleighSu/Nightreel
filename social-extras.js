@@ -401,7 +401,6 @@ async function pendingInvite(){
  await findQRPerson(name);
 }
 setInterval(pendingInvite,1800);
-}
 /* Messenger-style desktop dock and mobile floating entry point. */
 const nrDock=document.createElement('aside');nrDock.id='nr-chat-dock';nrDock.setAttribute('aria-label','Open conversations');document.body.append(nrDock);
 const nrBubble=document.createElement('button');nrBubble.id='nr-chat-fab';nrBubble.type='button';nrBubble.setAttribute('aria-label','Open messages');nrBubble.textContent='✉';document.body.append(nrBubble);
