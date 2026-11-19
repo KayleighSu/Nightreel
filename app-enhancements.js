@@ -889,6 +889,7 @@ async function refreshFriends(){
   note('friends-error','');
  }catch(e){note('friends-error','Unable to load friends: '+e.message);}
 }
+document.addEventListener('nightreel:friendship-changed',()=>{if(panel==='friends')refreshFriends();});
 $s('friends-results').addEventListener('click',async ev=>{
  const b=ev.target.closest('[data-friend-action]');if(!b||!owner())return;
  if(b.dataset.friendAction==='view'){viewFriend(b.dataset.friendId);return;}
