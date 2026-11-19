@@ -457,3 +457,10 @@
  .nr-watchtime strong{font-size:17px}
  .nr-watchtime span{font-size:8px;letter-spacing:.06em}
 }
+
+
+/* Watch-time badge + Add button: deliberate spacing on phone and desktop. */
+.hero .nr-hero-actions{display:flex;align-items:center;flex-wrap:wrap;gap:12px;position:relative;z-index:3}
+.hero .nr-hero-actions .nr-watchtime{margin:0}
+.hero .nr-hero-actions #hero-add{margin:0;flex:0 0 auto}
+#anime-episode-fields[hidden]{display:none!important}
