@@ -349,7 +349,9 @@ function spotlightMarkup(items,readOnly){
   '<div class="nr-ranked-favorite nr-rank-'+rank+'">'+
   '<div class="nr-rank-heading"><span>#'+String(rank).padStart(2,'0')+'</span><small>'+
   (rank===1?(readOnly?'ALL-TIME #1':'YOUR ALL-TIME #1'):'TOP FIVE FAVORITE')+'</small></div>'+
-  buildCard(entry,rank-1,readOnly)+'</div>';
+  buildCard(entry,rank-1,readOnly)+
+  (rank===1?'':'<button type="button" class="nr-favorite-mobile-toggle" data-favorite-expand aria-expanded="false" aria-label="Expand details for '+esc(entry.title)+'">View details <span aria-hidden="true">⌄</span></button>')+
+  '</div>';
  return '<section class="nr-library-section nr-featured-section" data-library-section="featured">'+
   '<div class="nr-section-heading"><div><span class="nr-section-eyebrow">'+(readOnly?'✦ ALL-TIME TOP FIVE':'✦ YOUR ALL-TIME TOP FIVE')+'</span>'+
   '<h3>Favorite anime <small>'+items.length+'</small></h3></div>'+
@@ -534,8 +536,41 @@ async function rate(e,n){
  }catch(err){toast('Rating not saved: '+err.message);}
  finally{state.busy=false;}
 }
+function setMobileFavoriteExpanded(wrapper,expanded){
+ if(!wrapper)return;
+ // Keep only one supporting favorite expanded at a time.
+ const grid=wrapper.closest('.nr-supporting-spotlight');
+ if(expanded&&grid)for(const other of grid.querySelectorAll('.nr-ranked-favorite.is-expanded')){
+  if(other!==wrapper)setMobileFavoriteExpanded(other,false);
+ }
+ wrapper.classList.toggle('is-expanded',expanded);
+ const button=wrapper.querySelector('[data-favorite-expand]');
+ if(button){
+  button.setAttribute('aria-expanded',String(expanded));
+  button.innerHTML=expanded?'Show less <span aria-hidden="true">⌃</span>':'View details <span aria-hidden="true">⌄</span>';
+  const card=wrapper.querySelector('.anime-card');
+  const title=card?.querySelector('.flip-body h3')?.textContent||'favorite';
+  button.setAttribute('aria-label',(expanded?'Collapse':'Expand')+' details for '+title);
+ }
+ if(!expanded)wrapper.querySelector('.anime-card')?.classList.remove('is-flipped');
+}
+function favoriteToggleClick(event){
+ const button=event.target.closest('[data-favorite-expand]');
+ if(!button)return;
+ event.preventDefault();
+ event.stopImmediatePropagation();
+ const wrapper=button.closest('.nr-ranked-favorite');
+ setMobileFavoriteExpanded(wrapper,!wrapper?.classList.contains('is-expanded'));
+}
 async function cardClick(ev,readOnly){
  const card=ev.target.closest('.anime-card');if(!card)return;
+ const compact=card.closest('.nr-supporting-spotlight .nr-ranked-favorite');
+ if(compact&&window.matchMedia('(max-width:580px)').matches&&!compact.classList.contains('is-expanded')){
+  // The first tap opens the full card instead of flipping an unreadably small tile.
+  ev.preventDefault();ev.stopImmediatePropagation();
+  setMobileFavoriteExpanded(compact,true);
+  return;
+ }
  const e=(readOnly?friendItems:state.entries).find(x=>String(x.id)===card.dataset.cardId);
  const action=ev.target.closest('[data-action]');
  if(action?.dataset.action==='flip'){ev.stopImmediatePropagation();flip(card,e);}
@@ -587,6 +622,8 @@ async function savePublicNote(event){
 }
 $s('anime-grid').addEventListener('change',saveQuickStatus,true);
 $s('anime-grid').addEventListener('click',savePublicNote,true);
+$s('anime-grid').addEventListener('click',favoriteToggleClick,true);
+$s('friend-grid').addEventListener('click',favoriteToggleClick,true);
 $s('anime-grid').addEventListener('click',e=>cardClick(e,false),true);
 $s('friend-grid').addEventListener('click',e=>cardClick(e,true));
 function show(which){
