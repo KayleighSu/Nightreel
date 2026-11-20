@@ -1164,3 +1164,6 @@ body:has(#account-menu-button) #account-avatar{display:none!important}
 .nr-moderation-card p{margin:0 0 10px;font-size:13px;line-height:1.55;white-space:pre-wrap}
 .nr-moderation-card .nr-moderation-meta{font-size:11px;color:#c4aabf}
 .nr-moderation-card button{min-height:36px}
+
+#nr-moderation-open .nr-moderation-count{display:inline-flex;align-items:center;justify-content:center;margin-left:8px;padding:2px 7px;border-radius:999px;background:#d14d78;color:white;min-width:21px;font-size:11px;font-weight:800;line-height:1.5}
+#nr-moderation-open .nr-moderation-count[hidden]{display:none}
