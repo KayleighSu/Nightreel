@@ -1188,3 +1188,115 @@ body:has(#account-menu-button) #account-avatar{display:none!important}
 .nr-inspector-entry strong{display:block;font-size:13px}
 .nr-inspector-entry p{font-size:12px;margin:5px 0 0}
 @media(max-width:620px){.nr-inspector-artwork{grid-template-columns:1fr}.nr-inspector-identity{align-items:flex-start}.nr-inspector-actions button{flex-basis:125px}}
+
+/* Nightreel moderation center v6 — independent responsive workspace */
+#nr-moderation-dialog.nr-mod-workspace{
+ width:min(1180px,calc(100vw - 48px));max-width:1180px;max-height:calc(100dvh - 36px);
+ height:min(850px,calc(100dvh - 36px));margin:auto;padding:0;overflow:hidden;
+ box-sizing:border-box;border:1px solid #75556f;border-radius:18px;background:#15111c;color:#f9eef6;
+}
+#nr-moderation-dialog.nr-mod-workspace *{box-sizing:border-box}
+#nr-moderation-dialog .nr-mod-shell{display:flex;flex-direction:column;width:100%;height:100%;min-width:0;overflow:hidden}
+#nr-moderation-dialog .nr-mod-header{
+ display:flex;justify-content:space-between;align-items:flex-start;gap:18px;padding:22px 25px 17px;
+ background:linear-gradient(110deg,#342337,#1d1725);border-bottom:1px solid #62435a;
+}
+#nr-moderation-dialog .nr-mod-header>div{min-width:0}
+#nr-moderation-dialog .nr-mod-header h2{font-size:clamp(23px,2.6vw,32px);margin:2px 0 6px;line-height:1.15}
+#nr-moderation-dialog .nr-mod-header p{margin:0;font-size:12px;color:#d6c4d2;line-height:1.5}
+#nr-moderation-dialog .nr-mod-eyebrow{font:800 10px/1.5 var(--body,system-ui);letter-spacing:.15em;color:#ec9fbb;text-transform:uppercase;margin:0}
+#nr-moderation-dialog .nr-mod-header button{flex:0 0 auto;min-height:39px;font-size:12px}
+#nr-moderation-dialog .nr-mod-toolbar{
+ padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+ border-bottom:1px solid #473648;background:#1b1623;
+}
+#nr-moderation-dialog .nr-mod-summary{font-size:12px;font-weight:800;color:#f6dbe8}
+#nr-moderation-dialog .nr-mod-toolbar-actions{display:flex;align-items:center;gap:9px;min-width:0}
+#nr-moderation-dialog .nr-mod-toolbar-actions label{font-size:12px;color:#c9b3c3}
+#nr-moderation-dialog #nr-mod-filter{min-width:120px;width:auto;max-width:155px;padding:9px;border:1px solid #77556b;background:#29202f;color:#fff;border-radius:8px;font-size:12px}
+#nr-moderation-dialog #nr-moderation-refresh{padding:9px 12px;min-height:38px;background:#332639;color:#f6deeb;border:1px solid #7d5a73;border-radius:8px}
+#nr-moderation-dialog .nr-mod-status{min-height:0;margin:0;padding:0 24px;color:#f3b8cf;font-size:12px}
+#nr-moderation-dialog .nr-mod-status:not(:empty){padding:8px 24px;border-bottom:1px solid #5b4057}
+#nr-moderation-dialog .nr-mod-columns{display:grid;grid-template-columns:minmax(270px,355px) minmax(0,1fr);min-height:0;flex:1;overflow:hidden}
+#nr-moderation-dialog .nr-mod-queue{min-width:0;overflow-y:auto;overscroll-behavior:contain;padding:15px;background:#18131e;border-right:1px solid #49364a}
+#nr-moderation-dialog .nr-moderation-list{display:grid;gap:12px;margin:0}
+#nr-moderation-dialog .nr-mod-case{
+ display:flex;flex-direction:column;gap:11px;min-width:0;padding:15px;border-radius:13px;background:#251c2c;
+ border:1px solid #584356;overflow-wrap:anywhere;
+}
+#nr-moderation-dialog .nr-mod-case.is-selected{border-color:#e78cad;box-shadow:inset 3px 0 #e78cad}
+#nr-moderation-dialog .nr-mod-case-top{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+#nr-moderation-dialog .nr-mod-category{font-size:10px;text-transform:uppercase;letter-spacing:.07em;font-weight:800;color:#f1b8cd}
+#nr-moderation-dialog .nr-mod-state{font-size:10px;font-weight:800;padding:5px 8px;border-radius:100px;background:#443747;color:#e4d1dc}
+#nr-moderation-dialog .nr-mod-state.is-pending{background:#5a344b;color:#ffe0ee}
+#nr-moderation-dialog .nr-mod-case-identity{display:flex;align-items:center;gap:10px;min-width:0}
+#nr-moderation-dialog .nr-mod-case-identity>div:last-child{min-width:0}
+#nr-moderation-dialog .nr-mod-case-identity strong{display:block;overflow-wrap:anywhere;font-size:15px;line-height:1.3}
+#nr-moderation-dialog .nr-mod-case-identity small{display:block;color:#cdb8cb;font-size:11px;overflow-wrap:anywhere}
+#nr-moderation-dialog .nr-mod-case-avatar{display:grid;place-items:center;width:42px;height:42px;flex:0 0 42px;border-radius:50%;background:#694459;color:#fff;font-weight:900}
+#nr-moderation-dialog .nr-mod-case-reason{margin:0;line-height:1.55;color:#f3e2eb;font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere}
+#nr-moderation-dialog .nr-mod-case-meta{margin:0;font-size:10px;color:#c6aec0;line-height:1.5}
+#nr-moderation-dialog .nr-mod-card-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;min-width:0}
+#nr-moderation-dialog button.nr-mod-button{
+ width:100%;min-width:0;min-height:40px;padding:9px 8px;border-radius:9px;
+ background:#37283b;border:1px solid #76556d;color:#ffe1ed;cursor:pointer;
+ font:750 11px/1.3 var(--body,system-ui);white-space:normal;text-align:center;overflow-wrap:anywhere;
+}
+#nr-moderation-dialog button.nr-mod-button:hover{background:#50354e;border-color:#b47d9a}
+#nr-moderation-dialog button.nr-mod-button:disabled{opacity:.45;cursor:not-allowed}
+#nr-moderation-dialog button.nr-mod-button-warn{border-color:#ac647a;color:#ffd1da;background:#412530}
+#nr-moderation-dialog button.nr-mod-button-primary{background:#e98cab;border-color:#f2a9c5;color:#21121b}
+#nr-moderation-dialog button.nr-mod-button-muted{background:#29222d}
+#nr-moderation-dialog .nr-mod-no-reports{padding:20px;color:#dbc6d2;font-size:13px}
+#nr-moderation-dialog .nr-mod-detail{min-width:0;min-height:0;padding:21px 24px 30px;overflow-y:auto;overscroll-behavior:contain;background:#201927}
+#nr-moderation-dialog .nr-mod-detail-header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:17px}
+#nr-moderation-dialog .nr-mod-detail-header h3{font:800 22px/1.2 var(--head,system-ui);margin:0}
+#nr-moderation-dialog .nr-mod-mobile-back{display:none}
+#nr-moderation-dialog .nr-mod-empty{display:grid;place-content:center;min-height:280px;text-align:center;gap:6px;color:#f0d4e4}
+#nr-moderation-dialog .nr-mod-empty p{color:#bba6b5;font-size:13px;margin:0}
+#nr-moderation-dialog .nr-mod-user{display:flex;align-items:center;gap:14px;padding:5px 0 16px;min-width:0}
+#nr-moderation-dialog .nr-mod-user>div:last-child{min-width:0}
+#nr-moderation-dialog .nr-mod-user-avatar{display:grid;place-items:center;width:70px;height:70px;flex:0 0 70px;background:#5f4155;border-radius:50%;font-size:28px;font-weight:900;overflow:hidden}
+#nr-moderation-dialog .nr-mod-user-avatar img{width:100%;height:100%;object-fit:cover}
+#nr-moderation-dialog .nr-mod-user h3{margin:0 0 3px;font:800 19px/1.2 var(--head,system-ui);overflow-wrap:anywhere}
+#nr-moderation-dialog .nr-mod-muted{font-size:12px;color:#cdbbcb;margin:4px 0;line-height:1.6;overflow-wrap:anywhere}
+#nr-moderation-dialog .nr-mod-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin:0 0 16px}
+#nr-moderation-dialog .nr-mod-stat{border:1px solid #68465f;background:#302238;padding:13px 14px;border-radius:11px;min-width:0}
+#nr-moderation-dialog .nr-mod-stat strong{display:block;font-size:21px;overflow-wrap:anywhere;line-height:1.25}
+#nr-moderation-dialog .nr-mod-stat span{display:block;margin-top:4px;color:#d9becd;font-size:11px}
+#nr-moderation-dialog .nr-mod-detail-section{padding:17px 0;border-top:1px solid #543c52;scroll-margin-top:16px}
+#nr-moderation-dialog .nr-mod-detail-section h4{font-size:14px;margin:0 0 9px;color:#ffe4ef}
+#nr-moderation-dialog .nr-mod-reason-full{white-space:pre-wrap;overflow-wrap:anywhere;background:#32243a;border:1px solid #65455e;border-radius:10px;padding:13px;font-size:13px;line-height:1.6;margin:7px 0 0}
+#nr-moderation-dialog .nr-mod-banner{display:block;max-width:100%;width:100%;max-height:205px;object-fit:cover;border-radius:11px;margin-top:10px}
+#nr-moderation-dialog .nr-mod-art-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:9px;max-height:390px;overflow-y:auto;margin-top:13px}
+#nr-moderation-dialog .nr-mod-art-card{min-width:0;display:flex;gap:9px;padding:9px;border:1px solid #5f4861;border-radius:10px;background:#281d30}
+#nr-moderation-dialog .nr-mod-art-card img{width:52px;height:75px;object-fit:cover;flex:0 0 52px;border-radius:5px}
+#nr-moderation-dialog .nr-mod-art-card strong{font-size:12px;overflow-wrap:anywhere}
+#nr-moderation-dialog .nr-mod-art-card p{font-size:11px;line-height:1.5;overflow-wrap:anywhere}
+#nr-moderation-dialog .nr-mod-action-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:13px}
+#nr-moderation-dialog .nr-mod-wait,#nr-moderation-dialog .nr-mod-error{font-size:13px;color:#efbed3}
+@media(max-width:720px){
+ #nr-moderation-dialog.nr-mod-workspace{width:calc(100vw - 16px);max-width:none;height:calc(100dvh - 20px);max-height:calc(100dvh - 20px);border-radius:12px}
+ #nr-moderation-dialog .nr-mod-header{padding:16px 15px 12px;gap:9px}
+ #nr-moderation-dialog .nr-mod-header h2{font-size:22px}
+ #nr-moderation-dialog .nr-mod-header p{font-size:11px}
+ #nr-moderation-dialog .nr-mod-header button{font-size:11px;padding:8px;min-height:37px}
+ #nr-moderation-dialog .nr-mod-toolbar{padding:10px 14px;align-items:stretch}
+ #nr-moderation-dialog .nr-mod-toolbar-actions{width:100%;justify-content:space-between}
+ #nr-moderation-dialog #nr-mod-filter{flex:1;max-width:none}
+ #nr-moderation-dialog .nr-mod-columns{display:block;position:relative;overflow:hidden}
+ #nr-moderation-dialog .nr-mod-queue{height:100%;border-right:0;padding:12px;overflow-y:auto}
+ #nr-moderation-dialog .nr-mod-detail{display:none;position:absolute;inset:0;z-index:2;overflow-y:auto;padding:15px;background:#201927}
+ #nr-moderation-dialog .nr-mod-detail.nr-mod-detail-open{display:block}
+ #nr-moderation-dialog .nr-mod-mobile-back{display:inline-block;border:1px solid #806078;border-radius:8px;background:#36243a;color:#fff;padding:9px;font-size:12px}
+ #nr-moderation-dialog .nr-mod-card-actions{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #nr-moderation-dialog .nr-mod-case{padding:13px}
+ #nr-moderation-dialog .nr-mod-stat strong{font-size:18px}
+ #nr-moderation-dialog .nr-mod-art-grid{grid-template-columns:1fr}
+}
+@media(max-width:370px){
+ #nr-moderation-dialog .nr-mod-toolbar-actions{flex-wrap:wrap}
+ #nr-moderation-dialog .nr-mod-toolbar-actions label{display:none}
+ #nr-moderation-dialog .nr-mod-header h2{font-size:19px}
+ #nr-moderation-dialog .nr-mod-card-actions{grid-template-columns:1fr 1fr}
+}
