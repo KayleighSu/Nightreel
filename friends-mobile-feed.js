@@ -6,7 +6,8 @@
   const feed=document.createElement('section');
   feed.id='nr-mobile-friend-activity';
   feed.setAttribute('aria-label','Friends anime activity');
-  feed.innerHTML='<div class="nrf-hero"><span>THE COMMUNITY FEED</span><h2>What your friends<br>are <em>watching.</em></h2><p>Anime updates and recommendations from your accepted friends.</p></div>'+
+  feed.innerHTML='<nav class="nrf-page-tabs" aria-label="Community sections"><button type="button" data-community-view="home">⌂ For You</button><button type="button" data-community-view="activity" aria-current="page">♧ Activity</button><button type="button" data-community-view="friends">♧ Friends</button><button type="button" data-community-view="messages">✉ Messages</button></nav>'+ 
+    '<div class="nrf-hero"><span>THE COMMUNITY FEED</span><h2>What your friends<br>are <em>watching.</em></h2><p>Anime updates and recommendations from your accepted friends.</p></div>'+
     '<div class="nrf-filters" role="group" aria-label="Activity filter">'+
     '<button type="button" data-feed-filter="all" aria-pressed="true">All activity</button>'+
     '<button type="button" data-feed-filter="watching" aria-pressed="false">Watching</button>'+
@@ -14,6 +15,26 @@
     '<div class="nrf-items" aria-live="polite"><p class="nrf-message">Loading your friends’ collections…</p></div>'+
     '<div class="nrf-bottom"><button type="button" data-feed-refresh>Refresh activity ↻</button></div>';
   panel.prepend(feed);
+  // Preserve Nightreel's existing friend search, requests and profile actions.
+  const manager=document.createElement('div');manager.id='nrf-friend-manager';
+  const first=feed.nextSibling;
+  while(feed.nextSibling)manager.append(feed.nextSibling);
+  panel.append(manager);
+  manager.hidden=true;
+  let communityView='activity';
+  function switchCommunity(view){
+    communityView=view;
+    feed.querySelectorAll('[data-community-view]').forEach(b=>{
+      if(b.dataset.communityView===view)b.setAttribute('aria-current','page');
+      else b.removeAttribute('aria-current');
+    });
+    feed.querySelector('.nrf-hero').hidden=view==='friends';
+    feed.querySelector('.nrf-filters').hidden=view==='friends';
+    feed.querySelector('.nrf-items').hidden=view==='friends';
+    feed.querySelector('.nrf-bottom').hidden=view==='friends';
+    manager.hidden=view!=='friends';
+    if(view==='friends')manager.scrollIntoView({block:'nearest',behavior:'smooth'});
+  }
   const list=feed.querySelector('.nrf-items');
   const mobile=()=>window.matchMedia('(max-width:780px)').matches;
   const validImage=(s)=>{try{const u=new URL(s);return u.protocol==='https:'?u.href:''}catch{return ''}};
@@ -115,11 +136,24 @@
     finally{loading=false}
   }
   feed.addEventListener('click',e=>{
+    const viewButton=e.target.closest('[data-community-view]');
+    if(viewButton){
+      const target=viewButton.dataset.communityView;
+      if(target==='home'){
+        document.querySelector('[data-social-view="library"]')?.click();
+        document.getElementById('brand-home')?.click();
+        return;
+      }
+      if(target==='messages'){document.getElementById('messages-top-button')?.click();return;}
+      switchCommunity(target);return;
+    }
     const filter=e.target.closest('[data-feed-filter]');
     if(filter){selected=filter.dataset.feedFilter;feed.querySelectorAll('[data-feed-filter]').forEach(b=>b.setAttribute('aria-pressed',String(b===filter)));render()}
     if(e.target.closest('[data-feed-refresh]'))refresh(true);
   });
-  const observer=new MutationObserver(()=>{if(!panel.hidden&&mobile())refresh()});
+  const observer=new MutationObserver(()=>{
+    if(!panel.hidden&&mobile()){switchCommunity('activity');refresh();}
+  });
   observer.observe(panel,{attributes:true,attributeFilter:['hidden']});
   window.addEventListener('resize',()=>{if(mobile()&&!panel.hidden)refresh()});
   document.querySelector('[data-social-view="friends"]')?.addEventListener('click',()=>setTimeout(()=>refresh(),50));
