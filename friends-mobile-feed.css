@@ -389,3 +389,144 @@
  #nr-mobile-friend-activity .nrf-filters{padding-inline:12px!important}
  #nr-mobile-friend-activity .nrf-cover{width:72px!important;flex-basis:72px!important;height:100px!important}
 }
+/* Compact social posts, not tall anime cards: square thumbnail, short
+   content row, then a separate reactions / watchlist footer. */
+@media(max-width:780px){
+ #nr-mobile-friend-activity .nrf-items{gap:10px!important;padding:0 14px!important}
+ #nr-mobile-friend-activity .nrf-card{
+   display:block!important;width:100%!important;min-height:0!important;
+   height:auto!important;padding:12px 13px 11px!important;
+   border-radius:17px!important;box-sizing:border-box!important;
+   background:linear-gradient(130deg,#24182e,#1a1423)!important;
+   border:1px solid #795775!important;
+ }
+ #nr-mobile-friend-activity .nrf-card-header{
+   display:flex!important;gap:9px!important;align-items:center!important;
+   margin:0 0 9px!important;min-height:34px!important;
+ }
+ #nr-mobile-friend-activity .nrf-avatar{
+   width:35px!important;height:35px!important;flex:0 0 35px!important;
+   font-size:15px!important;
+ }
+ #nr-mobile-friend-activity .nrf-identity{gap:2px!important}
+ #nr-mobile-friend-activity .nrf-identity strong{font-size:13px!important;line-height:1.12!important}
+ #nr-mobile-friend-activity .nrf-identity span{
+   font-size:10px!important;line-height:1.2!important;
+   color:#d2b8ce!important;
+   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+ }
+ #nr-mobile-friend-activity .nrf-profile{
+   flex:0 0 32px!important;width:32px!important;height:32px!important;
+   display:grid!important;place-items:center!important;
+   padding:0!important;color:#f9e4f2!important;
+   background:none!important;border:0!important;
+   font-size:22px!important;line-height:1!important;
+ }
+ #nr-mobile-friend-activity .nrf-show{
+   display:flex!important;align-items:flex-start!important;
+   min-height:0!important;height:auto!important;gap:11px!important;
+   padding:0 0 0 44px!important;
+ }
+ #nr-mobile-friend-activity .nrf-cover{
+   flex:0 0 82px!important;width:82px!important;
+   height:82px!important;aspect-ratio:1!important;
+   border-radius:10px!important;
+   background:#34243b!important;
+   align-self:flex-start!important;overflow:hidden!important;
+ }
+ #nr-mobile-friend-activity .nrf-cover img{
+   width:100%!important;height:100%!important;
+   object-fit:cover!important;object-position:center 35%!important;
+ }
+ #nr-mobile-friend-activity .nrf-show-info{
+   min-width:0!important;flex:1!important;
+   padding:2px 0 0!important;
+   align-self:flex-start!important;
+ }
+ #nr-mobile-friend-activity .nrf-show-info h3{
+   margin:0 0 5px!important;font-size:15px!important;
+   line-height:1.19!important;letter-spacing:-.01em!important;
+ }
+ #nr-mobile-friend-activity .nrf-subtitle{
+   font-size:10px!important;line-height:1.2!important;
+   margin:0 0 9px!important;
+ }
+ #nr-mobile-friend-activity .nrf-progress{
+   height:5px!important;border-radius:99px!important;
+   margin:0!important;
+ }
+ #nr-mobile-friend-activity .nrf-rating{
+   margin:2px 0 5px!important;font-size:14px!important;
+   letter-spacing:.04em!important;
+ }
+ #nr-mobile-friend-activity .nrf-note{
+   font-size:10.5px!important;line-height:1.32!important;
+   margin:1px 0 0!important;-webkit-line-clamp:2!important;
+ }
+ #nr-mobile-friend-activity .nrf-actions{
+   display:flex!important;align-items:center!important;justify-content:space-between!important;
+   gap:8px!important;margin:10px 0 0 44px!important;padding:0!important;
+   min-height:32px!important;height:auto!important;
+ }
+ #nr-mobile-friend-activity .nrf-social-actions{
+   display:flex;gap:11px;align-items:center;min-width:0;
+ }
+ #nr-mobile-friend-activity .nrf-action-icon{
+   display:inline-flex;gap:4px;align-items:center;justify-content:center;
+   min-width:30px;min-height:32px;padding:3px 0;
+   background:none!important;border:0!important;color:#f3dcec!important;
+   font:600 11px/1 system-ui,sans-serif!important;cursor:pointer;
+ }
+ #nr-mobile-friend-activity .nrf-action-icon svg{
+   width:20px!important;height:20px!important;flex:none!important;
+ }
+ #nr-mobile-friend-activity .nrf-action-icon[aria-pressed=true]{
+   color:#fc86b2!important;
+ }
+ #nr-mobile-friend-activity .nrf-action-icon[aria-pressed=true] svg{
+   fill:#fa83af!important;
+ }
+ #nr-mobile-friend-activity .nrf-action-icon:disabled{opacity:.45;cursor:default}
+ #nr-mobile-friend-activity .nrf-watchlist{
+   flex:0 1 auto!important;max-width:48%;
+   min-height:30px!important;padding:7px 10px!important;
+   border-radius:99px!important;white-space:nowrap!important;
+   font-size:10px!important;line-height:1.1!important;
+ }
+ #nr-mobile-friend-activity .nrf-comment-panel{
+   margin:11px 0 0 44px!important;
+   padding:10px!important;border:1px solid #694662!important;
+   border-radius:11px!important;background:#19111f!important;
+ }
+ #nr-mobile-friend-activity .nrf-comment-panel[hidden]{display:none!important}
+ #nr-mobile-friend-activity .nrf-comment-list{
+   display:grid;gap:10px;max-height:220px;overflow-y:auto;
+   font-size:11px;color:#ead8e7;
+ }
+ #nr-mobile-friend-activity .nrf-comment{padding-bottom:8px;border-bottom:1px solid #564057}
+ #nr-mobile-friend-activity .nrf-comment strong{font-size:11px;color:#ffb5d5}
+ #nr-mobile-friend-activity .nrf-comment p{margin:3px 0;line-height:1.35;overflow-wrap:anywhere}
+ #nr-mobile-friend-activity .nrf-comment-delete{
+   background:transparent;border:0;padding:3px;color:#e8aac9;font-size:10px
+ }
+ #nr-mobile-friend-activity .nrf-comment-form{
+   display:flex;gap:6px;align-items:center;margin-top:9px;
+ }
+ #nr-mobile-friend-activity .nrf-comment-form input{
+   min-width:0;flex:1;min-height:36px;border:1px solid #80567a;
+   border-radius:9px;background:#2b1e35;color:#fff;padding:8px;
+   font-size:16px!important;
+ }
+ #nr-mobile-friend-activity .nrf-comment-form button{
+   padding:8px 10px;min-height:36px;background:#743d60;
+   color:#fff;border:1px solid #ce86ad;border-radius:9px;font-size:11px;
+ }
+}
+@media(max-width:385px){
+ #nr-mobile-friend-activity .nrf-show{padding-left:0!important}
+ #nr-mobile-friend-activity .nrf-actions{margin-left:0!important}
+ #nr-mobile-friend-activity .nrf-comment-panel{margin-left:0!important}
+ #nr-mobile-friend-activity .nrf-cover{width:74px!important;flex-basis:74px!important;height:74px!important}
+ #nr-mobile-friend-activity .nrf-social-actions{gap:7px!important}
+ #nr-mobile-friend-activity .nrf-action-icon svg{width:18px!important;height:18px!important}
+}
