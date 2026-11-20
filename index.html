@@ -114,6 +114,21 @@
           <div class="stat stat-faves"><div class="stat-label">ALL-TIME FAVORITES <span>♥</span></div><div class="stat-number" id="stat-favorites">0</div><div class="stat-footer">Forever in your heart</div></div>
         </section>
 
+        <section id="nr-friends-watching" class="nr-friends-watching" aria-label="What your friends are watching" hidden>
+          <div class="nr-friends-carousel-heading">
+            <div><span class="nr-friends-eyebrow">✦ THE FRIEND FEED</span>
+              <h2>What your friends are watching<span class="accent-dot">.</span></h2>
+              <p>A peek at their current obsession and all-time favorite.</p>
+            </div>
+            <div class="nr-friends-carousel-controls">
+              <button type="button" data-friends-prev aria-label="Previous friend">‹</button>
+              <span id="nr-friends-position" aria-live="polite">—</span>
+              <button type="button" data-friends-next aria-label="Next friend">›</button>
+            </div>
+          </div>
+          <div id="nr-friends-carousel-track" class="nr-friends-carousel-track" tabindex="0" aria-label="Swipe to explore friends"></div>
+        </section>
+
         <section class="collection-section">
           <div class="section-header"><div><div class="section-kicker">THE COLLECTION / <span id="filter-label-small">ALL TITLES</span></div><h2 id="collection-title">My collection<span class="accent-dot">.</span></h2></div><div class="section-tools"><button type="button" id="export-btn" class="btn btn-ghost btn-small" title="Download your collection as JSON">↓ Export</button><button type="button" id="import-btn" class="btn btn-ghost btn-small" title="Import JSON, CSV, or the old Tracker.html file">↑ Import</button><button type="button" id="restore-original-btn" class="btn btn-ghost btn-small" title="Restore original artwork and titles">✦ Original collection</button><button type="button" id="add-btn" class="btn btn-secondary btn-small">+ Add anime</button></div></div>
           <div class="collection-toolbar"><div class="search-field"><span aria-hidden="true">⌕</span><input id="library-search" type="search" autocomplete="off" placeholder="Search your collection..." aria-label="Search your collection"></div><div class="toolbar-right"><span id="result-count" class="result-count">0 titles</span><label for="sort-select" class="sr-only">Sort collection</label><select id="sort-select"><option value="title" selected>Title A–Z</option><option value="newest">Recently added</option><option value="rating">Highest rated</option><option value="progress">Most progress</option></select></div></div>
