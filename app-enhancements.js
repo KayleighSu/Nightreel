@@ -793,6 +793,7 @@ let nrFriendsFeedToken=0;
 let nrFriendsFeedLoadedAt=0;
 let nrFriendsFeedUser='';
 let nrFriendsFeedBusy=false;
+let nrFriendsFeedPending=false;
 let nrFriendsFeedHasFriends=false;
 const nrFriendsTrack=$s('nr-friends-carousel-track');
 const nrFriendsPosition=$s('nr-friends-position');
@@ -846,13 +847,13 @@ async function nrRefreshFriendsFeed(force=false){
   friendCarousel.hidden=true;nrFriendsTrack.replaceChildren();nrFriendsFeedUser='';nrFriendsFeedHasFriends=false;return;
  }
  const uid=state.user.id;
- if(nrFriendsFeedBusy)return;
+ if(nrFriendsFeedBusy){nrFriendsFeedPending=true;return;}
  if(!force&&nrFriendsFeedUser===uid&&Date.now()-nrFriendsFeedLoadedAt<60000)return;
  nrFriendsFeedBusy=true;const token=++nrFriendsFeedToken;
  friendCarousel.hidden=false;
  if(!nrFriendsTrack.children.length)nrFriendsTrack.textContent='Finding your fellow anime nerds…';
  try{
-  const response=await state.supabase.rpc('get_nightreel_connections');
+  const response=await Promise.race([state.supabase.rpc('get_nightreel_connections'),new Promise((_,reject)=>setTimeout(()=>reject(new Error('Friend list timed out')),11000))]);
   if(response.error)throw response.error;
   const accepted=(response.data||[]).filter(f=>f.status==='accepted').map(f=>({
    id:f.requester_id===uid?f.recipient_id:f.requester_id,
@@ -866,7 +867,7 @@ async function nrRefreshFriendsFeed(force=false){
   }
   const loaded=await Promise.all(accepted.slice(0,40).map(async friend=>{
    try{
-    const r=await state.supabase.rpc('get_friend_anime_v7',{p_friend_id:friend.id});
+    const r=await Promise.race([state.supabase.rpc('get_friend_anime_v7',{p_friend_id:friend.id}),new Promise((_,reject)=>setTimeout(()=>reject(new Error('Watchlist lookup timed out')),8000))]);
     if(r.error)throw r.error;
     return {friend,items:r.data||[]};
    }catch(error){
@@ -887,8 +888,13 @@ async function nrRefreshFriendsFeed(force=false){
   nrSetFriendsCarouselPosition();
  }catch(error){
   console.warn('Unable to load friends watch feed:',error);
-  nrFriendsTrack.textContent='The friend feed is on an intermission. Pull down to try again.';
- }finally{nrFriendsFeedBusy=false;}
+  friendCarousel.hidden=false;
+  nrFriendsTrack.textContent='The friend feed is on an intermission. Tap here to retry.';
+  nrFriendsTrack.setAttribute('role','button');nrFriendsTrack.onclick=()=>nrRefreshFriendsFeed(true);
+ }finally{
+  nrFriendsFeedBusy=false;
+  if(nrFriendsFeedPending){nrFriendsFeedPending=false;nrRefreshFriendsFeed(true);}
+ }
 }
 friendCarousel.querySelector('[data-friends-prev]').onclick=()=>nrFriendsTrack.scrollBy({left:-nrFriendsTrack.clientWidth,behavior:'smooth'});
 friendCarousel.querySelector('[data-friends-next]').onclick=()=>nrFriendsTrack.scrollBy({left:nrFriendsTrack.clientWidth,behavior:'smooth'});
@@ -900,12 +906,15 @@ nrFriendsTrack.addEventListener('click',async event=>{
 });
 window.addEventListener('resize',nrSetFriendsCarouselPosition);
 document.addEventListener('nightreel:workspace-ready',()=>nrRefreshFriendsFeed(true));
+// Recheck after authentication and hydration; do not depend on a single startup event.
+setTimeout(()=>{if(owner())nrRefreshFriendsFeed(true);},2000);
+setTimeout(()=>{if(owner()&&!nrFriendsTrack.querySelector('.nr-friend-slide'))nrRefreshFriendsFeed(true);},7000);
 document.addEventListener('nightreel:friendship-changed',()=>nrRefreshFriendsFeed(true));
 if(state.user?.id)setTimeout(()=>nrRefreshFriendsFeed(true),0);
 function show(which){
  panel=which;
  const library=which==='library',friends=which==='friends',profile=which==='profile';
- friendCarousel.hidden=!library||!owner()||(nrFriendsFeedUser===state.user?.id&&!nrFriendsFeedHasFriends);
+ friendCarousel.hidden=!library||!owner();
  if(library&&owner())nrRefreshFriendsFeed();
  document.querySelector('.hero').hidden=!library;
  document.querySelector('.stats').hidden=!library;
