@@ -6,7 +6,7 @@ const root=process.cwd(),dest=join(root,'www');
 const items=[
  'index.html','community-guidelines.html','privacy.html','support.html','config.js','original-collection.js',
  'app-enhancements.js','app-enhancements.css',
- 'nightreel-releases.js','social-extras.js','nightreel-safety.js','nightreel-moderation.js','mobile-refresh.js',
+ 'nightreel-releases.js','social-extras.js','nightreel-safety.js','nightreel-moderation.js','nightreel-casework.js','mobile-refresh.js',
  'icons','images','manifest.webmanifest'
 ];
 await rm(dest,{recursive:true,force:true});
