@@ -25,7 +25,7 @@
   timer=setTimeout(()=>{timer=0;save()},350);
  },{passive:true});
  window.addEventListener('pagehide',save);
- if(!shouldRecover||!stored)return;
+ if(!shouldRecover||!stored){blocked=false;return;}
  const interacted=()=>{abandoned=true;blocked=false;};
  window.addEventListener('touchstart',interacted,{once:true,passive:true});
  window.addEventListener('wheel',interacted,{once:true,passive:true});
