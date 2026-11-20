@@ -1361,3 +1361,24 @@ body:has(#account-menu-button) #account-avatar{display:none!important}
  .nr-casework-list{max-height:calc(100dvh - 180px)}
  .nr-casework-dialog h2{font-size:20px}
 }
+
+/* Suspension: account and history remain accessible while social actions are disabled */
+#nr-suspension-notice{margin:12px 0 17px;padding:14px 16px;border:1px solid #d59b64;border-radius:12px;background:#3b2c2c;color:#ffe5d2}
+#nr-suspension-notice[hidden],#nr-suspension-banner[hidden]{display:none!important}
+#nr-suspension-notice strong{display:block;font-size:14px;color:#ffdfb7}
+#nr-suspension-notice p{margin:7px 0 12px;font-size:12px;line-height:1.6;color:#efcfb9}
+#nr-suspension-notice button{padding:9px 12px;border-radius:8px;border:1px solid #f1bc89;background:#684733;color:#fff0dc;font-size:12px;font-weight:800;cursor:pointer}
+#nr-suspension-banner{position:fixed;z-index:1050;top:env(safe-area-inset-top,0px);left:50%;transform:translateX(-50%);width:min(94vw,650px);padding:11px 14px;border:1px solid #ba8b62;border-radius:0 0 11px 11px;background:#30242a;color:#ffe4cc;box-shadow:0 12px 35px #0008;text-align:center;font-size:12px;line-height:1.5;pointer-events:none}
+#nr-suspension-banner.nr-suspension-flash{background:#62402e}
+.nr-is-suspended #extra-send-message.nr-suspended-compose,.nr-is-suspended .nr-dock-form.nr-suspended-compose{opacity:.65}
+.nr-is-suspended .nr-dock-form.nr-suspended-compose button:disabled{cursor:not-allowed}
+.nr-is-suspended [data-friend-action]:disabled,.nr-is-suspended [data-request-id]:disabled{opacity:.5}
+@media(max-width:650px){#nr-suspension-banner{font-size:11px;width:calc(100vw - 20px)}}
+
+/* Reporting is under a discreet overflow menu, not a message-level red button */
+.message-bubble{position:relative}
+.message-bubble .nr-message-options{display:inline-flex;align-items:center;justify-content:center;min-width:32px;min-height:27px;margin:6px 0 0 auto;padding:2px 8px;border:1px solid #69556b;border-radius:9px;background:#352a3a;color:#f3cfe0;font:800 20px/1 var(--body,system-ui);cursor:pointer}
+.message-bubble .nr-message-options:hover,.message-bubble .nr-message-options:focus-visible{background:#674763;color:#fff;border-color:#ad7e9e}
+.message-bubble .nr-message-option-menu{display:block;position:relative;z-index:3;margin:7px 0 2px auto;width:max-content;max-width:100%;padding:5px;border-radius:10px;background:#251a2d;border:1px solid #97708b;box-shadow:0 7px 19px #0007}
+.message-bubble .nr-message-option-menu button.nr-menu-report-action{display:block;min-height:39px;padding:8px 12px;border:1px solid #965f77;border-radius:8px;background:#412a39;color:#ffcad9;font:800 12px var(--body,system-ui);cursor:pointer}
+.message-bubble .nr-message-option-menu button:hover{background:#65384e}
