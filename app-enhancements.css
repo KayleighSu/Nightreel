@@ -1308,3 +1308,56 @@ body:has(#account-menu-button) #account-avatar{display:none!important}
 .nr-find-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .nr-find-actions button{min-height:39px}
 @media(max-width:560px){#profile-editor .nr-profile-visibility-field{padding:12px}#profile-editor #profile-visibility{font-size:16px}.nr-find-actions{justify-content:flex-start}}
+
+/* Casework: report-message control, evidence snapshots and user appeals */
+.message-bubble .nr-report-message{
+ display:block;align-self:flex-end;margin:5px 0 0 auto;padding:3px 6px;min-height:24px;
+ border:1px solid transparent;background:transparent;color:#f2c4d8;border-radius:6px;
+ font:700 10px/1.3 var(--body,system-ui);cursor:pointer;opacity:.88;
+}
+.message-bubble .nr-report-message:hover,.message-bubble .nr-report-message:focus-visible{
+ background:#56374e;border-color:#9c6888;color:#fff;opacity:1;
+}
+.nr-casework-dialog.extras-modal{
+ width:min(740px,calc(100vw - 24px));max-width:740px;
+ max-height:calc(100dvh - 26px);overflow-y:auto;border-radius:15px;
+}
+.nr-casework-dialog .extras-modal-inner{padding:22px}
+.nr-casework-dialog h2{font-size:clamp(21px,3.5vw,27px);line-height:1.2}
+.nr-casework-dialog .nr-casework-help{font-size:12px;line-height:1.7;color:#d8c4d3;margin:10px 0 16px}
+.nr-casework-form{display:flex;flex-direction:column;gap:12px;margin:13px 0}
+.nr-casework-form>label{font-weight:750;font-size:12px;color:#ffe5ef}
+.nr-casework-form textarea,.nr-casework-card textarea{
+ display:block;width:100%;min-width:0;box-sizing:border-box;resize:vertical;
+ margin-top:8px;border-radius:9px;border:1px solid #886781;background:#281f30;color:#fff;
+ font:500 16px/1.5 var(--body,system-ui);padding:11px 12px;
+}
+.nr-casework-form button.extras-primary{align-self:flex-start;padding:11px 16px;min-height:42px;border-radius:8px}
+.nr-casework-list{display:grid;gap:13px;max-height:65dvh;overflow-y:auto;overscroll-behavior:contain}
+.nr-casework-card{display:grid;gap:10px;border:1px solid #76536b;border-radius:12px;background:#291d2d;padding:14px;min-width:0;overflow-wrap:anywhere}
+.nr-casework-card>strong{font-size:14px;color:#ffe3f0}
+.nr-casework-card>small{color:#d6bbcd}
+.nr-casework-card p{margin:0;font-size:12px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}
+.nr-casework-evidence{border:1px solid #77536f;border-radius:10px;padding:11px;max-height:260px;overflow:auto}
+.nr-casework-evidence legend{color:#ffe6ef;font-size:12px;font-weight:800;padding:0 5px}
+.nr-casework-choice{display:flex;align-items:flex-start;gap:9px;padding:8px 4px;border-bottom:1px solid #534052;min-width:0;font-size:12px;line-height:1.5}
+.nr-casework-choice input{flex:0 0 18px;margin-top:3px;accent-color:#e99bb8}
+.nr-casework-choice span{min-width:0;overflow-wrap:anywhere;white-space:pre-wrap}
+.nr-casework-actions{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 0}
+.nr-casework-actions button{min-height:41px;border-radius:9px;padding:9px 13px;border:1px solid #8a657e;background:#3b2a3d;color:#ffe9f2;font-weight:750;flex:1 1 150px;min-width:0}
+.nr-casework-actions button:disabled{opacity:.5}
+.nr-casework-evidence-list{padding:12px;border:1px solid #6f5268;border-radius:10px;background:#201824;max-height:300px;overflow:auto}
+.nr-casework-evidence-list h4{margin:0 0 10px}
+.nr-casework-evidence-list p.nr-casework-evidence-item{padding:9px;border-top:1px solid #50394c;font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere}
+#nr-moderation-dialog .nr-mod-message-evidence{display:grid;gap:9px;margin:12px 0 0}
+#nr-moderation-dialog .nr-mod-evidence-bubble{background:#2a2332;border:1px solid #614862;border-radius:11px;padding:11px 13px;min-width:0}
+#nr-moderation-dialog .nr-mod-evidence-bubble.is-reported{background:#4b293e;border-color:#f09cbd}
+#nr-moderation-dialog .nr-mod-evidence-bubble small{font-size:11px;color:#d4afc7}
+#nr-moderation-dialog .nr-mod-evidence-bubble p{font-size:13px;line-height:1.6;margin:7px 0;white-space:pre-wrap;overflow-wrap:anywhere}
+#nr-moderation-dialog .nr-mod-evidence-bubble strong{color:#ffd2e6;font-size:11px}
+#nr-moderation-dialog #nr-review-appeals{padding:9px 12px;min-height:38px;background:#3e2b41;color:#ffe1ee;border:1px solid #a36c8c;border-radius:8px;font-size:12px}
+@media(max-width:620px){
+ .nr-casework-dialog .extras-modal-inner{padding:16px 14px}
+ .nr-casework-list{max-height:calc(100dvh - 180px)}
+ .nr-casework-dialog h2{font-size:20px}
+}
