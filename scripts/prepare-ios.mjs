@@ -4,7 +4,7 @@ import { cp, mkdir, rm, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 const root=process.cwd(),dest=join(root,'www');
 const items=[
- 'index.html','config.js','original-collection.js',
+ 'index.html','community-guidelines.html','config.js','original-collection.js',
  'app-enhancements.js','app-enhancements.css',
  'nightreel-releases.js','social-extras.js','nightreel-safety.js','mobile-refresh.js',
  'icons','images','manifest.webmanifest'
