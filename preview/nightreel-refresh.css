@@ -124,3 +124,69 @@ select{background:#221929;border-color:#6a4b66;border-radius:12px}
   .modal-inner{padding:21px 17px}
 }
 @media(prefers-reduced-motion:reduce){.anime-card:hover,.stat:hover,.anime-card:hover .poster img{transform:none}}
+
+/* Match the *real* Nightreel card architecture; not the old .poster template. */
+.anime-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;align-items:stretch}
+.anime-card{min-height:390px;border:1px solid #79506f;border-radius:19px;background:#1b1324;box-shadow:0 12px 40px #03020877}
+.anime-card .flip-inner{min-height:390px}
+.anime-card .flip-face{border-radius:18px;background:#24162c}
+.anime-card .flip-face.back{background:#1d1529}
+.anime-card .flip-face .card-image{opacity:.78;object-position:center}
+.anime-card .flip-face.front::before{background:linear-gradient(180deg,rgba(9,5,17,.14),rgba(10,6,20,.12) 27%,rgba(10,6,19,.84) 73%,#100b1cee)}
+.anime-card .flip-face.back::before{background:linear-gradient(155deg,#26182eec,#130f21fa)}
+.flip-top{padding:14px}
+.flip-body{padding:16px 17px 18px}
+.flip-body .art-label{color:#ffb6d2;font-size:9px}
+.flip-body h3{font-size:clamp(17px,1.6vw,23px);margin:6px 0 10px;line-height:1.14}
+.flip-rating{min-height:26px;margin:4px 0}
+.flip-rating button{font-size:22px}
+.flip-progress{font-size:11px;margin:8px 0 10px}
+.flip-actions{gap:5px;margin-top:9px;flex-wrap:wrap}
+.flip-actions button,.flip-actions a,.back-actions button,.back-actions a{border-radius:10px;border-color:#a36c8caa;background:#261a30d9;padding:8px 10px;font-size:11px}
+.flip-face .favorite-icon{background:#231328c9;border-color:#f7a6cc77}
+.flip-back-content{padding:18px 16px;gap:8px}
+.flip-back-content h3{font-size:20px}
+.flip-back-content .synopsis{font-size:12px;line-height:1.5}
+.nr-friends-watching{background:linear-gradient(125deg,#24172e,#181323);border:1px solid #754763;padding:23px;border-radius:22px}
+.nr-friends-carousel-heading h2{color:#fff1f8}
+.nr-friend-slide{border-radius:16px}
+#social-navigation button{border-radius:12px}
+.extras-panel,.social-panel{border-radius:20px}
+@media(max-width:1300px){.anime-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:1050px){.anime-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:780px){
+ .anime-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+ .anime-card,.anime-card .flip-inner{min-height:350px}
+ .flip-body h3{font-size:19px}
+ .flip-actions{gap:5px}
+ .flip-actions button,.flip-actions a{padding:8px}
+}
+@media(max-width:580px){
+ .anime-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;scroll-snap-type:none}
+ .anime-card{width:auto;min-height:330px;height:330px;scroll-snap-align:none;border-radius:15px}
+ .anime-card .flip-inner{min-height:330px;height:330px}
+ .anime-card .flip-face{border-radius:14px}
+ .flip-top{padding:10px}
+ .flip-top .status-pill{font-size:9px;padding:5px 7px}
+ .flip-body{padding:10px 10px 12px}
+ .flip-body h3{font-size:clamp(15px,4.25vw,19px);margin:5px 0 7px}
+ .flip-body .art-label{font-size:8px}
+ .flip-rating{gap:0;min-height:22px;margin:2px 0}
+ .flip-rating button{font-size:18px;padding:2px 1px}
+ .flip-rating .rating-text{font-size:9px;margin-left:4px}
+ .flip-progress{font-size:10px;margin:5px 0 7px}
+ .flip-actions{gap:4px;margin-top:5px}
+ .flip-actions button,.flip-actions a{font-size:10px;padding:6px;border-radius:8px}
+ .flip-back-content{padding:13px 11px;gap:6px}
+ .flip-back-content h3{font-size:16px}
+ .flip-back-content .synopsis{font-size:11px;line-height:1.45;min-height:0}
+ .flip-back-content .back-actions{gap:5px}
+ .flip-back-content .back-actions button,.flip-back-content .back-actions a{padding:6px;font-size:10px}
+ .nr-friends-watching{padding:17px 13px}
+ .nr-friends-carousel-heading h2{font-size:21px}
+}
+@media(max-width:365px){
+ .anime-grid{grid-template-columns:1fr}
+ .anime-card,.anime-card .flip-inner{min-height:380px;height:380px}
+ .flip-body h3{font-size:23px}
+}
