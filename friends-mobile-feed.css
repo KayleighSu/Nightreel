@@ -38,3 +38,90 @@
  #social-friends-panel>h2,#social-friends-panel>.social-row,#social-friends-panel>#people-results,#social-friends-panel>#friends-results,#social-friends-panel>#friends-error{margin-left:14px!important;margin-right:14px!important}
 }
 @media(min-width:781px){#nr-mobile-friend-activity{display:none!important}}
+
+/* Dedicated mobile Community screen — show it in place of the old library
+   carousel/dashboard when the existing Friends view is selected. */
+@media(max-width:780px){
+ body:has(#social-friends-panel:not([hidden])) .main-content{
+   padding-top:0!important;
+ }
+ body:has(#social-friends-panel:not([hidden])) .main-content>.hero,
+ body:has(#social-friends-panel:not([hidden])) .main-content>.stats,
+ body:has(#social-friends-panel:not([hidden])) .main-content>#nr-friends-watching,
+ body:has(#social-friends-panel:not([hidden])) .main-content>.collection-section,
+ body:has(#social-friends-panel:not([hidden])) .main-content>.page-footer,
+ body:has(#social-friends-panel:not([hidden])) .main-content>#nr-release-radar,
+ body:has(#social-friends-panel:not([hidden])) .sidebar{
+   display:none!important;
+ }
+ body:has(#social-friends-panel:not([hidden])) #social-navigation{
+   display:none!important;
+ }
+ body:has(#social-friends-panel:not([hidden])) #social-ui{
+   display:block!important;width:100%!important;max-width:none!important;margin:0!important;padding:0!important;
+ }
+ body:has(#social-friends-panel:not([hidden])) #social-friends-panel{
+   display:block!important;width:100%!important;max-width:none!important;margin:0!important;
+   padding:0 0 100px!important;border:0!important;border-radius:0!important;
+   background:#0d0b17!important;min-height:calc(100dvh - 140px)!important;
+ }
+ #social-friends-panel #nr-mobile-friend-activity{
+   padding:0!important;margin:0!important;width:100%!important;
+ }
+ #nr-mobile-friend-activity .nrf-page-tabs{
+   display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px;
+   align-items:center;margin:0 0 0;padding:8px 9px;
+   border-bottom:1px solid #50364f;background:#16101f;
+ }
+ #nr-mobile-friend-activity .nrf-page-tabs button{
+   min-width:0;white-space:nowrap;display:flex;align-items:center;justify-content:center;
+   border:1px solid transparent;border-radius:12px;background:transparent;
+   padding:12px 3px;color:#e4d0df;font:600 clamp(10px,3vw,13px) system-ui,sans-serif;
+ }
+ #nr-mobile-friend-activity .nrf-page-tabs button[aria-current=page]{
+   background:#55304b;border-color:#e489af;color:#ffbad4;
+ }
+ #nr-mobile-friend-activity .nrf-hero{
+   position:relative;margin:0!important;border:0!important;border-radius:0!important;
+   min-height:220px;padding:30px 20px 28px!important;
+   background:radial-gradient(circle at 90% 10%,#664a82 0%,transparent 39%),
+     radial-gradient(circle at 75% 35%,#8c4b71a8 0%,transparent 45%),
+     linear-gradient(115deg,#171122,#2c1834 73%,#161123)!important;
+   isolation:isolate;overflow:hidden;
+ }
+ #nr-mobile-friend-activity .nrf-hero::after{
+   content:"✿  ✿   ✿";position:absolute;right:-10px;top:1px;z-index:-1;
+   font:50px/1.1 Georgia,serif;letter-spacing:12px;color:#fa90c050;
+   transform:rotate(-22deg);pointer-events:none;
+ }
+ #nr-mobile-friend-activity .nrf-hero h2{
+   font-size:clamp(30px,8.8vw,43px)!important;max-width:410px;
+ }
+ #nr-mobile-friend-activity .nrf-filters{
+   padding:14px 15px 13px;margin:0!important;background:#0d0b17;
+ }
+ #nr-mobile-friend-activity .nrf-items{
+   display:grid!important;gap:13px!important;padding:0 15px;
+ }
+ #nr-mobile-friend-activity .nrf-card{
+   border-radius:19px!important;padding:16px!important;
+   background:linear-gradient(135deg,#271d32,#1d1628)!important;
+   border:1px solid #6f4b70!important;
+ }
+ #nr-mobile-friend-activity .nrf-card-header{margin-bottom:16px!important}
+ #nr-mobile-friend-activity .nrf-avatar{width:45px!important;height:45px!important;flex-basis:45px!important}
+ #nr-mobile-friend-activity .nrf-show{gap:14px!important}
+ #nr-mobile-friend-activity .nrf-cover{width:100px!important;flex-basis:100px!important;height:135px!important}
+ #nr-mobile-friend-activity .nrf-show-info h3{font-size:19px!important;line-height:1.25!important}
+ #nr-mobile-friend-activity .nrf-actions{margin-top:10px!important}
+ #nr-mobile-friend-activity .nrf-watchlist{
+   border-radius:999px!important;background:#5c304e!important;
+   border:1px solid #ec9abb!important;color:#ffe0ed!important;
+ }
+ #nr-mobile-friend-activity .nrf-bottom{margin:12px 0 24px!important}
+ #nrf-friend-manager{margin:17px 15px 30px}
+ #nrf-friend-manager[hidden]{display:none!important}
+ #nrf-friend-manager>h2{margin:10px 0;font-size:22px}
+ #nrf-friend-manager .social-row{margin:9px 0}
+ #nr-mobile-friend-activity [hidden]{display:none!important}
+}
