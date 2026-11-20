@@ -8,6 +8,59 @@
  const indicator=document.createElement('div');
  indicator.id='nr-pull-refresh';indicator.setAttribute('role','status');indicator.setAttribute('aria-live','polite');
  indicator.textContent='↓ Pull to refresh';document.body.append(indicator);
+ const restoreKey='nightreel:pull-refresh-view';
+ const rememberView=()=>{
+  try{
+   if(!state?.user?.id&&!state?.demo)return;
+   const snapshot={
+    userId:state.user?.id||'demo',
+    screen:window.NightreelCaptureView?.()||{panel:'library'},
+    chat:window.NightreelCaptureChat?.()||{open:false},
+    filter:state.filter,
+    search:state.search,
+    scrollY:window.scrollY,
+    savedAt:Date.now()
+   };
+   sessionStorage.setItem(restoreKey,JSON.stringify(snapshot));
+  }catch{}
+ };
+ let restoring=false;
+ async function restoreView(){
+  if(restoring||!state?.user?.id&&!state?.demo)return;
+  let snapshot;
+  try{snapshot=JSON.parse(sessionStorage.getItem(restoreKey)||'null');}catch{}
+  if(!snapshot)return;
+  const userId=state.user?.id||'demo';
+  if(snapshot.userId!==userId||Date.now()-snapshot.savedAt>120000){
+   sessionStorage.removeItem(restoreKey);return;
+  }
+  if(typeof window.NightreelRestoreView!=='function'||typeof window.NightreelRestoreChat!=='function')return;
+  restoring=true;
+  try{
+   const allowed=['all','untracked','watching','completed','plan_to_watch','on_hold','dropped','favorites','movies'];
+   if(allowed.includes(snapshot.filter))state.filter=snapshot.filter;
+   if(typeof snapshot.search==='string'){
+    state.search=snapshot.search.slice(0,200);
+    const search=document.getElementById('library-search');
+    if(search)search.value=state.search;
+   }
+   render();
+   await window.NightreelRestoreView(snapshot.screen);
+   if(snapshot.chat?.open)await window.NightreelRestoreChat(snapshot.chat);
+   // Restore page position only after the selected screen has been rendered.
+   requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    window.scrollTo({top:Math.max(0,Number(snapshot.scrollY)||0),behavior:'instant'});
+   }));
+  }catch(error){
+   console.warn('Nightreel could not restore its previous screen:',error);
+  }finally{
+   sessionStorage.removeItem(restoreKey);
+   restoring=false;
+  }
+ }
+ document.addEventListener('nightreel:workspace-ready',restoreView);
+ // Also covers a workspace that was already ready before the deferred script.
+ if(state?.user?.id||state?.demo)restoreView();
  let startY=0,tracking=false,ready=false,refreshing=false;
  const reset=()=>{
   tracking=false;ready=false;
@@ -40,6 +93,7 @@
    refreshing=true;
    indicator.classList.add('nr-pull-active');
    indicator.textContent='↻ Refreshing…';
+   rememberView();
    window.location.reload();
   }
  },{passive:true});
