@@ -136,8 +136,9 @@ function renderReports(){
   actions.append(
    actionButton('View profile','nr-mod-button',async()=>{ 
     if(typeof window.NightreelOpenProfile!=='function'){status.textContent='Profile navigation unavailable. Refresh Nightreel.';return;}
+    dialog.close();
     const ok=await window.NightreelOpenProfile(item.reported_user_id);
-    if(ok){dialog.close();}else{status.textContent='Unable to open this user profile.';}
+    if(!ok){if(!dialog.open)dialog.showModal();status.textContent='Unable to open this user profile.';}
    }),
    actionButton('Review content','nr-mod-button',()=>showDetail(item.id,'content')),
    actionButton('Suspend account','nr-mod-button nr-mod-button-warn',()=>showDetail(item.id,'actions')),
