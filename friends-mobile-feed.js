@@ -20,7 +20,7 @@
   const first=feed.nextSibling;
   while(feed.nextSibling)manager.append(feed.nextSibling);
   panel.append(manager);
-  manager.hidden=true;
+  manager.hidden=mobile();
   let communityView='activity';
   function switchCommunity(view){
     communityView=view;
@@ -32,7 +32,7 @@
     feed.querySelector('.nrf-filters').hidden=view==='friends';
     feed.querySelector('.nrf-items').hidden=view==='friends';
     feed.querySelector('.nrf-bottom').hidden=view==='friends';
-    manager.hidden=view!=='friends';
+    manager.hidden=mobile() && view!=='friends';
     if(view==='friends')manager.scrollIntoView({block:'nearest',behavior:'smooth'});
   }
   const list=feed.querySelector('.nrf-items');
@@ -155,7 +155,7 @@
     if(!panel.hidden&&mobile()){switchCommunity('activity');refresh();}
   });
   observer.observe(panel,{attributes:true,attributeFilter:['hidden']});
-  window.addEventListener('resize',()=>{if(mobile()&&!panel.hidden)refresh()});
+  window.addEventListener('resize',()=>{manager.hidden=mobile() && communityView!=='friends';if(mobile()&&!panel.hidden)refresh()});
   document.querySelector('[data-social-view="friends"]')?.addEventListener('click',()=>setTimeout(()=>refresh(),50));
   if(!panel.hidden)refresh();
 })();
