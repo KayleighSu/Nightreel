@@ -122,3 +122,17 @@
  #nr-mobile-experience{display:none!important}
  #nr-mobile-details{display:none!important}
 }
+
+@media(max-width:720px){
+ .nrm-header-actions{display:flex;gap:6px;align-items:center}
+ .nrm-header-actions button{display:grid;place-items:center;width:35px;height:35px;padding:6px;background:transparent;border:0;border-radius:50%;color:#f7e7f4}
+ .nrm-header-actions button svg{width:23px;height:23px}
+ .topbar-right #account-menu-button{max-width:118px}
+}
+@media(max-width:370px){
+ .nrm-header-actions{gap:0}
+ .nrm-header-actions button{width:29px}
+ .topbar .brand>span:last-child{font-size:13px!important}
+ .topbar-right #account-menu-button{max-width:92px}
+}
+@media(min-width:721px){.nrm-header-actions{display:none!important}}
