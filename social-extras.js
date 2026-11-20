@@ -463,8 +463,8 @@ async function loadMessages(quiet=false){
    bubble.append(body,when);
    if(item.sender_id!==user){
     const report= document.createElement('button');
-    report.type='button';report.className='nr-report-message';report.textContent='Report';
-    report.setAttribute('aria-label','Report this message');
+    report.type='button';report.className='nr-message-options';report.textContent='⋯';
+    report.setAttribute('aria-label','Message options');report.title='Message options';
     report.dataset.messageId=item.id;report.dataset.senderId=item.sender_id;
     bubble.append(report);
    }
@@ -730,8 +730,8 @@ async function nrLoadDockMessages(win){
    bubble.append(body,when);
    if(m.sender_id!==user){
     const report=document.createElement('button');report.type='button';
-    report.className='nr-report-message';report.textContent='Report';
-    report.setAttribute('aria-label','Report this message');
+    report.className='nr-message-options';report.textContent='⋯';
+    report.setAttribute('aria-label','Message options');report.title='Message options';
     report.dataset.messageId=m.id;report.dataset.senderId=m.sender_id;
     bubble.append(report);
    }
