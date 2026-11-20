@@ -68,7 +68,7 @@ const appealButton=btn('My moderation appeals',()=>openAppeals());
 appealButton.id='nr-my-appeals';appealButton.hidden=true;
 account.querySelector('.extras-menu-actions')?.append(appealButton);
 const own=dialog('nr-user-appeals','Appeal a moderation action');
-const ownHelp=make('p','nr-casework-help','You can appeal a suspension or removed profile artwork within 90 days. An accusation alone is not a penalty. You may submit up to eight messages as evidence; selected messages are copied securely for moderator review. If a suspension prevents you signing in, email support.nightreel@gmail.com from your account email.');
+const ownHelp=make('p','nr-casework-help','You can appeal a suspension or removed profile artwork within 90 days. An accusation alone is not a penalty. You may submit up to eight messages as evidence; selected messages are copied securely for moderator review. Suspensions still allow you to sign in, read existing messages, and submit an appeal.');
 const ownStatus=make('p','extras-status');ownStatus.setAttribute('role','status');
 const ownList=make('div','nr-casework-list');
 own.inner.append(ownHelp,ownStatus,ownList);
