@@ -1456,3 +1456,15 @@ body:has(#account-menu-button) #account-avatar{display:none!important}
 }
 .nr-safety-controls .nr-profile-actions-menu button:hover{background:#50364b}
 .nr-chat-window.nr-chat-minimized .nr-chat-report-start{display:none}
+
+/* Chat-level report submenu: explicit Select messages option */
+.nr-chat-head,#extra-open-chat .extras-top{position:relative}
+.nr-chat-report-options{position:absolute;right:8px;top:calc(100% + 4px);z-index:90;
+ padding:5px;border:1px solid #876984;border-radius:9px;background:#241b2c;
+ box-shadow:0 8px 24px #0009;min-width:155px;
+}
+.nr-chat-report-options button.nr-chat-select-option{width:100%;min-height:38px;text-align:left;
+ border:0;border-radius:7px;padding:9px 12px;background:transparent;
+ color:#eed7e6;font:700 12px var(--body,system-ui);cursor:pointer
+}
+.nr-chat-report-options button:hover{background:#4d354c}
