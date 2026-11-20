@@ -688,6 +688,12 @@ async function nrLoadDockMessages(win){
  finally{win._busy=false;}
 }
 // Remember which mobile conversation (or the chat list) was open on refresh.
+window.NightreelRefreshCurrentChat=async()=>{
+ if(!chatDialog.open)return false;
+ if(conversationId)await loadMessages();
+ else await openMessages(null,true);
+ return true;
+};
 window.NightreelCaptureChat=()=>({
  open:chatDialog.open,
  friendId:chatDialog.open&&conversationId?conversationId:null,
