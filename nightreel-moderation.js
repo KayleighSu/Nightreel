@@ -104,10 +104,11 @@ async function loadReports(preselect){
  if(!status.textContent.startsWith('Reports loaded'))status.textContent='';
  renderReports();
  const chosen=preselect||selectedReport;
- if(chosen&&currentReports.some(r=>r.id===chosen)){showDetail(chosen);}
- else if(currentReports.some(r=>!r.reviewed_at)){showDetail(currentReports.find(r=>!r.reviewed_at).id);}
- else if(currentReports.length&&filter.value!=='pending'){showDetail(currentReports[0].id);}
- else {selectedReport='';detail.innerHTML='<div class="nr-mod-empty"><strong>Nothing awaiting review</strong><p>Select All reports to view previous cases.</p></div>';}
+ const narrow=window.matchMedia('(max-width:720px)').matches;
+ if(chosen&&currentReports.some(r=>r.id===chosen)&&(!narrow||detail.classList.contains('nr-mod-detail-open'))){showDetail(chosen);}
+ else if(!narrow&&currentReports.some(r=>!r.reviewed_at)){showDetail(currentReports.find(r=>!r.reviewed_at).id);}
+ else if(!narrow&&currentReports.length&&filter.value!=='pending'){showDetail(currentReports[0].id);}
+ else {selectedReport='';detail.innerHTML='<div class="nr-mod-empty"><strong>Select a report</strong><p>Use the review buttons to inspect an account.</p></div>';}
  refreshCount();
 }
 function renderReports(){
