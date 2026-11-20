@@ -960,7 +960,13 @@ async function handleAuth(event) {
     if (state.authMode === 'signup') toast(result.data?.session ? 'Account created! Welcome to Nightreel.' : 'Check your email to confirm your account, then log in.');
     if (state.authMode === 'reset') { toast('If an account exists for that email, a reset link has been sent.'); showAuth('signin'); }
     if (state.authMode === 'update') { state.recoveryFlow = false; toast('Password updated successfully.'); await handleSession({ user: state.user }); }
-  } catch (e) { $('auth-error').textContent = e.message || 'Authentication failed.'; $('auth-error').hidden = false; }
+  } catch (e) {
+    const messageText=String(e?.message||'Authentication failed.');
+    $('auth-error').textContent=/ban|suspend/i.test(messageText)
+      ?'This account may be suspended. If you cannot sign in to appeal, email support.nightreel@gmail.com from your registered email address, describe the action and include any relevant message evidence. You can also use My moderation appeals while signed in.'
+      :messageText;
+    $('auth-error').hidden = false;
+  }
   finally { $('auth-submit').disabled = false; }
 }
 function wireEvents() {
