@@ -29,6 +29,7 @@ jobs:
         run: |
           npm run ios:add
           npm run ios:sync
+          node scripts/configure-ios.mjs
       - name: Generate Nightreel iOS icons from existing branding
         run: |
           mkdir -p assets
