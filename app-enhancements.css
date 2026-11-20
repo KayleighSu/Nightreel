@@ -1137,3 +1137,22 @@ body:has(#account-menu-button) #account-avatar{display:none!important}
 #extra-delete-dialog .extras-fields{margin:18px 0}
 #extra-delete-dialog #extra-delete-confirm{letter-spacing:.02em}
 @media(max-width:580px){#extra-delete-dialog.extras-modal{width:calc(100vw - 24px);max-width:420px}}
+
+
+/* App Store community safety: reporting and blocks */
+.nr-safety-controls{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin:13px 0}
+.nr-safety-controls button,.nr-blocked-row button{
+ min-height:38px;padding:8px 12px;border:1px solid #785568;border-radius:9px;
+ color:#f4d5e2;background:#352436;font:700 12px var(--body,system-ui);cursor:pointer
+}
+.nr-safety-controls #nr-block-friend{border-color:#a36471;color:#ffb5c4}
+.nr-safety-controls button:disabled{opacity:.5}
+#extra-account-dialog .nr-safety-blocks{margin:14px 0 0;border-top:1px solid #604859;padding-top:14px}
+#extra-account-dialog .nr-safety-blocks summary{font-size:12px;color:#e5bdcf;cursor:pointer;font-weight:700}
+.nr-blocked-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-top:1px solid #4d3548}
+.nr-blocked-row span{font-size:12px;color:#ddc9d4}
+@media(max-width:580px){
+ .nr-safety-controls{justify-content:stretch}
+ .nr-safety-controls button{flex:1 1 auto;min-height:43px}
+ #nr-report-dialog.extras-modal{width:calc(100vw - 24px);max-width:420px}
+}
