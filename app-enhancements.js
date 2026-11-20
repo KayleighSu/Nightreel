@@ -343,6 +343,7 @@ function buildCard(e,index,readOnly){
  const standin='<div class="nr-cover-standin" aria-hidden="true"><div class="nr-standin-glyph">✦</div><div class="nr-standin-wordmark">NIGHTREEL</div><div class="nr-standin-lines"></div></div>';
  const media=cleanedUrl(e.image_url);
  const pic=standin+(media?'<img class="card-image" loading="'+(e.favorite?'eager':'lazy')+'" decoding="async" src="'+esc(media)+'" alt="">':'');
+ const backPic=standin+(media?'<img class="card-image" loading="lazy" decoding="async" data-back-src="'+esc(media)+'" alt="">':'');
  const stars=[1,2,3,4,5].map(n=>'<button type="button" '+(readOnly?'disabled':'data-action="rate" data-id="'+id+'" data-rating="'+(n*2)+'"')+' class="'+(rating&&n<=Math.floor(rating/2)?'rated':rating&&n===Math.ceil(rating/2)?'half-rated':'unrated')+'" title="'+(readOnly?'Rating':'Rate '+n+' stars')+'">★</button>').join('');
  const synopsis=esc(e.synopsis||summaries.get(canonicalTitle(e.title))||'Tap here to load a story summary, or follow the IMDb link.');
  const publicNote=readOnly
@@ -358,7 +359,7 @@ function buildCard(e,index,readOnly){
  '<div class="flip-progress">'+esc(progress)+'<div class="progress-track"><div class="progress-fill" style="width:'+percent+'%"></div></div></div>'+
  '<div class="flip-actions">'+(readOnly?'':'<button type="button" data-action="edit" data-id="'+id+'">Edit</button>')+
  '<button type="button" data-action="flip">Story ↻</button><a href="'+esc(imdbLink(e))+'" target="_blank" rel="noopener noreferrer">IMDb ↗</a></div></div></div>'+
- '<div class="flip-face back">'+pic+'<div class="flip-back-content">'+''+'<span class="synopsis-heading">ABOUT THIS ANIME</span><h3>'+title+'</h3>'+
+ '<div class="flip-face back">'+backPic+'<div class="flip-back-content">'+''+'<span class="synopsis-heading">ABOUT THIS ANIME</span><h3>'+title+'</h3>'+
  '<p class="synopsis">'+synopsis+'</p>'+publicNote+
  '<section class="nr-where-watch">'+streamingMarkup(e)+'</section>'+
  (readOnly?'':'<button type="button" class="nr-edit-watch" data-stream-edit="'+id+'">Edit streaming services</button>')+
@@ -630,7 +631,11 @@ render=function(){sourceRender();displayOrganizedLibrary();drawHero();if(panel==
 state.sort='title';$s('sort-select').value='title';render();
 function flip(card,e){
  card.classList.toggle('is-flipped');
- if(card.classList.contains('is-flipped')&&!e?.synopsis)lookupSynopsis(card,e);
+ if(card.classList.contains('is-flipped')){
+  const back=card.querySelector('.flip-face.back img[data-back-src]');
+  if(back){back.src=back.dataset.backSrc;back.removeAttribute('data-back-src');}
+  if(!e?.synopsis)lookupSynopsis(card,e);
+ }
 }
 async function lookupSynopsis(card,e){
  const target=card.querySelector('.synopsis'),key=canonicalTitle(e?.title||'');
