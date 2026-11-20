@@ -803,6 +803,24 @@ document.querySelector('.sidebar')?.addEventListener('click',event=>{
  });
 },true);
 // Capture and restore the exact social screen for installed-app pull-to-refresh.
+// Refresh the active view in place instead of reloading to the default library.
+window.NightreelRefreshCurrentView=async()=>{
+ if(!owner()&& !state.demo)throw Error('Sign in to refresh your collection.');
+ if(panel==='friends'){
+  await refreshFriends();
+ }else if(panel==='profile'){
+  await loadProfile();
+ }else if(panel==='friend'){
+  const id=friendProfile?.id;
+  if(!id)throw Error('Friend profile is not ready yet.');
+  await refreshFriends();
+  await viewFriend(id);
+ }else{
+  if(!state.demo)await loadEntries();
+  else render();
+ }
+ return panel;
+};
 window.NightreelCaptureView=()=>({
  panel,
  friendId:panel==='friend'?friendProfile?.id||null:null
