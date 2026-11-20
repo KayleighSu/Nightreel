@@ -27,16 +27,33 @@ const reportStatus=make('p','extras-status');reportStatus.setAttribute('role','s
 reportForm.append(reasonLabel,reportSubmit,reportStatus);
 report.inner.append(explanation,reportForm);
 let selectedMessage='';
+let activeMenu=null;
+function closeMessageMenu(){activeMenu?.remove();activeMenu=null;}
 document.addEventListener('click',e=>{
- const target=e.target.closest?.('.nr-report-message');
- if(!target||!session())return;
- selectedMessage=target.dataset.messageId||'';
- if(!selectedMessage)return;
- reason.value='';reportStatus.textContent='';
- if(!report.d.open)report.d.showModal();
+ const target=e.target.closest?.('.nr-message-options');
+ if(target){
+  e.preventDefault();e.stopPropagation();
+  if(!session())return;
+  if(activeMenu?.dataset.messageId===target.dataset.messageId){closeMessageMenu();return;}
+  closeMessageMenu();
+  const menu=make('div','nr-message-option-menu');
+  menu.dataset.messageId=target.dataset.messageId||'';
+  const option=btn('Report this message',()=>{
+   selectedMessage=menu.dataset.messageId;
+   closeMessageMenu();
+   if(!selectedMessage)return;
+   reason.value='';reportStatus.textContent='';
+   if(!report.d.open)report.d.showModal();
+  },'nr-menu-report-action');
+  menu.append(option);
+  target.closest('.message-bubble')?.append(menu);
+  activeMenu=menu;return;
+ }
+ if(activeMenu&&!e.target.closest?.('.nr-message-option-menu'))closeMessageMenu();
 });
 reportForm.onsubmit=async e=>{
  e.preventDefault();if(!session()||!selectedMessage)return;
+ if(!window.confirm('Submit this message and up to six nearby messages to Nightreel moderators for review?'))return;
  reportSubmit.disabled=true;reportStatus.textContent='Submitting evidence…';
  try{
   const {data,error}=await state.supabase.rpc('nightreel_report_message',{p_message_id:selectedMessage,p_reason:reason.value.trim()});
