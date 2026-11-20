@@ -26,10 +26,43 @@
  dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close();});
  let currentUserId='';
  let countBusy=false;
+ const friendView=$('friend-view');
+ const reportHistory=document.createElement('p');
+ reportHistory.id='nr-profile-report-history';
+ reportHistory.className='nr-profile-report-history';
+ reportHistory.hidden=true;
+ if(friendView)friendView.querySelector('.social-hero-content')?.append(reportHistory);
+ let profileLookup=0;
+ async function updateProfileReportCount(){
+  const id=friendView?.dataset.friendId,shown=friendView&&!friendView.hidden;
+  const request=++profileLookup;
+  reportHistory.hidden=true;
+  if(!shown||!id||open.hidden||!state?.user?.id)return;
+  const {data,error}=await state.supabase.rpc('nightreel_moderation_report_counts',{p_user_ids:[id]});
+  if(request!==profileLookup||friendView?.dataset.friendId!==id||open.hidden||friendView.hidden)return;
+  if(error||!data?.length)return;
+  reportHistory.textContent='Moderator only · Times reported: '+Number(data[0].times_reported||0);
+  reportHistory.hidden=false;
+ }
+ if(friendView){
+  const obs=new MutationObserver(updateProfileReportCount);
+  obs.observe(friendView,{attributes:true,attributeFilter:['hidden','data-friend-id']});
+ }
+ async function loadReportCounts(reports){
+  const ids=[...new Set(reports.map(x=>x.reported_user_id).filter(Boolean))];
+  if(!ids.length)return new Map();
+  const counts=new Map();
+  for(let i=0;i<ids.length;i+=200){
+   const {data,error}=await state.supabase.rpc('nightreel_moderation_report_counts',{p_user_ids:ids.slice(i,i+200)});
+   if(error)throw error;
+   for(const entry of data||[])counts.set(entry.user_id,Number(entry.times_reported)||0);
+  }
+  return counts;
+ }
  async function checkModerator(){
   const id=state?.user?.id;
   if(!id||!state.supabase||state.demo){
-   open.hidden=true;countBadge.hidden=true;currentUserId='';return;
+   open.hidden=true;countBadge.hidden=true;reportHistory.hidden=true;currentUserId='';return;
   }
   if(currentUserId===id)return;
   currentUserId=id;open.hidden=true;
@@ -39,8 +72,8 @@
    if(currentUserId!==id)return;
    if(error)throw error;
    open.hidden=!data;
-   if(data)await refreshCount();
-  }catch{open.hidden=true;countBadge.hidden=true;}
+   if(data){await refreshCount();updateProfileReportCount();}
+  }catch{open.hidden=true;countBadge.hidden=true;reportHistory.hidden=true;}
  }
  async function refreshCount(){
   if(open.hidden||countBusy||!state?.user?.id)return;
@@ -71,13 +104,20 @@
   status.textContent=(data||[]).length+' reports shown · '+pending+' awaiting review';
   refreshCount();
   if(!data?.length){const p=document.createElement('p');p.textContent='No reports yet.';list.append(p);return;}
+  let history;
+  try{history=await loadReportCounts(data);}
+  catch(e){status.textContent='Reports loaded, but history counts could not be retrieved: '+e.message;history=new Map();}
   for(const item of data){
    const card=document.createElement('article');card.className='nr-moderation-card';
    const h=document.createElement('h3');h.textContent=item.category+' · '+(item.reviewed_at?'Reviewed':'Awaiting review');
    const meta=document.createElement('p');meta.className='nr-moderation-meta';
    meta.textContent='Reported: '+item.reported_user_id+' · By: '+item.reporter_id+' · '+new Date(item.created_at).toLocaleString();
    const reason=document.createElement('p');reason.textContent=item.reason;
-   card.append(h,meta,reason);
+   const prior=document.createElement('p');prior.className='nr-moderation-history';
+   prior.textContent=history.has(item.reported_user_id)
+    ?'Times reported: '+history.get(item.reported_user_id)+' · All submitted reports, including reviewed'
+    :'Times reported: unavailable';
+   card.append(h,meta,prior,reason);
    if(item.reviewed_at){
     const date=document.createElement('p');date.className='nr-moderation-meta';
     date.textContent='Reviewed '+new Date(item.reviewed_at).toLocaleString();card.append(date);
