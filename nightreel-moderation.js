@@ -222,8 +222,8 @@ async function showDetail(reportId,focus){
  const statrow=elt('div','nr-mod-stats');
  const times=elt('div','nr-mod-stat');times.append(elt('strong','',Number(data.times_reported)||0),elt('span','','Times reported'));
  const until=data.banned_until?new Date(data.banned_until):null;
- const banned=until&&!Number.isNaN(until.getTime())&&until.getTime()>Date.now();
- const ban=elt('div','nr-mod-stat');ban.append(elt('strong','',banned?'Suspended':'Active'),elt('span','',banned?'Until '+date(data.banned_until):'Account status'));
+ const banned=Boolean(data.is_suspended);
+ const ban=elt('div','nr-mod-stat');ban.append(elt('strong','',banned?'Suspended':'Active'),elt('span','',banned?(data.suspended_indefinitely?'Indefinite social restriction':'Until '+date(data.banned_until)):'Account status'));
  statrow.append(times,ban);detail.append(statrow);
  const reported=elt('section','nr-mod-detail-section');
  reported.append(elt('h4','','Current report'),elt('p','nr-mod-muted',(item.category||'Other')+' · '+date(item.created_at)),elt('p','nr-mod-reason-full',item.reason));
@@ -274,7 +274,7 @@ async function showDetail(reportId,focus){
  if(!grid.children.length)grid.append(elt('p','nr-mod-muted','No anime entries.'));
  content.append(grid);detail.append(content);
  const control=elt('section','nr-mod-detail-section');control.id='nr-mod-actions-section';
- control.append(elt('h4','','Administrator actions'),elt('p','nr-mod-muted','Suspensions are reversible. An existing login token may remain active until expiry.'));
+ control.append(elt('h4','','Administrator actions'),elt('p','nr-mod-muted','Suspensions limit social activity without blocking sign-in. The user can read existing messages and submit an appeal.'));
  const buttons=elt('div','nr-mod-action-grid');
  for(const [code,label,show]of [
   ['suspend_7d','Suspend 7 days',true],
