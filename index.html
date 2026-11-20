@@ -640,7 +640,7 @@ async function toggleFavorite(id) {
 // Group explicitly numbered TV seasons into one Nightreel show.
 function nightreelShowTitle(value){
  let title=String(value||'').trim();
- const suffix=/\s*(?:[:\-–]\s*)?(?:(?:the\s+)?final\s+season|(?:season|series)\s*\d+|\d+(?:st|nd|rd|th)\s+season|s[2-9]\d*|(?:part|cour)\s*\d+)(?:\s*[-:–]\s*(?:part|cour)\s*\d+)?\s*$/i;
+ const suffix=/\s*(?:[:\-–]\s*)?(?:(?:the\s+)?final\s+season|(?:season|series)\s*\d+|\d+(?:st|nd|rd|th)\s+season|s[2-9]\d*|[2-9]\d*|(?:ii|iii|iv|v|vi|vii|viii|ix|x)|(?:part|cour)\s*\d+)(?:\s*[-:–]\s*(?:part|cour)\s*\d+)?\s*$/i;
  for(let i=0;i<3;i++){
   const next=title.replace(suffix,'').replace(/[\s:–-]+$/,'').trim();
   if(!next||next===title)break;
