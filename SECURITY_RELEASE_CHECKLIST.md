@@ -26,3 +26,10 @@
 - Validate bundled iOS app with Xcode on an actual iPhone and TestFlight. No signed IPA or App Store submission has been built in this repository.
 
 Reference: https://supabase.com/docs/guides/security/production-checklist
+
+## Moderation and policy work (2026-11-20)
+
+- Owner-only moderation inbox is guarded by `nightreel_moderators` RLS; Dazai account is the current authorized moderator. Includes unreviewed-report count, report review status, and no automatic punitive actions. Changes have not been end-to-end tested on physical devices.
+- An hourly ChatGPT watch task checks for new reports; this is not an SMTP/Gmail delivery integration.
+- Public community guidelines, support page and privacy notice are linked from the app and bundled in the iOS build. Legal/operator review still needed before publication as final privacy statements.
+- Support: `support.nightreel@gmail.com`.
