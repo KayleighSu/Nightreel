@@ -44,8 +44,45 @@ const profileDialog=createDialog('extra-account-dialog','Your Nightreel profile'
  '<input type="file" id="extra-avatar-file" accept="image/jpeg,image/png,image/webp"></label>',
  '<button type="button" id="extra-avatar-upload" class="extras-primary">Save profile picture</button>',
  '<button type="button" id="extra-avatar-remove" class="extras-close">Remove profile picture</button></div></details>',
+ '<details class="nr-danger-zone"><summary>Account and data deletion</summary>',
+ '<p>Deleting your account permanently removes your Nightreel profile, anime collection, friends and messages. This cannot be undone.</p>',
+ '<button type="button" id="extra-delete-account" class="nr-delete-account-button">Delete my account…</button></details>',
  '<p class="extras-status" id="extra-profile-status" role="status"></p>'
 ].join(''));
+const deletionDialog=createDialog('extra-delete-dialog','Delete Nightreel account',[
+ '<p>All of your anime entries, messages, friendships, profile and uploaded pictures will be permanently deleted.</p>',
+ '<form id="extra-delete-form" class="extras-fields">',
+ '<label>Your current password<input type="password" id="extra-delete-password" autocomplete="current-password" required></label>',
+ '<label>Type DELETE MY ACCOUNT<input type="text" id="extra-delete-confirm" autocomplete="off" autocapitalize="characters" required></label>',
+ '<button type="submit" class="nr-delete-account-button" id="extra-delete-submit">Permanently delete account</button>',
+ '</form><p class="extras-status" id="extra-delete-status" role="alert"></p>'
+].join(''));
+$('extra-delete-account').onclick=()=>{profileDialog.close();$('extra-delete-form').reset();message($('extra-delete-status'),'');show(deletionDialog);};
+$('extra-delete-form').addEventListener('submit',async event=>{
+ event.preventDefault();
+ if(!loggedIn()){message($('extra-delete-status'),'Sign in first.');return;}
+ const confirm=$('extra-delete-confirm').value.trim();
+ if(confirm!=='DELETE MY ACCOUNT'){message($('extra-delete-status'),'Type DELETE MY ACCOUNT exactly.');return;}
+ const pass=$('extra-delete-password').value;
+ const email=state.user?.email;
+ if(!email||!pass){message($('extra-delete-status'),'Enter your current password.');return;}
+ const button=$('extra-delete-submit');button.disabled=true;
+ message($('extra-delete-status'),'Verifying your password…');
+ try{
+  // Fresh Supabase Auth sign-in verifies the password; never store or log it.
+  const {error:authError}=await state.supabase.auth.signInWithPassword({email,password:pass});
+  if(authError)throw new Error('Password verification failed.');
+  message($('extra-delete-status'),'Deleting account and personal data…');
+  const {data,error}=await state.supabase.functions.invoke('delete-account',{
+   body:{confirmation:'DELETE MY ACCOUNT'}
+  });
+  if(error||!data?.deleted)throw new Error(data?.error||error?.message||'Account deletion failed.');
+  deletionDialog.close();
+  await state.supabase.auth.signOut();
+  window.location.reload();
+ }catch(error){message($('extra-delete-status'),error.message||'Could not delete account.');}
+ finally{$('extra-delete-password').value='';button.disabled=false;}
+});
 const qrDialog=createDialog('extra-qr-dialog','Your friend QR code',[
  '<p>Show this code to someone. They can scan it in Nightreel to find your username and send you a friend request. Scanning does not automatically grant access.</p>',
  '<div id="friend-qr" aria-label="Your friend QR code"></div>',
