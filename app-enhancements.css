@@ -1468,3 +1468,15 @@ body:has(#account-menu-button) #account-avatar{display:none!important}
  color:#eed7e6;font:700 12px var(--body,system-ui);cursor:pointer
 }
 .nr-chat-report-options button:hover{background:#4d354c}
+
+/* Mobile performance: keep long watchlists paint-light while the user scrolls.
+   Only offscreen cards are skipped; no collection entries are hidden or removed. */
+@media(max-width:780px) and (pointer:coarse){
+  #anime-grid .nr-library-section .anime-card,
+  #anime-grid .nr-featured-section .anime-card,
+  #anime-grid .nr-more-ranked .anime-card{
+    content-visibility:auto;
+    contain-intrinsic-size:auto 640px;
+  }
+  #anime-grid .flip-face.back img[data-back-src]{visibility:hidden}
+}
