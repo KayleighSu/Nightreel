@@ -65,6 +65,7 @@ function stopSelection(){
 }
 function startSelection(target){
  if(!session())return;
+ dismissReportOptions();
  const desktop=target.closest('.nr-chat-window');
  const container=desktop||target.closest('#extra-open-chat');
  const thread=desktop?.querySelector('.nr-dock-thread')||container?.querySelector('#extra-chat-thread');
@@ -98,9 +99,22 @@ function continueSelected(){
  if(!report.d.open)report.d.showModal();
 }
 let pendingReport=null;
+let reportOptions=null;
+function dismissReportOptions(){reportOptions?.remove();reportOptions=null;}
 document.addEventListener('click',event=>{
  const start=event.target.closest?.('.nr-chat-report-start');
- if(start){event.preventDefault();startSelection(start);return;}
+ if(start){
+  event.preventDefault();event.stopPropagation();
+  if(reportOptions){dismissReportOptions();return;}
+  const menu=make('div','nr-chat-report-options');
+  menu.append(btn('Select messages',()=>{
+   dismissReportOptions();startSelection(start);
+  },'nr-chat-select-option'));
+  const header=start.closest('.nr-chat-head,.extras-top');
+  header?.append(menu);reportOptions=menu;
+  return;
+ }
+ if(reportOptions&&!event.target.closest?.('.nr-chat-report-options'))dismissReportOptions();
  const bubble=event.target.closest?.('.message-bubble[data-message-id]');
  if(selecting&&bubble&&selecting.thread.contains(bubble)){event.preventDefault();toggleBubble(bubble);}
 });
