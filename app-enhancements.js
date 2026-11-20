@@ -104,6 +104,21 @@ async function checkUsernameSetup(){
 const col=document.querySelector('.collection-section'), main=document.querySelector('.main-content');
 if(!col||!main)return;
 col.before(social);col.after(friendView);
+const friendCarousel=document.createElement('section');
+friendCarousel.id='nr-friends-watching';
+friendCarousel.className='nr-friends-watching';
+friendCarousel.hidden=true;
+friendCarousel.setAttribute('aria-label','What your friends are watching');
+friendCarousel.innerHTML=[
+ '<div class="nr-friends-carousel-heading"><div><span class="nr-friends-eyebrow">✦ THE FRIEND FEED</span>',
+ '<h2>What your friends are watching<span class="accent-dot">.</span></h2>',
+ '<p>A peek at their current obsession and all-time favorite.</p></div>',
+ '<div class="nr-friends-carousel-controls"><button type="button" data-friends-prev aria-label="Previous friend">‹</button>',
+ '<span id="nr-friends-position" aria-live="polite">—</span>',
+ '<button type="button" data-friends-next aria-label="Next friend">›</button></div></div>',
+ '<div id="nr-friends-carousel-track" class="nr-friends-carousel-track" tabindex="0" aria-label="Swipe to explore friends"></div>'
+].join('');
+social.before(friendCarousel);
 const owner=()=>Boolean(state.supabase&&state.user&&!state.demo);
 const lastArt=arr=>[...arr].sort((a,b)=>String(b.updated_at||b.created_at||'').localeCompare(String(a.updated_at||a.created_at||''))).find(x=>cleanedUrl(x.image_url))?.image_url||'';
 function putImage(id,url){const img=$s(id),safe=cleanedUrl(url);if(!img)return;img.hidden=!safe;if(safe)img.src=safe;else img.removeAttribute('src');}
@@ -774,9 +789,122 @@ $s('anime-grid').addEventListener('click',favoriteToggleClick,true);
 $s('friend-grid').addEventListener('click',favoriteToggleClick,true);
 $s('anime-grid').addEventListener('click',e=>cardClick(e,false),true);
 $s('friend-grid').addEventListener('click',e=>cardClick(e,true));
+let nrFriendsFeedToken=0;
+let nrFriendsFeedLoadedAt=0;
+let nrFriendsFeedUser='';
+let nrFriendsFeedBusy=false;
+const nrFriendsTrack=$s('nr-friends-carousel-track');
+const nrFriendsPosition=$s('nr-friends-position');
+function nrSetFriendsCarouselPosition(){
+ const total=nrFriendsTrack.children.length;
+ if(!total){nrFriendsPosition.textContent='—';return;}
+ const index=Math.max(0,Math.min(total-1,Math.round(nrFriendsTrack.scrollLeft/Math.max(1,nrFriendsTrack.clientWidth))));
+ nrFriendsPosition.textContent=(index+1)+' / '+total;
+ friendCarousel.querySelector('[data-friends-prev]').disabled=index===0;
+ friendCarousel.querySelector('[data-friends-next]').disabled=index===total-1;
+}
+function nrFriendCarouselCard(friend,items){
+ const watching=items.filter(e=>e.status==='watching')
+  .sort((a,b)=>String(b.updated_at||b.created_at||'').localeCompare(String(a.updated_at||a.created_at||'')))[0];
+ const favorites=items.filter(e=>e.favorite)
+  .sort((a,b)=>(Number(a.favorite_rank)||9999)-(Number(b.favorite_rank)||9999)||
+   (Number(b.rating)||0)-(Number(a.rating)||0))[0];
+ const name=friend.display_name||friend.username||'A fellow anime fan';
+ const row=document.createElement('button');row.type='button';row.className='nr-friend-slide';
+ row.setAttribute('aria-label','Open '+name+'\'s Nightreel profile');
+ row.dataset.friendId=friend.id;
+ const avatar=document.createElement('div');avatar.className='nr-friend-feed-avatar';
+ avatar.textContent=name.slice(0,1).toUpperCase();
+ const inner=document.createElement('div');inner.className='nr-friend-slide-content';
+ const identity=document.createElement('div');identity.className='nr-friend-feed-identity';
+ const who=document.createElement('strong');who.textContent=name;
+ const link=document.createElement('span');link.textContent='View profile ↗';
+ identity.append(avatar,who,link);
+ const details=document.createElement('div');details.className='nr-friend-feed-details';
+ const addInfo=(label,entry,fallback)=>{
+  const slot=document.createElement('div');slot.className='nr-friend-feed-stat';
+  const tag=document.createElement('small');tag.textContent=label;
+  const title=document.createElement('strong');title.textContent=entry?.title||fallback;
+  if(!entry)title.classList.add('nr-friend-feed-filler');
+  slot.append(tag,title);details.append(slot);
+ };
+ addInfo('◉ CURRENTLY WATCHING',watching,'Not nerdy enough to be watching anything… yet.');
+ addInfo('♥ ALL-TIME FAVORITE',favorites,'Still searching for their main-character obsession.');
+ inner.append(identity,details);
+ const artwork=watching?.image_url||favorites?.image_url;
+ if(artwork&&cleanedUrl(artwork)){
+  const cover=document.createElement('img');cover.className='nr-friend-feed-cover';cover.alt='';
+  cover.loading='lazy';cover.referrerPolicy='no-referrer';cover.src=cleanedUrl(artwork);
+  cover.onerror=()=>cover.remove();row.append(cover);
+ }
+ row.append(inner);
+ return row;
+}
+async function nrRefreshFriendsFeed(force=false){
+ if(!owner()){
+  friendCarousel.hidden=true;nrFriendsTrack.replaceChildren();nrFriendsFeedUser='';return;
+ }
+ const uid=state.user.id;
+ if(nrFriendsFeedBusy)return;
+ if(!force&&nrFriendsFeedUser===uid&&Date.now()-nrFriendsFeedLoadedAt<60000)return;
+ nrFriendsFeedBusy=true;const token=++nrFriendsFeedToken;
+ friendCarousel.hidden=false;
+ if(!nrFriendsTrack.children.length)nrFriendsTrack.textContent='Finding your fellow anime nerds…';
+ try{
+  const response=await state.supabase.rpc('get_nightreel_connections');
+  if(response.error)throw response.error;
+  const accepted=(response.data||[]).filter(f=>f.status==='accepted').map(f=>({
+   id:f.requester_id===uid?f.recipient_id:f.requester_id,
+   username:f.username,display_name:f.display_name
+  }));
+  if(token!==nrFriendsFeedToken||state.user?.id!==uid)return;
+  nrFriendsTrack.replaceChildren();
+  if(!accepted.length){
+   friendCarousel.hidden=true;nrFriendsFeedLoadedAt=Date.now();nrFriendsFeedUser=uid;return;
+  }
+  const loaded=await Promise.all(accepted.slice(0,40).map(async friend=>{
+   try{
+    const r=await state.supabase.rpc('get_friend_anime_v7',{p_friend_id:friend.id});
+    if(r.error)throw r.error;
+    return {friend,items:r.data||[]};
+   }catch(error){
+    console.warn('Nightreel friend feed unavailable for '+friend.id,error);
+    return {friend,items:[],unavailable:true};
+   }
+  }));
+  if(token!==nrFriendsFeedToken||state.user?.id!==uid)return;
+  for(const {friend,items,unavailable} of loaded){
+   const slide=nrFriendCarouselCard(friend,items);
+   if(unavailable){
+    slide.querySelectorAll('.nr-friend-feed-filler').forEach(e=>e.textContent='Their watchlist is taking an intermission.');
+   }
+   nrFriendsTrack.append(slide);
+  }
+  nrFriendsTrack.scrollLeft=0;
+  nrFriendsFeedUser=uid;nrFriendsFeedLoadedAt=Date.now();
+  nrSetFriendsCarouselPosition();
+ }catch(error){
+  console.warn('Unable to load friends watch feed:',error);
+  nrFriendsTrack.textContent='The friend feed is on an intermission. Pull down to try again.';
+ }finally{nrFriendsFeedBusy=false;}
+}
+friendCarousel.querySelector('[data-friends-prev]').onclick=()=>nrFriendsTrack.scrollBy({left:-nrFriendsTrack.clientWidth,behavior:'smooth'});
+friendCarousel.querySelector('[data-friends-next]').onclick=()=>nrFriendsTrack.scrollBy({left:nrFriendsTrack.clientWidth,behavior:'smooth'});
+nrFriendsTrack.addEventListener('scroll',nrSetFriendsCarouselPosition,{passive:true});
+nrFriendsTrack.addEventListener('click',async event=>{
+ const slide=event.target.closest('[data-friend-id]');if(!slide)return;
+ await refreshFriends();
+ await viewFriend(slide.dataset.friendId);
+});
+window.addEventListener('resize',nrSetFriendsCarouselPosition);
+document.addEventListener('nightreel:workspace-ready',()=>nrRefreshFriendsFeed(true));
+document.addEventListener('nightreel:friendship-changed',()=>nrRefreshFriendsFeed(true));
+if(state.user?.id)setTimeout(()=>nrRefreshFriendsFeed(true),0);
 function show(which){
  panel=which;
  const library=which==='library',friends=which==='friends',profile=which==='profile';
+ friendCarousel.hidden=!library||!owner();
+ if(library&&owner())nrRefreshFriendsFeed();
  document.querySelector('.hero').hidden=!library;
  document.querySelector('.stats').hidden=!library;
  col.hidden=!library;
@@ -818,6 +946,7 @@ window.NightreelRefreshCurrentView=async()=>{
  }else{
   if(!state.demo)await loadEntries();
   else render();
+  await nrRefreshFriendsFeed(true);
  }
  return panel;
 };
