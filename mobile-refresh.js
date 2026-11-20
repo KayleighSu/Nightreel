@@ -1,7 +1,7 @@
 /* Pull-to-refresh for installed Nightreel on iOS/Android. */
 (() => {
  'use strict';
- const isInstalled=()=>window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
+ const isInstalled=()=>window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true||window.Capacitor?.isNativePlatform?.()===true;
  const isPhone=()=>window.matchMedia('(max-width: 720px) and (pointer: coarse)').matches;
  const atTop=()=>window.scrollY<=2 && (document.scrollingElement?.scrollTop||0)<=2;
  const ignored=target=>Boolean(target?.closest('dialog,[role="dialog"],input,textarea,select,[contenteditable="true"],.message-thread,.nr-dock-thread'));
