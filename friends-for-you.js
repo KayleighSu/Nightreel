@@ -79,6 +79,7 @@
      const found=new Map();let attempts=0;
      // Use at most three strong, distinct seed anime to avoid overwhelming the public API.
      for(const seed of favourites.slice(0,3)){
+       try{
        let id=Number(seed.mal_id);
        if(!id){
          await sleep(attempts?550:0);
@@ -88,7 +89,7 @@
          attempts++;
        }
        if(!id)continue;
-       await sleep(800);
+       await sleep(1400);
        const recs=await fetchJson('https://api.jikan.moe/v4/anime/'+encodeURIComponent(id)+'/recommendations');
        for(const rec of recs.slice(0,30)){
          const anime=rec.entry;if(!anime||!anime.mal_id)continue;
@@ -97,6 +98,7 @@
          else prior.votes+=Number(rec.votes)||0;
        }
        if(found.size>=22)break;
+       }catch(error){console.warn('Skipping unavailable recommendation seed',seed.title,error);continue;}
      }
      const candidate=[...found.values()].filter(a=>!alreadyHave(a)).sort((a,b)=>b.votes-a.votes).slice(0,16);
      if(!candidate.length){showMessage('No new matches were returned for those titles yet. Try again later or rate more favorites.');return}
