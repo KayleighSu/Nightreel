@@ -104,7 +104,7 @@ const chatDialog=createDialog('extra-messages-dialog','Messages',[
  '<p>Private conversations with your accepted friends. Removing a friendship ends access to the conversation.</p>',
  '<section id="extra-friend-requests" class="nr-chat-requests" hidden><h3>Friend requests <span id="extra-request-count"></span></h3><div id="extra-request-list"></div></section>',
  '<div id="extra-conversations"></div>',
- '<div id="extra-open-chat" hidden><div class="extras-top"><h3 id="extra-chat-title">Conversation</h3><button type="button" class="extras-close" id="extra-back-chats">All chats</button></div>',
+ '<div id="extra-open-chat" hidden><div class="extras-top"><h3 id="extra-chat-title">Conversation</h3><button type="button" class="nr-chat-report-start" title="Report conversation">Report</button><button type="button" class="extras-close" id="extra-back-chats">All chats</button></div>',
  '<div class="message-thread" id="extra-chat-thread" aria-live="polite"></div>',
  '<form id="extra-send-message" class="extras-fields"><label for="extra-chat-text">New message<textarea id="extra-chat-text" maxlength="2000" rows="3" placeholder="Write a message…" required></textarea></label>',
  '<button type="submit" class="extras-primary" id="extra-send-button">Send message</button></form></div>',
@@ -432,6 +432,7 @@ async function openMessages(friendId,showList=false){
 async function openConversation(id){
  const f=friends.find(x=>x.id===id);if(!f)return;
  conversationId=id;
+ $('extra-open-chat').dataset.conversationId=id;
  if(nrIsMobile()){
   nrRememberMobileConversation(id);
   nrMarkChatRead(id);
@@ -460,15 +461,8 @@ async function loadMessages(quiet=false){
    const bubble=document.createElement('div');bubble.className='message-bubble'+(item.sender_id===user?' mine':'');
    const body=document.createElement('span');body.textContent=item.body;
    const when=document.createElement('small');when.textContent=timeLabel(item.created_at);
-   bubble.append(body,when);
-   if(item.sender_id!==user){
-    const report= document.createElement('button');
-    report.type='button';report.className='nr-message-options';report.textContent='⋯';
-    report.setAttribute('aria-label','Message options');report.title='Message options';
-    report.dataset.messageId=item.id;report.dataset.senderId=item.sender_id;
-    bubble.append(report);
-   }
-   box.append(bubble);
+   bubble.dataset.messageId=item.id;bubble.dataset.senderId=item.sender_id;
+   bubble.append(body,when);box.append(bubble);
   }
   if(pinned||!quiet)box.scrollTop=box.scrollHeight;
   if(!quiet)message($('extra-messages-status'),'');
@@ -672,7 +666,9 @@ function nrOpenDock(id,minimized=false){
  const minimize=document.createElement('button');minimize.type='button';minimize.className='nr-chat-minimize';minimize.textContent='−';minimize.title='Minimize conversation';
  minimize.onclick=()=>nrSetMinimized(win,!win.classList.contains('nr-chat-minimized'));
  const close=document.createElement('button');close.type='button';close.textContent='×';close.title='Close conversation';close.onclick=()=>{nrWindows.delete(id);win.remove();nrRememberTabs();};
- header.append(toggle,chatBadge,minimize,close);
+ const reportChat=document.createElement('button');reportChat.type='button';
+ reportChat.className='nr-chat-report-start';reportChat.textContent='Report';reportChat.title='Report conversation';
+ header.append(toggle,chatBadge,reportChat,minimize,close);
  const thread=document.createElement('div');thread.className='nr-dock-thread';thread.setAttribute('aria-live','polite');
  const form=document.createElement('form');form.className='nr-dock-form';
  const input=document.createElement('textarea');input.rows=1;input.maxLength=2000;input.placeholder='Write a message…';input.setAttribute('aria-label','Message '+(friend.display_name||friend.username));
@@ -727,15 +723,8 @@ async function nrLoadDockMessages(win){
    const bubble=document.createElement('div');bubble.className='message-bubble'+(m.sender_id===user?' mine':'');
    const body=document.createElement('span');body.textContent=m.body;
    const when=document.createElement('small');when.textContent=timeLabel(m.created_at);
-   bubble.append(body,when);
-   if(m.sender_id!==user){
-    const report=document.createElement('button');report.type='button';
-    report.className='nr-message-options';report.textContent='⋯';
-    report.setAttribute('aria-label','Message options');report.title='Message options';
-    report.dataset.messageId=m.id;report.dataset.senderId=m.sender_id;
-    bubble.append(report);
-   }
-   thread.append(bubble);
+   bubble.dataset.messageId=m.id;bubble.dataset.senderId=m.sender_id;
+   bubble.append(body,when);thread.append(bubble);
   }
   if(pinned)thread.scrollTop=thread.scrollHeight;
  }catch(error){win.querySelector('.nr-dock-status').textContent=error.message;}
