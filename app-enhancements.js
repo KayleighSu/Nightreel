@@ -10,7 +10,7 @@ const social=document.createElement('section');social.id='social-ui';
 social.innerHTML=[
 '<div class="social-toolbar" id="social-navigation"><button type="button" data-social-view="library">◈ My library</button><button type="button" data-social-view="friends">♡ Friends</button><button type="button" data-social-view="profile">◉ My profile</button></div>',
 '<div class="social-panel" id="social-friends-panel" hidden><h2>Find your people.</h2><p>Search usernames or names. Only accepted friends can see your anime and public notes.</p><div class="social-row"><label class="social-field" style="flex:1">Find a friend<input id="find-person" type="search" maxlength="32" placeholder="Search at least 2 letters"></label><button type="button" id="find-person-btn">Search</button></div><div id="people-results"></div><h2 style="margin-top:20px">Friends and requests</h2><div id="friends-results"></div><p class="social-message" id="friends-error" role="status"></p></div>',
-'<div class="social-panel" id="social-profile-panel" hidden><h2>My public profile.</h2><p>Friends see your anime, ratings and public notes, never your email or private notes.</p><div class="social-hero"><img id="profile-banner" alt="" hidden><div class="social-hero-content"><span class="social-caption">STAY OBSESSED.</span><h2 id="profile-name">Anime fan</h2></div></div><form id="profile-editor"><div class="social-grid"><label class="social-field">Username<input id="profile-handle" pattern="[A-Za-z][A-Za-z0-9_]{2,31}" maxlength="32" required></label><label class="social-field">Display name<input id="profile-display" maxlength="60" required></label></div><p>Banner uses your most recently edited anime artwork unless you upload your own.</p><label class="social-field">Custom banner: JPG, PNG or WebP (maximum 4 MB)<input id="profile-image-file" type="file" accept="image/jpeg,image/png,image/webp"></label><label class="social-field">Profile picture (JPG, PNG or WebP, max 2 MB)<input id="profile-avatar-file" type="file" accept="image/jpeg,image/png,image/webp"></label><div class="social-toolbar" style="margin-top:15px"><button type="submit">Save profile</button><button type="button" id="remove-banner">Use latest anime image</button></div></form><p class="social-message" id="profile-error" role="status"></p></div>'
+'<div class="social-panel" id="social-profile-panel" hidden><h2>My profile.</h2><p>Choose who can view your profile and anime collection. Your email and private notes are never shown.</p><div class="social-hero"><img id="profile-banner" alt="" hidden><div class="social-hero-content"><span class="social-caption">STAY OBSESSED.</span><h2 id="profile-name">Anime fan</h2></div></div><form id="profile-editor"><label class="social-field nr-profile-visibility-field">Profile visibility<select id="profile-visibility" name="profile-visibility"><option value="public">Public — anyone signed in to Nightreel</option><option value="friends">Friends only — accepted friends</option><option value="private">Private — only me (and moderators for safety reviews)</option></select></label><p class="nr-privacy-hint">Private profiles are hidden from search. Moderators can still investigate reports. Existing publicly shared cover-image links may remain accessible to someone who already has the URL.</p><div class="social-grid"><label class="social-field">Username<input id="profile-handle" pattern="[A-Za-z][A-Za-z0-9_]{2,31}" maxlength="32" required></label><label class="social-field">Display name<input id="profile-display" maxlength="60" required></label></div><p>Banner uses your most recently edited anime artwork unless you upload your own.</p><label class="social-field">Custom banner: JPG, PNG or WebP (maximum 4 MB)<input id="profile-image-file" type="file" accept="image/jpeg,image/png,image/webp"></label><label class="social-field">Profile picture (JPG, PNG or WebP, max 2 MB)<input id="profile-avatar-file" type="file" accept="image/jpeg,image/png,image/webp"></label><div class="social-toolbar" style="margin-top:15px"><button type="submit">Save profile</button><button type="button" id="remove-banner">Use latest anime image</button></div></form><p class="social-message" id="profile-error" role="status"></p></div>'
 ].join('');
 const friendView=document.createElement('section');friendView.id='friend-view';friendView.hidden=true;
 friendView.innerHTML=[
@@ -286,7 +286,7 @@ function drawHero(){
  putImage('hero-banner-image',ownBanner||lastArt(state.entries));frameBannerAt('hero-banner-image',ownProfile);
  if(owner() && (!ownProfile || currentProfileOwner!==state.user.id) && !loadingProfile){
   loadingProfile=true;
-  state.supabase.from('profiles').select('id,username,display_name,banner_path,avatar_path,banner_desktop_x,banner_desktop_y,banner_desktop_zoom,banner_mobile_x,banner_mobile_y,banner_mobile_zoom').eq('id',state.user.id).maybeSingle().then(async r=>{
+  state.supabase.from('profiles').select('id,username,display_name,visibility,banner_path,avatar_path,banner_desktop_x,banner_desktop_y,banner_desktop_zoom,banner_mobile_x,banner_mobile_y,banner_mobile_zoom').eq('id',state.user.id).maybeSingle().then(async r=>{
    if(!r.error && r.data && state.user?.id===r.data.id){
     ownProfile=r.data;currentProfileOwner=r.data.id;
     ownBanner=await getSignedBanner(ownProfile);
@@ -980,12 +980,13 @@ async function loadProfile(){
   $s('profile-handle').readOnly=true;
   $s('profile-handle').title='Automatically generated unique username';
   $s('profile-display').value=ownProfile.display_name;
+  $s('profile-visibility').value=ownProfile.visibility||'friends';
   ownBanner=await getSignedBanner(ownProfile);
   currentProfileOwner=ownProfile.id;
   bannerDraft=bannerFrame(ownProfile);updateBannerEditor();
   drawMyBanner();drawHero();
   refreshAccountAvatar();
-  note('profile-error','Only accepted friends can see your profile.');
+  note('profile-error','Privacy setting: '+(ownProfile.visibility==='public'?'Public':ownProfile.visibility==='private'?'Private':'Friends only')+'.');
  }catch(err){note('profile-error','Profile unavailable: '+err.message);}
 }
 function drawMyBanner(){
@@ -1023,9 +1024,11 @@ $s('profile-editor').addEventListener('submit',async ev=>{
    const uploaded=await state.supabase.storage.from('nightreel-banners').upload(banner_path,file,{upsert:false,contentType:file.type});
    if(uploaded.error)throw uploaded.error;
   }
-  const r=await state.supabase.from('profiles').update({display_name,banner_path,avatar_path,...bannerFrame(bannerDraft)}).eq('id',state.user.id);
+  const visibility=$s('profile-visibility').value;
+  if(!['public','friends','private'].includes(visibility))throw Error('Invalid profile visibility.');
+  const r=await state.supabase.from('profiles').update({display_name,visibility,banner_path,avatar_path,...bannerFrame(bannerDraft)}).eq('id',state.user.id);
   if(r.error)throw r.error;
-  ownProfile={...ownProfile,username,display_name,banner_path,avatar_path,...bannerFrame(bannerDraft)};
+  ownProfile={...ownProfile,username,display_name,visibility,banner_path,avatar_path,...bannerFrame(bannerDraft)};
   ownBanner=await getSignedBanner(ownProfile);
   drawMyBanner();drawHero();resetBannerObjectUrl();updateBannerEditor();$s('profile-image-file').value='';$s('profile-avatar-file').value='';refreshAccountAvatar();note('profile-error','Profile saved.');
  }catch(e){note('profile-error', e.code==='23505'?'That username is already taken. Please choose another.':'Save failed: '+e.message);}
@@ -1075,12 +1078,14 @@ $s('find-person-btn').onclick=async()=>{
   if(r.error)throw r.error;
   const ids=new Set(links.map(f=>f.requester_id===state.user.id?f.recipient_id:f.requester_id));
   $s('people-results').innerHTML=(r.data||[]).map(p=>'<div class="social-row"><div><strong>'+esc(p.display_name)+'</strong><small>@'+esc(p.username)+'</small></div>'+
-   (ids.has(p.id)?'<small>Already connected / requested</small>':'<button type="button" data-request-id="'+esc(p.id)+'">Send request</button>')+'</div>').join('')||'<p>No people found.</p>';
+   '<div class="nr-find-actions"><button type="button" data-open-profile="'+esc(p.id)+'">View profile</button>'+(ids.has(p.id)?'<small>Already connected / requested</small>':'<button type="button" data-request-id="'+esc(p.id)+'">Send request</button>')+'</div>'+'</div>').join('')||'<p>No people found.</p>';
   note('friends-error','');
  }catch(e){note('friends-error','Search unavailable: '+e.message);}
 };
 $s('find-person').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$s('find-person-btn').click();}});
 $s('people-results').addEventListener('click',async ev=>{
+ const view=ev.target.closest('[data-open-profile]');
+ if(view){await viewFriend(view.dataset.openProfile);return;}
  const b=ev.target.closest('[data-request-id]');if(!b||!owner())return;
  b.disabled=true;
  try{
@@ -1090,8 +1095,9 @@ $s('people-results').addEventListener('click',async ev=>{
  }catch(e){b.disabled=false;note('friends-error','Could not send request: '+e.message);}
 });
 async function viewFriend(id){
- if(!owner())return;
- if(!links.some(f=>f.status==='accepted'&&(f.requester_id===state.user.id?f.recipient_id:f.requester_id)===id))return;
+ if(!owner()||!id||id===state.user.id)return;
+ const permission=await state.supabase.rpc('nightreel_can_view_profile',{p_target:id});
+ if(permission.error||permission.data!==true){note('friends-error','This profile is not visible to your account.');return;}
  try{
   const [p,e]=await Promise.all([
    state.supabase.from('profiles').select('id,username,display_name,banner_path,avatar_path,banner_desktop_x,banner_desktop_y,banner_desktop_zoom,banner_mobile_x,banner_mobile_y,banner_mobile_zoom').eq('id',id).single(),
@@ -1110,6 +1116,8 @@ async function viewFriend(id){
   show('friend');
  }catch(err){note('friends-error','Could not load friend profile: '+err.message);}
 }
+// Moderation and user discovery navigate to the actual in-app profile screen.
+window.NightreelOpenProfile=async id=>{if(!owner())return false;await viewFriend(id);return !friendView.hidden&&friendView.dataset.friendId===id;};
 // Refresh private signed banner URLs periodically so custom artwork remains visible
 // without making the storage bucket public.
 setInterval(async()=>{
