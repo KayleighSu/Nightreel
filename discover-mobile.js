@@ -160,23 +160,30 @@ const searchCatalogue=async(q)=>{
 };
 const activate=()=>{
  if(!mobile())return;
- document.querySelector('[data-social-view="library"]')?.click();
- active=true;document.body.classList.add('nr-discover-active');
- nav.querySelectorAll('[data-nightreel-tab]').forEach(b=>b.setAttribute('aria-current',b.dataset.nightreelTab==='discover'?'page':'false'));
- build();window.scrollTo({top:0,behavior:'instant'});
+ // Do not route through the Friends "For You" tab or anime catalogue modal.
+ // Discover is a standalone page with its own content.
+ active=true;
+ document.body.classList.add('nr-discover-active');
+ const social=document.getElementById('social-friends-panel');
+ if(social && !social.hidden)document.querySelector('[data-social-view="library"]')?.click();
+ nav.querySelectorAll('[data-nightreel-tab]').forEach(b=>{
+  if(b.dataset.nightreelTab==='discover')b.setAttribute('aria-current','page');
+  else b.removeAttribute('aria-current');
+ });
+ build();
+ window.scrollTo({top:0,behavior:'instant'});
  catalogue();recommend();
 };
 const deactivate=()=>{
  if(!active)return;
  active=false;document.body.classList.remove('nr-discover-active');
 };
+// The original bottom menu owns navigation; expose the dedicated view
+// rather than competing with its earlier event listener.
+window.NightreelDiscover={activate,deactivate};
 nav.addEventListener('click',e=>{
  const button=e.target.closest('[data-nightreel-tab]');if(!button)return;
- if(button.dataset.nightreelTab==='discover'){
-  e.preventDefault();e.stopImmediatePropagation();activate();
- }else{
-  deactivate();
- }
+ if(button.dataset.nightreelTab!=='discover')deactivate();
 },true);
 root.addEventListener('click',e=>{
  const select=e.target.closest('[data-select]');
