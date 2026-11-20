@@ -136,3 +136,12 @@
  .topbar-right #account-menu-button{max-width:92px}
 }
 @media(min-width:721px){.nrm-header-actions{display:none!important}}
+
+@media(max-width:720px){
+ .nrm-library-tools{margin:27px 0 2px;padding:17px 14px 20px;border-radius:18px;background:#1f172b;border:1px solid #624260}
+ .nrm-library-tools h2{margin:0 0 13px;font:800 18px var(--head);color:#fff}
+ .nrm-library-tools>div{display:flex;gap:8px;flex-wrap:wrap}
+ .nrm-library-tools button{padding:10px 12px;min-height:40px;border:1px solid #855779;border-radius:12px;background:#37233e;color:#ffd2e9;font-size:12px!important;font-weight:700!important}
+ body.nrm-original-social .main-content>#nr-release-radar:not([hidden]){display:block!important;margin:17px 13px 24px!important;padding:16px!important}
+ body.nrm-original-social .main-content>#nr-release-radar .nr-radar-head h2{font-size:26px}
+}
