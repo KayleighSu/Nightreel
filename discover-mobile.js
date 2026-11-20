@@ -26,6 +26,7 @@ const icon=n=>({
  }[n]||'');
 const svg=n=>'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+icon(n)+'</svg>';
 let active=false,tab='discover',search='',trending=[],recommendations=[],current=null,requesting=false,recLoading=false,searchResults=[],requestSeq=0,recKey='',searchTimer,featuredIndex=0;
+const detailCache=new Set();
 const useImage=(a,klass='')=>{const url=poster(a);return url?'<img class="'+klass+'" src="'+escape(url)+'" loading="lazy" alt="">':'<span class="nrd-empty-art">✦</span>'};
 const infoText=a=>[a?.type,a?.episodes?a.episodes+' eps':'',a?.score?'★ '+Number(a.score).toFixed(1):''].filter(Boolean).join(' · ');
 const percent=e=>{const watched=Number(e?.episodes_watched||0),total=Number(e?.episodes_total||e?.catalog_episode_total||0);return total?Math.max(0,Math.min(100,Math.round(watched*100/total))):0};
@@ -55,6 +56,16 @@ const openDetails=a=>{
  '<div class="nrd-dialog-actions"><button type="button" data-detail-add>'+ (own?'View / edit your entry':'＋ Add to watchlist')+'</button>'+
  '<button type="button" data-detail-close>Close</button></div></div>';
  if(!modal.open)modal.showModal();
+ if(a.mal_id&&!a.synopsis&&!detailCache.has(a.mal_id)){
+  detailCache.add(a.mal_id);
+  fetch('https://api.jikan.moe/v4/anime/'+encodeURIComponent(a.mal_id)+'/full')
+   .then(r=>r.ok?r.json():null).then(body=>{
+    if(!body?.data||current!==a||!modal.open)return;
+    Object.assign(a,{synopsis:body.data.synopsis||a.synopsis,episodes:body.data.episodes||a.episodes,
+      score:body.data.score||a.score,year:body.data.year||a.year,type:body.data.type||a.type});
+    openDetails(a);
+   }).catch(error=>console.warn('Anime details unavailable',error));
+ }
 };
 modal.addEventListener('click',e=>{
  if(e.target===modal||e.target.closest('[data-detail-close]'))modal.close();
@@ -78,6 +89,8 @@ const makeFeatured=()=>{
 const watching=()=>list().filter(e=>e.status==='watching');
 function build(){
  if(!active||!mobile())return;
+ const focused=document.activeElement?.id==='nrd-query';
+ const caret=focused?document.activeElement.selectionStart:null;
  const w=watching();
  const fav=list().filter(e=>e.favorite).sort((a,b)=>(Number(a.favorite_rank)||99)-(Number(b.favorite_rank)||99));
  const recs=recommendations.length?recommendations: fav.filter(x=>x.image_url).map(ownAnime).slice(0,8);
@@ -101,6 +114,7 @@ function build(){
    '<div class="nrd-recs">'+section(recommendations.length?'Because of Your Favorites':'Your Favorite Stories','',recs,'recs')+
    (recLoading?'<p class="nrd-message">Finding recommendations from anime fans…</p>':'')+'</div>'
  )+'</div>';
+ if(focused){const next=root.querySelector('#nrd-query');next?.focus({preventScroll:true});try{if(caret!=null)next.setSelectionRange(caret,caret)}catch{}}
 }
 const catalogue=async()=>{
  if(trending.length)return;requesting=true;build();
