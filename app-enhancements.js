@@ -793,6 +793,7 @@ let nrFriendsFeedToken=0;
 let nrFriendsFeedLoadedAt=0;
 let nrFriendsFeedUser='';
 let nrFriendsFeedBusy=false;
+let nrFriendsFeedHasFriends=false;
 const nrFriendsTrack=$s('nr-friends-carousel-track');
 const nrFriendsPosition=$s('nr-friends-position');
 function nrSetFriendsCarouselPosition(){
@@ -842,7 +843,7 @@ function nrFriendCarouselCard(friend,items){
 }
 async function nrRefreshFriendsFeed(force=false){
  if(!owner()){
-  friendCarousel.hidden=true;nrFriendsTrack.replaceChildren();nrFriendsFeedUser='';return;
+  friendCarousel.hidden=true;nrFriendsTrack.replaceChildren();nrFriendsFeedUser='';nrFriendsFeedHasFriends=false;return;
  }
  const uid=state.user.id;
  if(nrFriendsFeedBusy)return;
@@ -859,6 +860,7 @@ async function nrRefreshFriendsFeed(force=false){
   }));
   if(token!==nrFriendsFeedToken||state.user?.id!==uid)return;
   nrFriendsTrack.replaceChildren();
+  nrFriendsFeedHasFriends=accepted.length>0;
   if(!accepted.length){
    friendCarousel.hidden=true;nrFriendsFeedLoadedAt=Date.now();nrFriendsFeedUser=uid;return;
   }
@@ -903,7 +905,7 @@ if(state.user?.id)setTimeout(()=>nrRefreshFriendsFeed(true),0);
 function show(which){
  panel=which;
  const library=which==='library',friends=which==='friends',profile=which==='profile';
- friendCarousel.hidden=!library||!owner();
+ friendCarousel.hidden=!library||!owner()||(nrFriendsFeedUser===state.user?.id&&!nrFriendsFeedHasFriends);
  if(library&&owner())nrRefreshFriendsFeed();
  document.querySelector('.hero').hidden=!library;
  document.querySelector('.stats').hidden=!library;
