@@ -1,6 +1,6 @@
 # Nightreel — App Store review preparation
 
-**Status:** working notes. Do not submit this as final review metadata until the privacy policy, support information and legal review have been completed.
+**Status:** working notes. Public privacy and support URLs have been created. Do not submit as final review metadata until the disclosure and retention language receives operator/legal review.
 
 ## App overview
 
@@ -27,16 +27,22 @@ Observed current implementation:
 
 ## Required human inputs
 
-1. A support email or official support contact (do not put a private email address into the public source without choosing to).
-2. Legal/operator name and contact for the privacy policy.
+1. **Completed:** Support contact published as `support.nightreel@gmail.com`; support page: `https://kayleighsu.github.io/Nightreel/support.html`.
+2. **Needs confirmation:** Legal/operator identity, data retention practices, and privacy notice review. Draft published: `https://kayleighsu.github.io/Nightreel/privacy.html`.
 3. A copyright complaint and takedown contact; review whether a DMCA agent registration applies.
-4. Confirm moderation staffing/response process for reports; app provides reporting/blocking but does not automate moderator review.
+4. Owner-only in-app moderation inbox is live, with an unreviewed-report indicator. A ChatGPT task checks for new reports hourly, but automated **Gmail delivery** and a documented moderation response process still need to be arranged.
 5. Confirm all default anime images can be used under a valid license, permission or documented applicable copyright exception.
 6. Supply a **disposable reviewer account** with representative demo content, or obtain Apple's approval for guest demo use; do not share the owner account credentials.
 
 ## Reviewer notes (draft, not for automatic upload)
 
 Nightreel is an anime tracking and friends application. Users sign up with email/password, add titles, set a watch status, track progress, rank favorites and optionally upload custom cover artwork. Accepted friends can see each other's shared collections and message one another. Users can report or block profiles, and account deletion is available in the account dialog. To access the QR scanner, open Profile > Scan a QR > Start Camera. Camera permission is requested only when scanning. The app currently directs password recovery/verification emails to the hosted Nightreel website; the user can then sign into the native application.
+
+## Apple listing links
+
+- Privacy Policy URL: `https://kayleighsu.github.io/Nightreel/privacy.html` (verify and approve content before entering into App Store Connect).
+- Support URL: `https://kayleighsu.github.io/Nightreel/support.html`.
+- Community Guidelines: `https://kayleighsu.github.io/Nightreel/community-guidelines.html`.
 
 ## Remaining device checks
 
