@@ -100,6 +100,17 @@
       }
     }
   };
+  const relativeTime=value=>{
+    if(!value)return '';
+    const timestamp=Date.parse(value),diff=Date.now()-timestamp;
+    if(!Number.isFinite(timestamp)||diff<0)return '';
+    const minutes=Math.floor(diff/60000),hours=Math.floor(diff/3600000),days=Math.floor(diff/86400000);
+    if(minutes<1)return 'just now';
+    if(minutes<60)return minutes+'m ago';
+    if(hours<24)return hours+'h ago';
+    if(days<7)return days+'d ago';
+    return new Date(timestamp).toLocaleDateString(undefined,{month:'short',day:'numeric'});
+  };
   const createCard=(friend,anime,kind)=>{
     const card=document.createElement('article');card.className='nrf-card';
     card.dataset.entryId=String(anime.id||'');
@@ -107,8 +118,20 @@
     const avatar=add(header,'span','nrf-avatar',(friend.display_name||friend.username||'?').slice(0,1).toUpperCase());
     avatar.setAttribute('aria-hidden','true');
     const who=add(header,'div','nrf-identity');
-    add(who,'strong',null,friend.display_name||friend.username||'Nightreel friend');
-    add(who,'span',null,kind==='watching'?'Currently watching '+(anime.title||'an anime'):'Added '+(anime.title||'an anime')+' to favorites');
+    const byline=add(who,'div','nrf-byline');
+    add(byline,'strong','nrf-author',friend.display_name||friend.username||'Nightreel friend');
+    // The anime record exposes updated_at, not a dedicated activity event timestamp.
+    // Label it "Updated" so metadata edits aren't mistaken for a new watch event.
+    const updatedLabel=relativeTime(anime.updated_at);
+    if(updatedLabel){
+      const time=add(byline,'time','nrf-post-time','Updated '+updatedLabel);
+      time.dateTime=anime.updated_at;
+      time.title=new Date(anime.updated_at).toLocaleString();
+    }
+    const activity=add(who,'div','nrf-activity-line');
+    add(activity,'span','nrf-activity-icon',kind==='watching'?'▣':'★');
+    add(activity,'span',null,kind==='watching'?'Watching ':'Favorited ');
+    add(activity,'strong','nrf-activity-title',anime.title||'an anime');
     const profile=add(header,'button','nrf-profile','⋯');profile.type='button';
     profile.setAttribute('aria-label','View '+(friend.display_name||friend.username||'friend')+' profile');
     profile.addEventListener('click',()=>{
@@ -123,7 +146,7 @@
     if(artwork){const img=add(picture,'img');img.alt='';img.loading='lazy';img.referrerPolicy='no-referrer';img.src=artwork}
     else add(picture,'span','nrf-cover-fallback','✦');
     const info=add(content,'div','nrf-show-info');
-    add(info,'h3',null,anime.title||'Untitled anime');
+    add(info,'h3','nrf-anime-name',anime.title||'Untitled anime');
     if(kind==='watching'){
       const watched=Number(anime.episodes_watched)||0;
       const total=Number(anime.episodes_total||anime.catalog_episode_total)||0;
