@@ -157,7 +157,7 @@ function updateCardReleaseInfo(){
      !regular?String(e.catalog_format).replace(/_/g,' ')+' · excluded from episode totals':
      total&&watched>total?total+' / '+total+' regular episodes · '+watched+' watched saved':
      total?watched+' / '+total+' episodes':watched+' episodes watched';
-   if(progress.firstChild?.nodeType===Node.TEXT_NODE)progress.firstChild.nodeValue=line;
+   if(progress.firstChild?.nodeType===Node.TEXT_NODE && progress.firstChild.nodeValue!==line)progress.firstChild.nodeValue=line;
    const bar=progress.querySelector('.progress-fill');
    if(bar)bar.style.width=(e.is_movie?(e.status==='completed'?100:0):
      !regular?0:total?Math.min(100,Math.round(100*watched/total)):(e.status==='completed'?100:0))+'%';
@@ -170,10 +170,21 @@ function updateCardReleaseInfo(){
     const body=back.querySelector('.nr-public-note');
     if(body)body.before(box);else back.append(box);
    }
-   box.innerHTML='<strong>Release info</strong>'+summary(e);
+   const summaryMarkup='<strong>Release info</strong>'+summary(e);
+   // Avoid replacing the release details (and their focused buttons) in
+   // every card when only one title's metadata changed in the background.
+   if(box.dataset.summaryMarkup!==summaryMarkup){
+    box.innerHTML=summaryMarkup;
+    box.dataset.summaryMarkup=summaryMarkup;
+   }
    const watch=back.querySelector('.nr-where-watch');
-   if(watch && window.NightreelStreamingMarkup)
-     watch.innerHTML=window.NightreelStreamingMarkup(e);
+   if(watch && window.NightreelStreamingMarkup){
+    const streamingMarkup=window.NightreelStreamingMarkup(e);
+    if(watch.dataset.streamingMarkup!==streamingMarkup){
+     watch.innerHTML=streamingMarkup;
+     watch.dataset.streamingMarkup=streamingMarkup;
+    }
+   }
    let refresh=box.querySelector('button[data-release-refresh]');
    if(!refresh){
     refresh=document.createElement('button');refresh.type='button';refresh.dataset.releaseRefresh=e.id;
@@ -188,7 +199,7 @@ function updateCardReleaseInfo(){
    const releaseInfo=!e.is_movie&&isRegularSeries(e.catalog_format)&&/currently airing|releasing|not yet aired|not yet released/i.test(e.catalog_airing_status||'');
    if(hasNextEpisode || nextSeason || releaseInfo){
     if(!chip){chip=document.createElement('span');chip.className='nr-airing-chip';front.querySelector('h3')?.before(chip);}
-    if(chip)chip.textContent=nextSeason||(hasNextEpisode?'Next ep '+shortDate(e.catalog_next_episode_at):'Release tracking');
+    if(chip){const label=nextSeason||(hasNextEpisode?'Next ep '+shortDate(e.catalog_next_episode_at):'Release tracking');if(chip.textContent!==label)chip.textContent=label;}
    }else chip?.remove();
   }
  });
