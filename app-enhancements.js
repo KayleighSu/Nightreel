@@ -802,6 +802,23 @@ document.querySelector('.sidebar')?.addEventListener('click',event=>{
   });
  });
 },true);
+// Capture and restore the exact social screen for installed-app pull-to-refresh.
+window.NightreelCaptureView=()=>({
+ panel,
+ friendId:panel==='friend'?friendProfile?.id||null:null
+});
+window.NightreelRestoreView=async snapshot=>{
+ if(!snapshot||!['library','friends','profile','friend'].includes(snapshot.panel))return false;
+ if(snapshot.panel==='friend'){
+  if(!snapshot.friendId||!owner())return false;
+  // viewFriend validates that the friendship is still accepted.
+  await refreshFriends();
+  await viewFriend(snapshot.friendId);
+  return !friendView.hidden;
+ }
+ show(snapshot.panel);
+ return true;
+};
 social.querySelectorAll('[data-social-view]').forEach(b=>b.addEventListener('click',()=>show(b.dataset.socialView)));
 $s('friend-back').onclick=()=>show('friends');
 async function loadProfile(){
