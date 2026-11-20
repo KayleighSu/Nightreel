@@ -39,6 +39,7 @@ jobs:
           npm install --no-audit --no-fund
           npm run ios:add
           npm run ios:sync
+          node scripts/configure-ios.mjs
           mkdir -p assets
           sips -z 1024 1024 icons/nightreel-icon-512.png --out assets/icon.png
           npx --yes @capacitor/assets generate --ios --iconBackgroundColor '#17151f'
