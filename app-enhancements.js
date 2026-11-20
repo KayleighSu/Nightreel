@@ -1099,6 +1099,7 @@ async function viewFriend(id){
   ]);
   if(p.error)throw p.error;if(e.error)throw e.error;
   friendProfile=p.data;friendItems=e.data||[];
+  friendView.dataset.friendId=id;
   const image=await getSignedBanner(friendProfile);
   putImage('friend-banner',image||lastArt(friendItems));frameBannerAt('friend-banner',friendProfile);
   $s('friend-name').textContent=friendProfile.display_name||friendProfile.username||'Unnamed user';
