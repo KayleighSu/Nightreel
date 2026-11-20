@@ -22,6 +22,11 @@ jobs:
         run: |
           npm run ios:add
           npm run ios:sync
+      - name: Generate Nightreel iOS icons from existing branding
+        run: |
+          mkdir -p assets
+          sips -z 1024 1024 icons/nightreel-icon-512.png --out assets/icon.png
+          npx --yes @capacitor/assets generate --ios --iconBackgroundColor '#17151f'
       - name: Check Xcode project schemes
         run: xcodebuild -list -project ios/App/App.xcodeproj
       - name: Build unsigned iOS Simulator app
