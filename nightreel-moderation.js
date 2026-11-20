@@ -1,267 +1,303 @@
-/* Private Nightreel moderation inbox. Database RLS is authoritative. */
+/* Nightreel moderator workspace. Authorization is enforced by Supabase, not by these controls. */
 (()=>{
- 'use strict';
- const $=id=>document.getElementById(id);
- const account=$('extra-account-dialog');
- if(!account)return;
- const actions=account.querySelector('.extras-menu-actions');
- if(!actions)return;
- const open=document.createElement('button');
- open.type='button';open.id='nr-moderation-open';
- open.className='extras-secondary';open.textContent='Review user reports';open.hidden=true;
- open.setAttribute('aria-label','Review user reports');
- const countBadge=document.createElement('span');countBadge.id='nr-moderation-count';countBadge.hidden=true;
- countBadge.className='nr-moderation-count';countBadge.setAttribute('aria-live','polite');
- open.append(countBadge);
- actions.append(open);
- const dialog=document.createElement('dialog');dialog.id='nr-moderation-dialog';dialog.className='extras-modal';
- dialog.innerHTML='<div class="extras-modal-inner">'+
- '<div class="extras-top"><h2>Nightreel reports</h2><button type="button" id="nr-moderation-close" class="extras-close">Close</button></div>'+
- '<p>Reports are private. Review the reason and decide whether any action is needed. Marking reviewed does not automatically remove or ban anyone.</p>'+
- '<button type="button" class="extras-secondary" id="nr-moderation-refresh">Refresh reports</button>'+
- '<p id="nr-moderation-status" class="extras-status" role="status"></p>'+
- '<div id="nr-moderation-list" class="nr-moderation-list"></div></div>';
- document.body.append(dialog);
- const inspector=document.createElement('dialog');
- inspector.id='nr-moderation-inspector';inspector.className='extras-modal nr-moderation-inspector';
- inspector.innerHTML='<div class="extras-modal-inner">'+
-  '<div class="extras-top"><h2>Review account</h2><button type="button" id="nr-inspector-close" class="extras-close">Close</button></div>'+
-  '<p id="nr-inspector-status" class="extras-status" role="status"></p>'+
-  '<div id="nr-inspector-content"></div></div>';
- document.body.append(inspector);
- $('nr-inspector-close').onclick=()=>inspector.close();
- inspector.addEventListener('click',e=>{if(e.target===inspector)inspector.close();});
- $('nr-moderation-close').onclick=()=>dialog.close();
- let inspectedId='';
- function elem(tag,className,textValue){
-  const el=document.createElement(tag);
-  if(className)el.className=className;
-  if(textValue!==undefined)el.textContent=String(textValue);
-  return el;
+'use strict';
+const $=id=>document.getElementById(id);
+const account=$('extra-account-dialog');
+if(!account?.querySelector('.extras-menu-actions'))return;
+const elt=(tag,cls,content)=>{
+ const node=document.createElement(tag);
+ if(cls)node.className=cls;
+ if(content!==undefined)node.textContent=String(content);
+ return node;
+};
+const linkUrl=value=>{try{const u=new URL(value);return u.protocol==='https:'?u.href:'';}catch{return '';}};
+const date=value=>value?new Date(value).toLocaleString():'Unknown';
+const trigger=elt('button','extras-secondary','Review user reports');
+trigger.id='nr-moderation-open';trigger.type='button';trigger.hidden=true;
+const countTag=elt('span','nr-moderation-count');
+countTag.id='nr-moderation-count';countTag.hidden=true;trigger.append(countTag);
+account.querySelector('.extras-menu-actions').append(trigger);
+const dialog=elt('dialog','extras-modal nr-mod-workspace');
+dialog.id='nr-moderation-dialog';
+dialog.innerHTML=`
+ <div class="nr-mod-shell">
+  <header class="nr-mod-header">
+   <div><p class="nr-mod-eyebrow">NIGHTREEL · ADMINISTRATION</p><h2>Moderation center</h2><p>Review reports, inspect accounts, and record a decision.</p></div>
+   <button class="extras-close" type="button" id="nr-moderation-close" aria-label="Close moderation center">✕ Close</button>
+  </header>
+  <div class="nr-mod-toolbar">
+   <div id="nr-mod-summary" class="nr-mod-summary" aria-live="polite">Loading…</div>
+   <div class="nr-mod-toolbar-actions">
+    <label for="nr-mod-filter">Show</label>
+    <select id="nr-mod-filter"><option value="pending">Awaiting review</option><option value="all">All reports</option><option value="reviewed">Reviewed</option></select>
+    <button type="button" id="nr-moderation-refresh" class="extras-secondary">↻ Refresh</button>
+   </div>
+  </div>
+  <p id="nr-moderation-status" class="nr-mod-status" role="status"></p>
+  <div class="nr-mod-columns">
+   <section class="nr-mod-queue" aria-label="Submitted reports">
+    <div id="nr-moderation-list" class="nr-moderation-list"></div>
+   </section>
+   <section class="nr-mod-detail" id="nr-mod-detail" aria-label="Account review">
+    <div class="nr-mod-empty"><strong>Select a report</strong><p>Choose a report to inspect the account and its public-facing content.</p></div>
+   </section>
+  </div>
+ </div>`;
+document.body.append(dialog);
+$('nr-moderation-close').onclick=()=>dialog.close();
+dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close()});
+let moderatorId='',selectedReport='',currentReports=[],profiles=new Map(),history=new Map(),loadId=0,inspectedId='';
+const status=$('nr-moderation-status'),list=$('nr-moderation-list'),detail=$('nr-mod-detail'),filter=$('nr-mod-filter');
+async function isModerator(){
+ const id=state?.user?.id;
+ if(!id||!state.supabase||state.demo){trigger.hidden=true;countTag.hidden=true;moderatorId='';return false;}
+ if(moderatorId===id)return !trigger.hidden;
+ moderatorId=id;trigger.hidden=true;
+ const {data,error}=await state.supabase.from('nightreel_moderators').select('user_id').eq('user_id',id).maybeSingle();
+ if(moderatorId!==id)return false;
+ trigger.hidden=!!error||!data;
+ if(!trigger.hidden){refreshCount();updateFriendHistory();}
+ return !trigger.hidden;
+}
+async function refreshCount(){
+ if(trigger.hidden||!state?.user?.id)return;
+ const id=state.user.id;
+ const {count,error}=await state.supabase.from('nightreel_reports').select('id',{count:'exact',head:true}).is('reviewed_at',null);
+ if(error||state.user?.id!==id)return;
+ countTag.hidden=!count;countTag.textContent=Number(count)>99?'99+':String(count||0);
+ trigger.setAttribute('aria-label',count?'Review '+count+' pending reports':'Review user reports');
+}
+async function loadHistory(rows){
+ const ids=[...new Set(rows.map(r=>r.reported_user_id).filter(Boolean))],counts=new Map();
+ for(let i=0;i<ids.length;i+=200){
+  const {data,error}=await state.supabase.rpc('nightreel_moderation_report_counts',{p_user_ids:ids.slice(i,i+200)});
+  if(error)throw error;
+  for(const r of data||[])counts.set(r.user_id,Number(r.times_reported)||0);
  }
- function safeUrl(input){
-  try{const u=new URL(input);return u.protocol==='https:'?u.href:null;}catch{return null;}
- }
- async function signedImage(bucket,path){
-  if(!path)return null;
-  const {data,error}=await state.supabase.storage.from(bucket).createSignedUrl(path,180);
-  return error?null:safeUrl(data?.signedUrl);
- }
- async function takeAction(action,target,display){
-  const map={
-   suspend_7d:['Suspend for 7 days','SUSPEND ACCOUNT'],
-   suspend_permanent:['Ban indefinitely','BAN ACCOUNT'],
-   unsuspend:['Lift suspension','LIFT SUSPENSION'],
-   remove_avatar:['Remove avatar','REMOVE ARTWORK'],
-   remove_banner:['Remove banner','REMOVE ARTWORK']
-  };
-  const setting=map[action];if(!setting)return;
-  const phrase=window.prompt(setting[0]+' for '+display+'? Type '+setting[1]+' to confirm. This action is logged.');
-  if(phrase!==setting[1])return;
-  const detail=window.prompt('Optional moderation note (not visible to the reported user):')||'';
-  const status=$('nr-inspector-status');
-  status.textContent='Applying '+setting[0].toLowerCase()+'…';
-  const buttons=inspector.querySelectorAll('button');buttons.forEach(b=>b.disabled=true);
-  try{
-   const {data,error}=await state.supabase.functions.invoke('moderate-account',{
-    body:{action,targetUserId:target,confirmation:phrase,detail}
-   });
-   if(error||!data?.ok)throw new Error(data?.error||error?.message||'Action failed');
-   await inspect(target);
-   $('nr-inspector-status').textContent=setting[0]+' completed. '+(data.warning||'');
-  }catch(e){
-   status.textContent='Could not apply action: '+(e.message||'Unknown error');
-  }finally{buttons.forEach(b=>b.disabled=false);}
- }
- async function inspect(id){
-  if(!id||open.hidden||!state.user?.id)return;
-  inspectedId=id;
-  if(!inspector.open)inspector.showModal();
-  $('nr-inspector-status').textContent='Loading profile and artwork…';
-  $('nr-inspector-content').replaceChildren();
-  const {data,error}=await state.supabase.rpc('nightreel_moderator_inspect_user',{p_user_id:id});
-  if(inspectedId!==id||!inspector.open)return;
-  const panel=$('nr-inspector-content');
-  if(error){$('nr-inspector-status').textContent='Access denied or profile unavailable: '+error.message;return;}
-  if(!data?.profile){$('nr-inspector-status').textContent='This account profile no longer exists.';return;}
-  $('nr-inspector-status').textContent='Moderator-only information · Profile inspection is logged when you take an action.';
-  const profile=data.profile;
-  const headline=elem('div','nr-inspector-identity');
-  const names=elem('div');
-  names.append(elem('h3','',profile.display_name||profile.username||'Unnamed account'),
-   elem('p','nr-moderation-meta','@'+(profile.username||'unknown')+' · '+id),
-   elem('p','nr-moderation-history','Times reported: '+Number(data.times_reported||0)),
-   elem('p','nr-moderation-meta','Joined '+new Date(profile.created_at).toLocaleDateString()));
-  const avatar=await signedImage('nightreel-avatars',profile.avatar_path);
-  if(inspectedId!==id||!inspector.open)return;
-  if(avatar){const im=elem('img','nr-inspector-avatar');im.src=avatar;im.alt='Reported account avatar';headline.append(im);}
-  headline.append(names);
-  panel.append(headline);
-  const banner=await signedImage('nightreel-banners',profile.banner_path);
-  if(inspectedId!==id||!inspector.open)return;
-  if(banner){const im=elem('img','nr-inspector-banner');im.src=banner;im.alt='Reported account banner';panel.append(im);}
-  const bannedUntil=data.banned_until?new Date(data.banned_until):null;
-  const isBanned=!!bannedUntil && !Number.isNaN(bannedUntil.getTime()) && bannedUntil.getTime()>Date.now();
-  panel.append(elem('p','nr-moderation-history',
-   isBanned?'Account status: SUSPENDED until '+bannedUntil.toLocaleString():'Account status: No active suspension'));
-  panel.append(elem('h3','','Account moderation'));
-  panel.append(elem('p','nr-moderation-meta','Suspensions block new sign-ins, but an already-issued access token may remain valid until it expires. Reversible actions are preferred.'));
-  const controls=elem('div','nr-inspector-actions');
-  for(const [action,label,shown] of [
-   ['suspend_7d','Suspend 7 days',true],
-   ['suspend_permanent','Ban indefinitely',true],
-   ['unsuspend','Lift suspension',true],
-   ['remove_avatar','Remove avatar',!!profile.avatar_path],
-   ['remove_banner','Remove banner',!!profile.banner_path]
-  ]){
-   if(!shown)continue;
-   const button=elem('button','extras-secondary',label);
-   button.type='button';
-   button.onclick=()=>takeAction(action,id,profile.display_name||profile.username||id);
-   controls.append(button);
-  }
-  panel.append(controls);
-  panel.append(elem('h3','','Profile artwork and anime collection'));
-  panel.append(elem('p','nr-moderation-meta','Only public-facing content is shown. Private anime notes and private messages are not exposed here.'));
-  const collection=elem('div','nr-inspector-artwork');
-  const entries=Array.isArray(data.entries)?data.entries:[];
-  for(const entry of entries){
-   const item=elem('article','nr-inspector-entry');
-   const url=safeUrl(entry.image_url);
-   if(url){const img=elem('img');img.src=url;img.loading='lazy';img.alt='Artwork for '+(entry.title||'anime');item.append(img);}
-   const inner=elem('div');
-   inner.append(elem('strong','',entry.title||'Untitled'));
-   if(entry.public_notes)inner.append(elem('p','',entry.public_notes));
-   item.append(inner);collection.append(item);
-  }
-  panel.append(collection);
-  if(!entries.length)panel.append(elem('p','nr-moderation-meta','No anime entries found.'));
-  const actions=Array.isArray(data.actions)?data.actions:[];
-  panel.append(elem('h3','','Previous moderation actions'));
-  if(!actions.length)panel.append(elem('p','nr-moderation-meta','No previous actions recorded.'));
-  for(const a of actions)panel.append(elem('p','nr-moderation-meta',new Date(a.created_at).toLocaleString()+' · '+a.action+(a.detail?' · '+a.detail:'')));
- }
- dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close();});
- let currentUserId='';
- let countBusy=false;
- const friendView=$('friend-view');
- const reportHistory=document.createElement('p');
- reportHistory.id='nr-profile-report-history';
- reportHistory.className='nr-profile-report-history';
- reportHistory.hidden=true;
- if(friendView)friendView.querySelector('.social-hero-content')?.append(reportHistory);
- let profileLookup=0;
- async function updateProfileReportCount(){
-  const id=friendView?.dataset.friendId,shown=friendView&&!friendView.hidden;
-  const request=++profileLookup;
-  reportHistory.hidden=true;
-  if(!shown||!id||open.hidden||!state?.user?.id)return;
-  const {data,error}=await state.supabase.rpc('nightreel_moderation_report_counts',{p_user_ids:[id]});
-  if(request!==profileLookup||friendView?.dataset.friendId!==id||open.hidden||friendView.hidden)return;
-  if(error||!data?.length)return;
-  reportHistory.textContent='Moderator only · Times reported: '+Number(data[0].times_reported||0);
-  reportHistory.hidden=false;
- }
- if(friendView){
-  const obs=new MutationObserver(updateProfileReportCount);
-  obs.observe(friendView,{attributes:true,attributeFilter:['hidden','data-friend-id']});
- }
- async function loadReportCounts(reports){
-  const ids=[...new Set(reports.map(x=>x.reported_user_id).filter(Boolean))];
-  if(!ids.length)return new Map();
-  const counts=new Map();
-  for(let i=0;i<ids.length;i+=200){
-   const {data,error}=await state.supabase.rpc('nightreel_moderation_report_counts',{p_user_ids:ids.slice(i,i+200)});
-   if(error)throw error;
-   for(const entry of data||[])counts.set(entry.user_id,Number(entry.times_reported)||0);
-  }
-  return counts;
- }
- async function checkModerator(){
-  const id=state?.user?.id;
-  if(!id||!state.supabase||state.demo){
-   open.hidden=true;countBadge.hidden=true;reportHistory.hidden=true;currentUserId='';return;
-  }
-  if(currentUserId===id)return;
-  currentUserId=id;open.hidden=true;
-  try{
-   const {data,error}=await state.supabase.from('nightreel_moderators')
-    .select('user_id').eq('user_id',id).maybeSingle();
-   if(currentUserId!==id)return;
-   if(error)throw error;
-   open.hidden=!data;
-   if(data){await refreshCount();updateProfileReportCount();}
-  }catch{open.hidden=true;countBadge.hidden=true;reportHistory.hidden=true;}
- }
- async function refreshCount(){
-  if(open.hidden||countBusy||!state?.user?.id)return;
-  countBusy=true;
-  const userId=state.user.id;
-  try{
-   const {count,error}=await state.supabase.from('nightreel_reports')
-    .select('id',{count:'exact',head:true}).is('reviewed_at',null);
-   if(error)throw error;
-   if(userId!==state.user?.id||open.hidden)return;
-   const total=Math.max(0,Number(count)||0);
-   countBadge.hidden=total===0;
-   countBadge.textContent=total>99?'99+':String(total);
-   open.setAttribute('aria-label',total===1?'Review 1 pending report':'Review '+total+' pending reports');
-  }catch{
-   countBadge.hidden=true;
-  }finally{countBusy=false;}
- }
- async function refresh(){
-  if(!state?.user?.id||open.hidden){dialog.close();return;}
-  const list=$('nr-moderation-list'),status=$('nr-moderation-status');
-  status.textContent='Loading reports…';list.replaceChildren();
-  const {data,error}=await state.supabase.from('nightreel_reports')
-   .select('id,reporter_id,reported_user_id,category,reason,created_at,reviewed_at')
+ return counts;
+}
+function actionButton(text,cls,callback){
+ const b=elt('button',cls,text);b.type='button';b.addEventListener('click',callback);return b;
+}
+async function loadReports(preselect){
+ if(trigger.hidden||!state.user?.id)return;
+ const request=++loadId;
+ status.textContent='Loading reports…';list.replaceChildren();
+ const {data,error}=await state.supabase.from('nightreel_reports')
+   .select('id,reporter_id,reported_user_id,category,reason,created_at,reviewed_at,review_decision')
    .order('created_at',{ascending:false}).limit(200);
-  if(error){status.textContent='Could not retrieve reports: '+error.message;return;}
-  const pending=(data||[]).filter(x=>!x.reviewed_at).length;
-  status.textContent=(data||[]).length+' reports shown · '+pending+' awaiting review';
-  refreshCount();
-  if(!data?.length){const p=document.createElement('p');p.textContent='No reports yet.';list.append(p);return;}
-  let history;
-  try{history=await loadReportCounts(data);}
-  catch(e){status.textContent='Reports loaded, but history counts could not be retrieved: '+e.message;history=new Map();}
-  for(const item of data){
-   const card=document.createElement('article');card.className='nr-moderation-card';
-   const h=document.createElement('h3');h.textContent=item.category+' · '+(item.reviewed_at?'Reviewed':'Awaiting review');
-   const meta=document.createElement('p');meta.className='nr-moderation-meta';
-   meta.textContent='Reported: '+item.reported_user_id+' · By: '+item.reporter_id+' · '+new Date(item.created_at).toLocaleString();
-   const reason=document.createElement('p');reason.textContent=item.reason;
-   const prior=document.createElement('p');prior.className='nr-moderation-history';
-   prior.textContent=history.has(item.reported_user_id)
-    ?'Times reported: '+history.get(item.reported_user_id)+' · All submitted reports, including reviewed'
-    :'Times reported: unavailable';
-   card.append(h,meta,prior,reason);
-   const inspectButton=elem('button','extras-secondary','Inspect reported account');
-   inspectButton.type='button';inspectButton.onclick=()=>inspect(item.reported_user_id);
-   card.append(inspectButton);
-   if(item.reviewed_at){
-    const date=document.createElement('p');date.className='nr-moderation-meta';
-    date.textContent='Reviewed '+new Date(item.reviewed_at).toLocaleString();card.append(date);
-   }else{
-    const button=document.createElement('button');button.type='button';button.className='extras-secondary';
-    button.textContent='Mark reviewed';
-    button.onclick=async()=>{
-     button.disabled=true;
-     const {error}=await state.supabase.from('nightreel_reports')
-      .update({reviewed_at:new Date().toISOString()}).eq('id',item.id);
-     if(error){button.disabled=false;status.textContent='Could not update report: '+error.message;return;}
-     await refresh();
-    };
-    card.append(button);
-   }
-   list.append(card);
+ if(request!==loadId)return;
+ if(error){status.textContent='Unable to retrieve reports: '+error.message;return;}
+ currentReports=data||[];
+ const ids=[...new Set(currentReports.map(r=>r.reported_user_id).filter(Boolean))];
+ profiles=new Map();
+ try{
+  for(let i=0;i<ids.length;i+=100){
+   const {data:found,error:pe}=await state.supabase.from('profiles').select('id,username,display_name,avatar_path').in('id',ids.slice(i,i+100));
+   if(pe)throw pe;
+   for(const p of found||[])profiles.set(p.id,p);
   }
+ }catch(e){status.textContent='Reports loaded; profile names unavailable: '+e.message;}
+ try{history=await loadHistory(currentReports);}catch(e){history=new Map();status.textContent='Reports loaded; history unavailable: '+e.message;}
+ const total=currentReports.length,pending=currentReports.filter(r=>!r.reviewed_at).length;
+ $('nr-mod-summary').textContent=pending+' awaiting review · '+total+' recent reports';
+ if(!status.textContent.startsWith('Reports loaded'))status.textContent='';
+ renderReports();
+ const chosen=preselect||selectedReport;
+ if(chosen&&currentReports.some(r=>r.id===chosen)){showDetail(chosen);}
+ else if(currentReports.some(r=>!r.reviewed_at)){showDetail(currentReports.find(r=>!r.reviewed_at).id);}
+ else if(currentReports.length&&filter.value!=='pending'){showDetail(currentReports[0].id);}
+ else {selectedReport='';detail.innerHTML='<div class="nr-mod-empty"><strong>Nothing awaiting review</strong><p>Select All reports to view previous cases.</p></div>';}
+ refreshCount();
+}
+function renderReports(){
+ list.replaceChildren();
+ const selected=currentReports.filter(r=>filter.value==='all'||(filter.value==='pending'?!r.reviewed_at:!!r.reviewed_at));
+ if(!selected.length){list.append(elt('p','nr-mod-no-reports','No reports in this view.'));return;}
+ for(const item of selected){
+  const profile=profiles.get(item.reported_user_id)||{};
+  const card=elt('article','nr-mod-case');
+  if(item.id===selectedReport)card.classList.add('is-selected');
+  const top=elt('div','nr-mod-case-top');
+  top.append(elt('span','nr-mod-category',item.category||'Other'),
+    elt('span','nr-mod-state '+(item.reviewed_at?'is-reviewed':'is-pending'),
+     item.reviewed_at?(item.review_decision==='dismissed'?'Dismissed':item.review_decision==='resolved'?'Resolved':'Reviewed'):'Awaiting review'));
+  const identity=elt('div','nr-mod-case-identity');
+  const face=elt('div','nr-mod-case-avatar',(profile.display_name||profile.username||'?').charAt(0).toUpperCase());
+  const names=elt('div');
+  names.append(elt('strong','',profile.display_name||profile.username||'Account unavailable'),
+    elt('small','',profile.username?'@'+profile.username:'Account ID: '+item.reported_user_id.slice(0,8)));
+  identity.append(face,names);
+  const note=elt('p','nr-mod-case-reason',item.reason);
+  const stats=elt('p','nr-mod-case-meta',
+    'Times reported: '+(history.has(item.reported_user_id)?history.get(item.reported_user_id):'—')+' · '+date(item.created_at));
+  const actions=elt('div','nr-mod-card-actions');
+  actions.append(
+   actionButton('View profile','nr-mod-button',()=>showDetail(item.id,'profile')),
+   actionButton('Review content','nr-mod-button',()=>showDetail(item.id,'content')),
+   actionButton('Suspend account','nr-mod-button nr-mod-button-warn',()=>showDetail(item.id,'actions')),
+   actionButton('Dismiss report','nr-mod-button nr-mod-button-muted',()=>dismiss(item)));
+  if(item.reviewed_at)actions.lastElementChild.disabled=true;
+  card.append(top,identity,note,stats,actions);list.append(card);
  }
- open.onclick=()=>{account.close();dialog.showModal();refresh();};
- $('nr-moderation-refresh').onclick=refresh;
- document.addEventListener('nightreel:workspace-ready',checkModerator);
- setInterval(checkModerator,4500);
- setInterval(refreshCount,60000);
- document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshCount();});
- checkModerator();
+}
+async function signedImage(bucket,path){
+ if(!path)return '';
+ const {data,error}=await state.supabase.storage.from(bucket).createSignedUrl(path,180);
+ return error?'':linkUrl(data?.signedUrl);
+}
+async function dismiss(item){
+ if(item.reviewed_at)return;
+ if(!confirm('Dismiss this report without taking action against the account? The report will remain in history.'))return;
+ await decide(item,'dismissed');
+}
+async function decide(item,decision){
+ const {error}=await state.supabase.from('nightreel_reports')
+  .update({reviewed_at:new Date().toISOString(),review_decision:decision}).eq('id',item.id).is('reviewed_at',null);
+ if(error){status.textContent='Could not save review: '+error.message;return;}
+ await loadReports(item.id);
+ status.textContent=decision==='dismissed'?'Report dismissed and retained in history.':'Report marked resolved.';
+}
+async function takeAction(action,id,name){
+ const labels={
+  suspend_7d:['Suspend account for 7 days','SUSPEND ACCOUNT'],
+  suspend_permanent:['Ban account indefinitely','BAN ACCOUNT'],
+  unsuspend:['Lift account suspension','LIFT SUSPENSION'],
+  remove_avatar:['Remove avatar','REMOVE ARTWORK'],
+  remove_banner:['Remove banner','REMOVE ARTWORK']
+ };
+ if(!labels[action])return;
+ const phrase=prompt(labels[action][0]+' for '+name+'? Type '+labels[action][1]+' to confirm.');
+ if(phrase!==labels[action][1])return;
+ const notes=prompt('Optional internal moderation note:')||'';
+ const buttons=[...detail.querySelectorAll('button')];buttons.forEach(b=>b.disabled=true);
+ status.textContent='Applying '+labels[action][0].toLowerCase()+'…';
+ try{
+  const {data,error}=await state.supabase.functions.invoke('moderate-account',{
+   body:{action,targetUserId:id,confirmation:phrase,detail:notes}});
+  if(error||!data?.ok)throw Error(data?.error||error?.message||'Action failed');
+  status.textContent=labels[action][0]+' completed. '+(data.warning||'');
+  await showDetail(selectedReport,'actions');
+ }catch(e){status.textContent='Action failed: '+e.message;}
+ finally{buttons.forEach(b=>b.disabled=false);}
+}
+let detailRequest=0;
+async function showDetail(reportId,focus){
+ const item=currentReports.find(r=>r.id===reportId);if(!item)return;
+ selectedReport=reportId;inspectedId=item.reported_user_id;
+ const sequence=++detailRequest;
+ renderReports();
+ detail.replaceChildren();
+ const heading=elt('div','nr-mod-detail-header');
+ const headingText=elt('div');
+ headingText.append(elt('span','nr-mod-eyebrow','REPORTED ACCOUNT'),elt('h3','','Account review'));
+ const close=actionButton('← Reports','nr-mod-mobile-back',()=>detail.classList.remove('nr-mod-detail-open'));
+ heading.append(headingText,close);detail.append(heading,elt('p','nr-mod-wait','Loading account…'));
+ detail.classList.add('nr-mod-detail-open');
+ const {data,error}=await state.supabase.rpc('nightreel_moderator_inspect_user',{p_user_id:item.reported_user_id});
+ if(sequence!==detailRequest||!dialog.open)return;
+ detail.replaceChildren(heading);
+ if(error||!data?.profile){
+  detail.append(elt('p','nr-mod-error',error?.message||'This user no longer has a profile.'));
+  const dismissButton=actionButton('Dismiss report','nr-mod-button',()=>dismiss(item));detail.append(dismissButton);
+  return;
+ }
+ const profile=data.profile;
+ const identity=elt('div','nr-mod-user');
+ const avatarBox=elt('div','nr-mod-user-avatar',(profile.display_name||profile.username||'?').slice(0,1).toUpperCase());
+ const avatar=await signedImage('nightreel-avatars',profile.avatar_path);
+ if(sequence!==detailRequest||!dialog.open)return;
+ if(avatar){avatarBox.textContent='';const img=elt('img');img.src=avatar;img.alt='Profile avatar';avatarBox.append(img);}
+ const info=elt('div');
+ info.append(elt('h3','',profile.display_name||profile.username||'Unnamed user'),
+  elt('p','nr-mod-muted','@'+(profile.username||'unknown')),
+  elt('p','nr-mod-muted','Joined '+new Date(profile.created_at).toLocaleDateString()));
+ identity.append(avatarBox,info);detail.append(identity);
+ const statrow=elt('div','nr-mod-stats');
+ const times=elt('div','nr-mod-stat');times.append(elt('strong','',Number(data.times_reported)||0),elt('span','','Times reported'));
+ const until=data.banned_until?new Date(data.banned_until):null;
+ const banned=until&&!Number.isNaN(until.getTime())&&until.getTime()>Date.now();
+ const ban=elt('div','nr-mod-stat');ban.append(elt('strong','',banned?'Suspended':'Active'),elt('span','',banned?'Until '+date(data.banned_until):'Account status'));
+ statrow.append(times,ban);detail.append(statrow);
+ const reported=elt('section','nr-mod-detail-section');
+ reported.append(elt('h4','','Current report'),elt('p','nr-mod-muted',(item.category||'Other')+' · '+date(item.created_at)),elt('p','nr-mod-reason-full',item.reason));
+ detail.append(reported);
+ const profileSection=elt('section','nr-mod-detail-section');profileSection.id='nr-mod-profile-section';
+ profileSection.append(elt('h4','','Profile & banner'));
+ const banner=await signedImage('nightreel-banners',profile.banner_path);
+ if(sequence!==detailRequest||!dialog.open)return;
+ if(banner){const image=elt('img','nr-mod-banner');image.src=banner;image.alt='User banner';profileSection.append(image);}
+ else profileSection.append(elt('p','nr-mod-muted','No uploaded profile banner.'));
+ detail.append(profileSection);
+ const content=elt('section','nr-mod-detail-section');content.id='nr-mod-content-section';
+ content.append(elt('h4','','Public-facing anime content'),
+   elt('p','nr-mod-muted','Review submitted artwork and public notes. Private messages and private notes are not shown.'));
+ const grid=elt('div','nr-mod-art-grid');
+ for(const e of Array.isArray(data.entries)?data.entries:[]){
+  const card=elt('article','nr-mod-art-card');
+  const url=linkUrl(e.image_url);
+  if(url){const img=elt('img');img.src=url;img.loading='lazy';img.alt='Artwork for '+(e.title||'anime');card.append(img);}
+  const text=elt('div');text.append(elt('strong','',e.title||'Untitled'));
+  if(e.public_notes)text.append(elt('p','',e.public_notes));
+  card.append(text);grid.append(card);
+ }
+ if(!grid.children.length)grid.append(elt('p','nr-mod-muted','No anime entries.'));
+ content.append(grid);detail.append(content);
+ const control=elt('section','nr-mod-detail-section');control.id='nr-mod-actions-section';
+ control.append(elt('h4','','Administrator actions'),elt('p','nr-mod-muted','Suspensions are reversible. An existing login token may remain active until expiry.'));
+ const buttons=elt('div','nr-mod-action-grid');
+ for(const [code,label,show]of [
+  ['suspend_7d','Suspend 7 days',true],
+  ['suspend_permanent','Ban indefinitely',true],
+  ['unsuspend','Lift suspension',!!banned],
+  ['remove_avatar','Remove avatar',!!profile.avatar_path],
+  ['remove_banner','Remove banner',!!profile.banner_path]
+ ]){
+  if(show)buttons.append(actionButton(label,'nr-mod-button'+(code.includes('suspend')?' nr-mod-button-warn':''),()=>takeAction(code,item.reported_user_id,profile.display_name||profile.username||'account')));
+ }
+ control.append(buttons);detail.append(control);
+ const decisions=elt('section','nr-mod-detail-section');
+ decisions.append(elt('h4','','Close report'));
+ const finish=elt('div','nr-mod-action-grid');
+ if(!item.reviewed_at){
+  finish.append(actionButton('Mark resolved','nr-mod-button nr-mod-button-primary',()=>decide(item,'resolved')),
+   actionButton('Dismiss report','nr-mod-button',()=>dismiss(item)));
+ }else finish.append(elt('p','nr-mod-muted','Report '+(item.review_decision||'reviewed')+' on '+date(item.reviewed_at)));
+ decisions.append(finish);detail.append(decisions);
+ const prev=elt('section','nr-mod-detail-section');prev.append(elt('h4','','Previous account actions'));
+ for(const a of data.actions||[])prev.append(elt('p','nr-mod-muted',date(a.created_at)+' · '+a.action+(a.detail?' · '+a.detail:'')));
+ if(!(data.actions||[]).length)prev.append(elt('p','nr-mod-muted','No previous moderator actions.'));
+ detail.append(prev);
+ if(focus==='content'||focus==='actions'){
+  const section=focus==='content'?content:control;
+  requestAnimationFrame(()=>section.scrollIntoView({block:'start',behavior:'smooth'}));
+ }
+}
+filter.onchange=()=>{renderReports();detail.classList.remove('nr-mod-detail-open');};
+$('nr-moderation-refresh').onclick=()=>loadReports(selectedReport);
+trigger.onclick=async()=>{
+ account.close();if(!dialog.open)dialog.showModal();
+ if(await isModerator())await loadReports();
+ else dialog.close();
+};
+const friendView=$('friend-view');
+const friendCount=elt('p','nr-profile-report-history');
+friendCount.id='nr-profile-report-history';friendCount.hidden=true;
+friendView?.querySelector('.social-hero-content')?.append(friendCount);
+let friendSeq=0;
+async function updateFriendHistory(){
+ const id=friendView?.dataset.friendId,sequence=++friendSeq;
+ friendCount.hidden=true;
+ if(!id||friendView.hidden||trigger.hidden||!state?.user?.id)return;
+ const {data,error}=await state.supabase.rpc('nightreel_moderation_report_counts',{p_user_ids:[id]});
+ if(sequence!==friendSeq||friendView?.dataset.friendId!==id||friendView.hidden||trigger.hidden||error||!data?.length)return;
+ friendCount.textContent='Moderator only · Times reported: '+Number(data[0].times_reported||0);
+ friendCount.hidden=false;
+}
+if(friendView)new MutationObserver(updateFriendHistory).observe(friendView,{attributes:true,attributeFilter:['hidden','data-friend-id']});
+document.addEventListener('nightreel:workspace-ready',isModerator);
+setInterval(isModerator,4500);
+setInterval(refreshCount,60000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){refreshCount();if(dialog.open)loadReports(selectedReport);}});
+isModerator();
 })();
