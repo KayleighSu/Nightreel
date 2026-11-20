@@ -295,3 +295,97 @@
  #nr-mobile-friend-activity .nrf-items{padding:0 13px!important}
  #nr-mobile-friend-activity .nrf-filters{padding:13px!important}
 }
+
+/* Community reference match: compact content hierarchy, consistent 20px gutters,
+   short activity rows, and original cherry-blossom / torii header art. */
+@media(max-width:780px){
+ #nr-mobile-friend-activity .nrf-page-tabs{
+   display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;
+   padding:6px 12px!important;min-height:54px!important;gap:3px!important;
+   background:#151020!important;border-bottom:1px solid #58415b!important;
+ }
+ #nr-mobile-friend-activity .nrf-page-tabs button{
+   padding:9px 1px!important;min-height:39px!important;
+   font:600 clamp(10px,3vw,13px)/1.1 system-ui,sans-serif!important;
+ }
+ #nr-mobile-friend-activity .nrf-hero{
+   min-height:194px!important;
+   padding:25px 20px 24px!important;
+   background:linear-gradient(90deg,#141021 0%,#171122eb 34%,#19132933 74%),
+    url("community-night-scene.svg") center center/cover no-repeat!important;
+ }
+ #nr-mobile-friend-activity .nrf-hero::after{content:none!important}
+ #nr-mobile-friend-activity .nrf-hero>span{
+   display:block;margin:0 0 9px!important;font-size:10px!important;letter-spacing:.19em!important;
+ }
+ #nr-mobile-friend-activity .nrf-hero h2{
+   max-width:345px!important;font:800 clamp(30px,7.35vw,38px)/1.07 var(--head,system-ui)!important;
+   letter-spacing:-.035em!important;margin:0 0 10px!important;
+ }
+ #nr-mobile-friend-activity .nrf-hero p{
+   color:#e1d3e0!important;max-width:337px!important;font-size:12px!important;
+   line-height:1.48!important;margin:0!important;
+ }
+ #nr-mobile-friend-activity .nrf-filters{
+   padding:14px 19px 12px!important;gap:8px!important;min-height:0!important;
+ }
+ #nr-mobile-friend-activity .nrf-filters button{
+   min-height:35px!important;padding:8px 12px!important;font-size:12px!important;
+   border-radius:99px!important;
+ }
+ #nr-mobile-friend-activity .nrf-items{
+   display:grid!important;gap:10px!important;padding:0 17px!important;
+ }
+ #nr-mobile-friend-activity .nrf-card{
+   display:flex!important;flex-direction:column!important;min-height:0!important;
+   padding:12px!important;border-radius:16px!important;
+ }
+ #nr-mobile-friend-activity .nrf-card-header{
+   display:flex!important;align-items:center!important;gap:9px!important;margin:0 0 9px!important;
+ }
+ #nr-mobile-friend-activity .nrf-avatar{
+   width:38px!important;height:38px!important;flex:0 0 38px!important;
+   font-size:17px!important;
+ }
+ #nr-mobile-friend-activity .nrf-identity strong{font-size:14px!important}
+ #nr-mobile-friend-activity .nrf-identity span{font-size:11px!important}
+ #nr-mobile-friend-activity .nrf-profile{
+   white-space:nowrap!important;font-size:10px!important;
+ }
+ #nr-mobile-friend-activity .nrf-show{
+   display:flex!important;align-items:flex-start!important;gap:11px!important;
+   min-height:0!important;
+ }
+ #nr-mobile-friend-activity .nrf-cover{
+   flex:0 0 80px!important;width:80px!important;height:107px!important;
+   border-radius:10px!important;
+ }
+ #nr-mobile-friend-activity .nrf-show-info{
+   min-width:0!important;align-self:stretch!important;
+   padding-top:2px!important;
+ }
+ #nr-mobile-friend-activity .nrf-show-info h3{
+   font-size:16px!important;line-height:1.16!important;margin:0 0 7px!important;
+ }
+ #nr-mobile-friend-activity .nrf-subtitle{font-size:11px!important;margin:0 0 10px!important}
+ #nr-mobile-friend-activity .nrf-progress{height:6px!important}
+ #nr-mobile-friend-activity .nrf-note{
+   display:-webkit-box!important;-webkit-line-clamp:4;-webkit-box-orient:vertical;
+   overflow:hidden!important;line-height:1.4!important;font-size:11px!important;
+ }
+ #nr-mobile-friend-activity .nrf-actions{
+   display:flex!important;justify-content:flex-end!important;align-items:center!important;
+   min-height:0!important;margin:7px 0 0!important;
+ }
+ #nr-mobile-friend-activity .nrf-watchlist{
+   min-height:31px!important;padding:7px 11px!important;font-size:10px!important;
+ }
+ #nr-mobile-friend-activity .nrf-bottom{margin:8px 0 16px!important}
+ #nr-mobile-friend-activity .nrf-bottom button{padding:9px 13px!important}
+}
+@media(max-width:365px){
+ #nr-mobile-friend-activity .nrf-items{padding:0 12px!important}
+ #nr-mobile-friend-activity .nrf-hero{padding-inline:16px!important}
+ #nr-mobile-friend-activity .nrf-filters{padding-inline:12px!important}
+ #nr-mobile-friend-activity .nrf-cover{width:72px!important;flex-basis:72px!important;height:100px!important}
+}
