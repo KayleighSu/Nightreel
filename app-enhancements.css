@@ -1428,3 +1428,31 @@ body:has(#account-menu-button) #account-avatar{display:none!important}
  .nr-chat-selection-bar{gap:6px;padding:8px}
  .nr-chat-selection-bar span{width:100%}
 }
+
+/* Compact profile options: hide safety actions until users open the menu */
+.nr-safety-controls{justify-content:flex-end;margin:7px 0 12px;position:relative;z-index:5}
+.nr-safety-controls .nr-profile-actions{position:relative;display:block}
+.nr-safety-controls .nr-profile-actions>summary{
+ display:flex;align-items:center;justify-content:center;list-style:none;
+ width:30px;height:30px;min-width:30px;min-height:30px;
+ border:1px solid #55465b;border-radius:8px;background:#28212e;
+ color:#beafc0;font:700 19px/1 var(--body,system-ui);cursor:pointer;
+}
+.nr-safety-controls .nr-profile-actions>summary::-webkit-details-marker{display:none}
+.nr-safety-controls .nr-profile-actions>summary:hover,.nr-safety-controls .nr-profile-actions>summary:focus-visible{
+ border-color:#95738e;background:#44334a;color:#fff
+}
+.nr-safety-controls .nr-profile-actions-menu{
+ position:absolute;right:0;top:calc(100% + 6px);z-index:10;
+ min-width:215px;max-width:min(260px,85vw);padding:6px;border:1px solid #785b75;
+ border-radius:11px;background:#231b2a;box-shadow:0 12px 30px #0009;display:grid;gap:3px;
+}
+.nr-safety-controls .nr-profile-actions:not([open]) .nr-profile-actions-menu{display:none}
+.nr-safety-controls .nr-profile-actions-menu button,
+.nr-safety-controls .nr-profile-actions-menu #nr-block-friend{
+ display:block;width:100%;text-align:left;min-height:38px;padding:9px 12px;
+ border:0;border-radius:7px;background:transparent;color:#e7d7e1;
+ font:600 12px var(--body,system-ui)
+}
+.nr-safety-controls .nr-profile-actions-menu button:hover{background:#50364b}
+.nr-chat-window.nr-chat-minimized .nr-chat-report-start{display:none}
