@@ -9,6 +9,10 @@
  const open=document.createElement('button');
  open.type='button';open.id='nr-moderation-open';
  open.className='extras-secondary';open.textContent='Review user reports';open.hidden=true;
+ open.setAttribute('aria-label','Review user reports');
+ const countBadge=document.createElement('span');countBadge.id='nr-moderation-count';countBadge.hidden=true;
+ countBadge.className='nr-moderation-count';countBadge.setAttribute('aria-live','polite');
+ open.append(countBadge);
  actions.append(open);
  const dialog=document.createElement('dialog');dialog.id='nr-moderation-dialog';dialog.className='extras-modal';
  dialog.innerHTML='<div class="extras-modal-inner">'+
@@ -21,10 +25,11 @@
  $('nr-moderation-close').onclick=()=>dialog.close();
  dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close();});
  let currentUserId='';
+ let countBusy=false;
  async function checkModerator(){
   const id=state?.user?.id;
   if(!id||!state.supabase||state.demo){
-   open.hidden=true;currentUserId='';return;
+   open.hidden=true;countBadge.hidden=true;currentUserId='';return;
   }
   if(currentUserId===id)return;
   currentUserId=id;open.hidden=true;
@@ -34,7 +39,25 @@
    if(currentUserId!==id)return;
    if(error)throw error;
    open.hidden=!data;
-  }catch{open.hidden=true;}
+   if(data)await refreshCount();
+  }catch{open.hidden=true;countBadge.hidden=true;}
+ }
+ async function refreshCount(){
+  if(open.hidden||countBusy||!state?.user?.id)return;
+  countBusy=true;
+  const userId=state.user.id;
+  try{
+   const {count,error}=await state.supabase.from('nightreel_reports')
+    .select('id',{count:'exact',head:true}).is('reviewed_at',null);
+   if(error)throw error;
+   if(userId!==state.user?.id||open.hidden)return;
+   const total=Math.max(0,Number(count)||0);
+   countBadge.hidden=total===0;
+   countBadge.textContent=total>99?'99+':String(total);
+   open.setAttribute('aria-label',total===1?'Review 1 pending report':'Review '+total+' pending reports');
+  }catch{
+   countBadge.hidden=true;
+  }finally{countBusy=false;}
  }
  async function refresh(){
   if(!state?.user?.id||open.hidden){dialog.close();return;}
@@ -46,6 +69,7 @@
   if(error){status.textContent='Could not retrieve reports: '+error.message;return;}
   const pending=(data||[]).filter(x=>!x.reviewed_at).length;
   status.textContent=(data||[]).length+' reports shown · '+pending+' awaiting review';
+  refreshCount();
   if(!data?.length){const p=document.createElement('p');p.textContent='No reports yet.';list.append(p);return;}
   for(const item of data){
    const card=document.createElement('article');card.className='nr-moderation-card';
@@ -76,5 +100,7 @@
  $('nr-moderation-refresh').onclick=refresh;
  document.addEventListener('nightreel:workspace-ready',checkModerator);
  setInterval(checkModerator,4500);
+ setInterval(refreshCount,60000);
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshCount();});
  checkModerator();
 })();
