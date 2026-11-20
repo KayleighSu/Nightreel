@@ -5,9 +5,17 @@
  const friend=$('friend-view'),account=$('extra-account-dialog');
  if(!friend||!account)return;
  const bar=document.createElement('div');bar.className='nr-safety-controls';
- bar.innerHTML='<button type="button" id="nr-report-friend">Report profile or artwork</button>'+
-  '<button type="button" id="nr-block-friend">Block user</button>';
+ bar.innerHTML='<details class="nr-profile-actions">'+
+  '<summary aria-label="Profile options" title="Profile options">⋯</summary>'+
+  '<div class="nr-profile-actions-menu">'+
+  '<button type="button" id="nr-report-friend">Report profile or artwork</button>'+
+  '<button type="button" id="nr-block-friend">Block user</button>'+
+  '</div></details>';
  friend.querySelector('.social-hero')?.after(bar);
+ const actions=bar.querySelector('.nr-profile-actions');
+ document.addEventListener('click',event=>{
+  if(actions?.open&&!actions.contains(event.target))actions.open=false;
+ });
  const report=document.createElement('dialog');report.id='nr-report-dialog';report.className='extras-modal';
  report.innerHTML='<div class="extras-modal-inner"><div class="extras-top"><h2>Report a concern</h2><button type="button" class="extras-close" data-cancel>✕ Close</button></div>'+
   '<p>Tell us what concerns you about this person, their messages or artwork. Reports are private and can be reviewed by the Nightreel administrator.</p>'+
@@ -24,6 +32,7 @@
  $('nr-report-friend').onclick=()=>{
   if(!state.user?.id||!friend.dataset.friendId)return;
   reportedId=friend.dataset.friendId;
+  actions.open=false;
   $('nr-report-form').reset();$('nr-report-status').textContent='';
   report.showModal();
  };
@@ -44,6 +53,7 @@
   finally{button.disabled=false;}
  });
  $('nr-block-friend').onclick=async()=>{
+  actions.open=false;
   const id=friend.dataset.friendId;
   const name=$('friend-name')?.textContent||'this person';
   if(!state.user?.id||!id||!confirm('Block '+name+'? You will be unfriended and neither of you can send new friend requests while blocked.'))return;
