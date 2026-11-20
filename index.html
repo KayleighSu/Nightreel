@@ -637,10 +637,53 @@ async function toggleFavorite(id) {
     render(); toast(favorite ? 'Added to favorites ♥' : 'Removed from favorites.');
   } catch (e) { toast(`Could not update favorite: ${e.message}`); }
 }
+// Group explicitly numbered TV seasons into one Nightreel show.
+function nightreelShowTitle(value){
+ let title=String(value||'').trim();
+ const suffix=/\s*(?:[:\-–]\s*)?(?:(?:the\s+)?final\s+season|(?:season|series)\s*\d+|\d+(?:st|nd|rd|th)\s+season|s[2-9]\d*|(?:part|cour)\s*\d+)(?:\s*[-:–]\s*(?:part|cour)\s*\d+)?\s*$/i;
+ for(let i=0;i<3;i++){
+  const next=title.replace(suffix,'').replace(/[\s:–-]+$/,'').trim();
+  if(!next||next===title)break;
+  title=next;
+ }
+ return title;
+}
+function nightreelCatalogIsSeries(item){
+ return /^(tv|tv_short|ona)$/i.test(String(item?.type||'').replace(/\s+/g,'_'));
+}
+function nightreelCatalogGroups(items){
+ const map=new Map(),out=[];
+ for(const item of items){
+  const title=item.title_english||item.title||'';
+  const isSeries=nightreelCatalogIsSeries(item);
+  const root=isSeries?nightreelShowTitle(title):title;
+  const key=isSeries?'show:'+searchNormalize(root):'other:'+String(item.mal_id||item.url||title);
+  if(!map.has(key)){
+   const group={...item,nightreelShowTitle:root,nightreelSeasons:[],nightreelIsShow:isSeries};
+   map.set(key,group);out.push(group);
+  }
+  const group=map.get(key);
+  const id=item.mal_id||item.url||searchNormalize(title);
+  if(!group.nightreelSeasons.some(row=>row.id===id))
+   group.nightreelSeasons.push({id,episodes:Number(item.episodes)||null});
+  if(searchNormalize(title)===searchNormalize(root) &&
+     searchNormalize(group.title_english||group.title)!==searchNormalize(root)){
+   for(const field of ['mal_id','url','title','title_english','year','synopsis','images'])
+    group[field]=item[field];
+  }
+ }
+ for(const group of out){
+  const seasons=group.nightreelSeasons;
+  group.nightreelSeasonCount=seasons.length;
+  group.nightreelEpisodeTotal=seasons.every(row=>Number.isInteger(row.episodes)&&row.episodes>0)
+   ?seasons.reduce((sum,row)=>sum+row.episodes,0):null;
+ }
+ return out;
+}
 function catalogItemHtml(anime, i) {
-  const title = anime.title_english || anime.title || 'Untitled';
+  const title = anime.nightreelShowTitle || anime.title_english || anime.title || 'Untitled';
   const image = cleanedUrl(anime.images?.jpg?.image_url || anime.images?.webp?.image_url);
-  const detail = [anime.year, anime.type, anime.episodes ? `${anime.episodes} episodes` : null].filter(Boolean).join(' · ');
+  const detail = [anime.year, anime.nightreelIsShow?'TV series':anime.type, anime.nightreelSeasonCount>1?`${anime.nightreelSeasonCount} seasons found`:null, anime.nightreelEpisodeTotal?`${anime.nightreelEpisodeTotal} matched episodes`:null].filter(Boolean).join(' · ');
   return `<div class="catalog-item">${image ? `<img class="catalog-cover" src="${escapeHtml(image)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : '<div class="catalog-cover"></div>'}<div class="catalog-text"><h3>${escapeHtml(title)}</h3><p>${escapeHtml(detail)}</p><p class="catalog-summary">${escapeHtml(anime.synopsis || 'No description available.')}</p></div><button type="button" data-catalog-index="${i}">Add +</button></div>`;
 }
 // Bounded requests: never leave anime search spinning if a provider hangs.
@@ -697,7 +740,7 @@ async function searchCatalog() {
   }
   if(controller.signal.aborted||resultId!==state.catalogSearchId)return;
   if(!found)throw new Error(errors.join(' ')||'Search unavailable.');
-  state.catalog=found.data.slice(0,15);
+  state.catalog=nightreelCatalogGroups(found.data);
   $('catalog-results').innerHTML=state.catalog.map(catalogItemHtml).join('');
   $('catalog-message').textContent=state.catalog.length
    ?state.catalog.length+' results · Powered by '+(found.source||'anime catalogue')+'. Select a title to add it.'
@@ -716,14 +759,14 @@ function addFromCatalog(index) {
   const current = state.entries.find((e) => e.id === existingId);
   if (current && current.mal_id && current.mal_id !== anime.mal_id && !confirm('Replace the catalogue information for this existing entry?')) return;
   state.modalMetadata = { mal_id: anime.mal_id, mal_url: cleanedUrl(anime.url), synopsis: String(anime.synopsis || '').slice(0, 12000) || null, year: num(anime.year) };
-  $('anime-title').value = anime.title_english || anime.title || '';
-  $('anime-total').value = anime.episodes || '';
+  $('anime-title').value = anime.nightreelShowTitle || anime.title_english || anime.title || '';
+  $('anime-total').value = anime.nightreelIsShow ? (anime.nightreelEpisodeTotal||'') : (anime.episodes||'');
   const chosenArt=originalByTitle.get(canonicalTitle($('anime-title').value));
   $('anime-image').value = chosenArt?.image_url || cleanedUrl(anime.images?.jpg?.large_image_url || anime.images?.jpg?.image_url || anime.images?.webp?.image_url);
   if (chosenArt?.imdb_id) $('anime-imdb').value=chosenArt.imdb_id;
   closeDialog('catalog-dialog');
   $('anime-title').focus();
-  toast('Catalogue details added. Set your status and save.');
+  toast(anime.nightreelIsShow ? 'Show selected. Verify the full-series episode total before saving.' : 'Catalogue details added. Set your status and save.');
 }
 function download(name, content, type) {
   const blob = new Blob([content], { type });
