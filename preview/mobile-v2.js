@@ -78,7 +78,7 @@
   }else{
    result=groupDefs.map(([key,label,sub])=>{const list=all.filter(e=>status(e)===key);return list.length?'<section class="nrm-shelf"><div class="nrm-shelf-header"><div><h2>'+esc(label)+' <b>'+list.length+'</b></h2><p>'+esc(sub)+'</p></div><button type="button" data-mobile-action="'+key+'">View all ↗</button></div>'+strip(list.slice(0,12))+'</section>':''}).join('');
   }
-  return '<section class="nrm-library">'+header+topSearch()+tabs+result+'</section>';
+  return '<section class="nrm-library">'+header+topSearch()+tabs+result+'<div class="nrm-library-tools"><h2>Library tools</h2><div><button type="button" data-mobile-action="releases">◷ Release Radar</button><button type="button" data-mobile-action="rank">♡ Rank favorites</button><button type="button" data-mobile-action="import">↑ Import</button><button type="button" data-mobile-action="export">↓ Export</button><button type="button" data-mobile-action="restore">✦ Restore artwork</button></div></div></section>';
  }
  function social(){
   return '<section class="nrm-community"><div class="nrm-community-heading"><small>THE NIGHTREEL COMMUNITY</small><h1>What your friends<br>are <em>watching.</em></h1><p>Your friends’ current obsessions and favorites, straight from Nightreel.</p></div>'+
@@ -121,6 +121,14 @@
   const action=event.target.closest('[data-mobile-action]');if(!action)return;
   const a=action.dataset.mobileAction;
   if(a==='add'){document.getElementById('add-btn')?.click();return;}
+  if(a==='import'||a==='export'||a==='restore'){
+    document.getElementById(({import:'import-btn',export:'export-btn',restore:'restore-original-btn'})[a])?.click();return;
+  }
+  if(a==='rank'){document.querySelector('.nr-manage-favorites')?.click();return;}
+  if(a==='releases'){
+    document.body.classList.add('nrm-original-social');
+    document.getElementById('nr-release-button')?.click();return;
+  }
   if(a==='messages'){document.getElementById('extra-open-messages')?.click();return;}
   if(a==='profile'||a==='friends'){document.querySelector('[data-social-view="'+a+'"]')?.click();document.body.classList.add('nrm-original-social');return;}
   if(a==='favorites'){tab='library';filter='favorites';build();return;}
