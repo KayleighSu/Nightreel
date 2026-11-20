@@ -687,6 +687,17 @@ async function nrLoadDockMessages(win){
  }catch(error){win.querySelector('.nr-dock-status').textContent=error.message;}
  finally{win._busy=false;}
 }
+// Remember which mobile conversation (or the chat list) was open on refresh.
+window.NightreelCaptureChat=()=>({
+ open:chatDialog.open,
+ friendId:chatDialog.open&&conversationId?conversationId:null,
+ list:chatDialog.open&&!conversationId
+});
+window.NightreelRestoreChat=async snapshot=>{
+ if(!snapshot?.open)return;
+ if(snapshot.friendId)await openMessages(snapshot.friendId);
+ else await openMessages(null,true);
+};
 nrBubble.onclick=async()=>{
  // Check immediately instead of depending on the eight-second polling interval.
  await nrCheckNotifications();
