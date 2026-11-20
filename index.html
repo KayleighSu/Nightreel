@@ -929,6 +929,14 @@ async function handleSession(session) {
     ++state.loadId; state.entries = []; showAuth('signin');
   }
 }
+function nightreelAuthEmailRedirect(){
+  // iOS WKWebView cannot receive browser email links without configured
+  // universal-link handling. For beta, complete confirmation/recovery on web;
+  // the user can then sign in to the app with their verified credentials.
+  return location.protocol==='capacitor:'||location.protocol==='ionic:'
+    ?'https://kayleighsu.github.io/Nightreel/'
+    :location.origin+location.pathname;
+}
 async function handleAuth(event) {
   event.preventDefault(); if (!state.supabase) return;
   const email = $('auth-email').value.trim(); const password = $('auth-password').value;
@@ -945,8 +953,8 @@ async function handleAuth(event) {
   try {
     let result;
     if (state.authMode === 'signin') result = await state.supabase.auth.signInWithPassword({ email, password });
-    else if (state.authMode === 'signup') result = await state.supabase.auth.signUp({ email, password, options: { emailRedirectTo: `${location.origin}${location.pathname}`, data: { display_name: displayName } } });
-    else if (state.authMode === 'reset') result = await state.supabase.auth.resetPasswordForEmail(email, { redirectTo: `${location.origin}${location.pathname}` });
+    else if (state.authMode === 'signup') result = await state.supabase.auth.signUp({ email, password, options: { emailRedirectTo: nightreelAuthEmailRedirect(), data: { display_name: displayName } } });
+    else if (state.authMode === 'reset') result = await state.supabase.auth.resetPasswordForEmail(email, { redirectTo: nightreelAuthEmailRedirect() });
     else if (state.authMode === 'update') result = await state.supabase.auth.updateUser({ password });
     if (result.error) throw result.error;
     if (state.authMode === 'signup') toast(result.data?.session ? 'Account created! Welcome to Nightreel.' : 'Check your email to confirm your account, then log in.');
