@@ -1156,3 +1156,11 @@ body:has(#account-menu-button) #account-avatar{display:none!important}
  .nr-safety-controls button{flex:1 1 auto;min-height:43px}
  #nr-report-dialog.extras-modal{width:calc(100vw - 24px);max-width:420px}
 }
+/* Nightreel private report moderation */
+#nr-moderation-dialog.extras-modal{width:min(92vw,680px);max-height:88vh;overflow:auto}
+.nr-moderation-list{display:grid;gap:12px;margin-top:15px}
+.nr-moderation-card{border:1px solid #665064;background:#241c2d;border-radius:12px;padding:14px;overflow-wrap:anywhere}
+.nr-moderation-card h3{font-size:14px;margin:0 0 8px;text-transform:capitalize}
+.nr-moderation-card p{margin:0 0 10px;font-size:13px;line-height:1.55;white-space:pre-wrap}
+.nr-moderation-card .nr-moderation-meta{font-size:11px;color:#c4aabf}
+.nr-moderation-card button{min-height:36px}
