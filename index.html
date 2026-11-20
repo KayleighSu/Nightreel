@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#1c1029" />
   <meta name="description" content="Nightreel — a personal anime library to share with friends, each with their own collection." />
@@ -683,7 +684,7 @@ function nightreelCatalogGroups(items){
 function catalogItemHtml(anime, i) {
   const title = anime.nightreelShowTitle || anime.title_english || anime.title || 'Untitled';
   const image = cleanedUrl(anime.images?.jpg?.image_url || anime.images?.webp?.image_url);
-  const detail = [anime.year, anime.nightreelIsShow?'TV series':anime.type, anime.nightreelSeasonCount>1?`${anime.nightreelSeasonCount} seasons found`:null, anime.nightreelEpisodeTotal?`${anime.nightreelEpisodeTotal} matched episodes`:null].filter(Boolean).join(' · ');
+  const detail = [anime.year, anime.nightreelIsShow?'Complete show entry':anime.type, anime.nightreelSeasonCount>1?`${anime.nightreelSeasonCount} seasons matched`:null, anime.nightreelEpisodeTotal?`${anime.nightreelEpisodeTotal} episodes in matched seasons`:null].filter(Boolean).join(' · ');
   return `<div class="catalog-item">${image ? `<img class="catalog-cover" src="${escapeHtml(image)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : '<div class="catalog-cover"></div>'}<div class="catalog-text"><h3>${escapeHtml(title)}</h3><p>${escapeHtml(detail)}</p><p class="catalog-summary">${escapeHtml(anime.synopsis || 'No description available.')}</p></div><button type="button" data-catalog-index="${i}">Add +</button></div>`;
 }
 // Bounded requests: never leave anime search spinning if a provider hangs.
@@ -743,7 +744,7 @@ async function searchCatalog() {
   state.catalog=nightreelCatalogGroups(found.data);
   $('catalog-results').innerHTML=state.catalog.map(catalogItemHtml).join('');
   $('catalog-message').textContent=state.catalog.length
-   ?state.catalog.length+' results · Powered by '+(found.source||'anime catalogue')+'. Select a title to add it.'
+   ?state.catalog.length+' shows · Grouped by series · Powered by '+(found.source||'anime catalogue')+'.'
    :'No matching titles. You can still add one manually.';
  }catch(error){
   if(resultId!==state.catalogSearchId)return;
