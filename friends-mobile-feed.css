@@ -157,3 +157,73 @@
  #nrf-for-you .nrf-rec-cover{width:88px;flex-basis:88px}
  #nrf-for-you .nrf-rec-body h3{font-size:15px}
 }
+
+/* Community refinements: remove doubled mobile gutters and match the reference spacing. */
+#nr-friends-watching{display:none!important} /* Activity moved to dedicated Friends page. */
+@media(max-width:780px){
+  body:has(#social-friends-panel:not([hidden])) .main-content{
+    width:100%!important;max-width:100%!important;margin:0!important;
+    padding:0 0 calc(90px + env(safe-area-inset-bottom,0px))!important;
+    overflow-x:clip!important;
+  }
+  body:has(#social-friends-panel:not([hidden])) #social-ui{
+    margin:0!important;padding:0!important;
+    width:100%!important;box-sizing:border-box!important;
+  }
+  body:has(#social-friends-panel:not([hidden])) #social-friends-panel{
+    padding:0!important;box-sizing:border-box!important;overflow-x:clip!important;
+  }
+  #nr-mobile-friend-activity .nrf-page-tabs{
+    width:100%!important;box-sizing:border-box!important;
+    padding:7px 11px!important;gap:4px!important;
+  }
+  #nr-mobile-friend-activity .nrf-page-tabs button{
+    min-height:42px!important;font-size:clamp(10px,3.1vw,13px)!important;
+    padding:9px 2px!important;
+  }
+  #nr-mobile-friend-activity .nrf-hero{
+    padding:28px 20px 22px!important;min-height:190px!important;
+  }
+  #nr-mobile-friend-activity .nrf-hero h2{
+    font-size:clamp(29px,7.3vw,39px)!important;
+    line-height:1.08!important;margin:11px 0 9px!important;
+    max-width:350px!important;
+  }
+  #nr-mobile-friend-activity .nrf-hero p{
+    font-size:12px!important;line-height:1.5!important;
+    max-width:335px!important;margin:0!important;
+  }
+  #nr-mobile-friend-activity .nrf-filters{
+    padding:13px 19px!important;gap:9px!important;
+  }
+  #nr-mobile-friend-activity .nrf-filters button{
+    padding:9px 13px!important;min-height:37px!important;
+    font-size:12px!important;
+  }
+  #nr-mobile-friend-activity .nrf-items{
+    box-sizing:border-box!important;width:100%!important;
+    padding:0 19px!important;gap:11px!important;
+  }
+  #nr-mobile-friend-activity .nrf-card{
+    padding:14px!important;border-radius:17px!important;
+  }
+  #nr-mobile-friend-activity .nrf-card-header{margin-bottom:11px!important}
+  #nr-mobile-friend-activity .nrf-show{gap:12px!important}
+  #nr-mobile-friend-activity .nrf-cover{
+    width:86px!important;flex-basis:86px!important;height:116px!important;
+  }
+  #nr-mobile-friend-activity .nrf-show-info h3{
+    font-size:clamp(15px,4.1vw,18px)!important;margin:2px 0 8px!important;
+  }
+  #nr-mobile-friend-activity .nrf-actions{margin-top:9px!important}
+  #nr-mobile-friend-activity .nrf-bottom{margin:9px 0 20px!important}
+  #nrf-for-you{box-sizing:border-box!important}
+  #nrf-friend-manager{box-sizing:border-box!important}
+}
+@media(max-width:380px){
+  #nr-mobile-friend-activity .nrf-items{padding:0 13px!important}
+  #nr-mobile-friend-activity .nrf-filters{padding-inline:13px!important}
+  #nr-mobile-friend-activity .nrf-cover{
+    width:76px!important;flex-basis:76px!important;height:107px!important;
+  }
+}
