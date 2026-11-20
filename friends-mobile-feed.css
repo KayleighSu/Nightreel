@@ -227,3 +227,71 @@
     width:76px!important;flex-basis:76px!important;height:107px!important;
   }
 }
+
+/* Fix the actual outer inset, not just the card padding.
+   The Community section sits inside Nightreel's padded main-content.
+   Make this screen viewport-wide, while keeping a 16px inner card gutter. */
+@media(max-width:780px){
+ body:has(#social-friends-panel:not([hidden])) .workspace,
+ body:has(#social-friends-panel:not([hidden])) .main-content,
+ body:has(#social-friends-panel:not([hidden])) #social-ui,
+ body:has(#social-friends-panel:not([hidden])) #social-friends-panel{
+   overflow:visible!important;
+ }
+ body:has(#social-friends-panel:not([hidden])) .main-content{
+   padding:0 0 calc(90px + env(safe-area-inset-bottom,0px))!important;
+   margin:0!important;width:100%!important;max-width:none!important;
+ }
+ body:has(#social-friends-panel:not([hidden])) #nr-mobile-friend-activity{
+   position:relative!important;
+   left:50%!important;
+   transform:translateX(-50%)!important;
+   width:100vw!important;
+   max-width:100vw!important;
+   margin:0!important;
+   padding:0!important;
+   box-sizing:border-box!important;
+ }
+ #nr-mobile-friend-activity .nrf-page-tabs,
+ #nr-mobile-friend-activity .nrf-hero,
+ #nr-mobile-friend-activity .nrf-filters{
+   box-sizing:border-box!important;
+   width:100%!important;
+   margin-left:0!important;
+   margin-right:0!important;
+ }
+ #nr-mobile-friend-activity .nrf-filters{
+   display:flex!important;
+   align-items:center!important;
+   overflow-x:auto!important;
+   overscroll-behavior-x:contain;
+   scrollbar-width:none;
+   padding:14px 16px!important;
+   gap:8px!important;
+ }
+ #nr-mobile-friend-activity .nrf-items{
+   padding:0 16px!important;
+   margin:0!important;
+   width:100%!important;
+   box-sizing:border-box!important;
+ }
+ #nr-mobile-friend-activity .nrf-card{
+   margin:0!important;
+   width:100%!important;
+   box-sizing:border-box!important;
+ }
+ #nr-mobile-friend-activity .nrf-bottom{
+   padding:0 16px!important;
+ }
+ #nrf-for-you{
+   width:100%!important;
+   box-sizing:border-box!important;
+ }
+ #nrf-friend-manager{
+   margin:16px!important;
+ }
+}
+@media(max-width:380px){
+ #nr-mobile-friend-activity .nrf-items{padding:0 13px!important}
+ #nr-mobile-friend-activity .nrf-filters{padding:13px!important}
+}
