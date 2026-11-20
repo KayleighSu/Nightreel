@@ -228,6 +228,30 @@ async function showDetail(reportId,focus){
  const reported=elt('section','nr-mod-detail-section');
  reported.append(elt('h4','','Current report'),elt('p','nr-mod-muted',(item.category||'Other')+' · '+date(item.created_at)),elt('p','nr-mod-reason-full',item.reason));
  detail.append(reported);
+ if(item.category==='message'){
+  const evidenceSection=elt('section','nr-mod-detail-section');
+  evidenceSection.append(elt('h4','','Reported message evidence'));
+  evidenceSection.append(elt('p','nr-mod-muted','A limited snapshot submitted by the reporting user, including the flagged message and nearby context. Not a complete conversation.'));
+  const {data:reportedMessages,error:evidenceError}=await state.supabase.from('nightreel_message_evidence')
+   .select('body,sender_id,recipient_id,sent_at,is_reported')
+   .eq('report_id',item.id).order('sent_at',{ascending:true});
+  if(sequence!==detailRequest||!dialog.open)return;
+  if(evidenceError)evidenceSection.append(elt('p','nr-mod-error','Evidence unavailable: '+evidenceError.message));
+  else if(!reportedMessages?.length)evidenceSection.append(elt('p','nr-mod-muted','No message evidence was attached. This may be an older free-text report.'));
+  else{
+   const stack=elt('div','nr-mod-message-evidence');
+   for(const msg of reportedMessages){
+    const row=elt('div','nr-mod-evidence-bubble'+(msg.is_reported?' is-reported':''));
+    row.append(elt('small','',msg.sender_id===item.reported_user_id?'Reported account':'Reporting account'+' · '+date(msg.sent_at)));
+    if(msg.sender_id===item.reported_user_id)row.firstChild.textContent='Reported account · '+date(msg.sent_at);
+    row.append(elt('p','',msg.body));
+    if(msg.is_reported)row.append(elt('strong','','Flagged message'));
+    stack.append(row);
+   }
+   evidenceSection.append(stack);
+  }
+  detail.append(evidenceSection);
+ }
  const profileSection=elt('section','nr-mod-detail-section');profileSection.id='nr-mod-profile-section';
  profileSection.append(elt('h4','','Profile & banner'));
  const banner=await signedImage('nightreel-banners',profile.banner_path);
