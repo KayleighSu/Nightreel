@@ -145,3 +145,13 @@
  body.nrm-original-social .main-content>#nr-release-radar:not([hidden]){display:block!important;margin:17px 13px 24px!important;padding:16px!important}
  body.nrm-original-social .main-content>#nr-release-radar .nr-radar-head h2{font-size:26px}
 }
+
+/* Three poster tiles per phone viewport, matching the chosen library reference. */
+@media(max-width:720px){
+ .nrm-poster{flex-basis:clamp(100px,29vw,124px)!important;height:clamp(158px,46vw,191px)!important}
+ .nrm-shelf .nrm-poster{flex-basis:clamp(99px,28vw,121px)!important;height:clamp(160px,44vw,182px)!important}
+ .nrm-poster-bottom{padding:28px 8px 8px!important}
+ .nrm-poster-bottom strong{font-size:clamp(11px,3.2vw,13px)!important}
+ .nrm-poster-bottom small{font-size:9px!important}
+ .nrm-poster-strip{gap:9px!important}
+}
