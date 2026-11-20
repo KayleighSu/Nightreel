@@ -9,6 +9,7 @@ Requires Node.js (supported LTS), Xcode, an iOS simulator or device, and Apple d
 1. Clone the repository and open Terminal in its root.
 2. Run `npm install`.
 3. Run `npm run ios:add` **only once** to generate the native `ios/` project.
+   - Generate a native icon from the existing 512px Nightreel artwork: `mkdir -p assets && sips -z 1024 1024 icons/nightreel-icon-512.png --out assets/icon.png && npx --yes @capacitor/assets generate --ios --iconBackgroundColor '#17151f'` (run after creating `ios/`).
 4. After each Nightreel website change, run `npm run ios:sync`.
 5. Run `npm run ios:open` to open the native project in Xcode.
 6. Set the app's Bundle Identifier, Signing Team and capabilities in Xcode. Build and test on a real iPhone.
@@ -33,3 +34,19 @@ The Supabase Edge Functions `anime-search` and `anime-catalog` have been configu
 - Run a full authenticated security test with separate accounts before launch.
 
 **Important:** Changing the web site does not automatically update the locally bundled App Store binary. Repeat `npm run ios:sync` and release a new build when needed.
+
+
+## Apple Developer and TestFlight setup (November 2026)
+
+1. In [Certificates, Identifiers & Profiles](https://developer.apple.com/account/resources/identifiers/list), register an explicit App ID with Bundle ID `com.kayleighsu.nightreel`, unless you choose a different identifier **before first upload**.
+2. In [App Store Connect — Apps](https://appstoreconnect.apple.com/apps), add an iOS app: app name **Nightreel**, choose the same Bundle ID, choose a unique SKU (e.g. `nightreel-ios-v1`), and select your language.
+3. For a **Mac build**, open Xcode, select the Nightreel App target, choose your Apple Developer Team in **Signing & Capabilities**, verify Bundle ID, version and icon, then run on a real iPhone. Archive via Product > Archive and choose **Distribute App > App Store Connect** to upload.
+4. For a **Windows-first check**, GitHub Actions includes an opt-in **iOS simulator build check (manual)** workflow. In GitHub > Actions, manually run the workflow to compile on a macOS runner and retrieve an unsigned simulator artifact. **That artifact is not installable via TestFlight** and is not an App Store package. Running macOS-hosted Actions may consume billed runner minutes.
+5. Once a signed device build has been uploaded, open **TestFlight** in App Store Connect and invite internal testers.
+
+### Safety and account management
+
+- The app now has password-confirmed account deletion backed by a JWT-authenticated Supabase Edge Function. Do not exercise this with the owner account while testing; use a disposable test account.
+- Friend profiles support reporting and blocking. The `nightreel_reports` table is reviewable by project administrators in Supabase; establish a documented response/moderation workflow before inviting public users.
+- **Sign-up verification / password reset during the first iOS beta:** email links return to the Nightreel website, not directly to the iOS app. Once confirmed or reset on the web, users can sign into the installed app. Native universal/deep linking can be added after device testing.
+- Configure a support contact and publish accurate privacy, data retention and community/content terms before App Store review.
