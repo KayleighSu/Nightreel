@@ -1126,3 +1126,14 @@ body:has(#account-menu-button) #account-avatar{display:none!important}
  .nr-friend-feed-identity>span{font-size:0}
  .nr-friend-feed-identity>span::after{content:'↗';font-size:15px}
 }
+
+
+/* iOS and web account deletion, intentionally secondary to ordinary profile actions */
+#extra-account-dialog .nr-danger-zone{margin-top:17px;border-top:1px solid #614455;padding:13px 0 0}
+#extra-account-dialog .nr-danger-zone summary{cursor:pointer;color:#e9b3c2;font-size:12px;font-weight:750}
+#extra-account-dialog .nr-danger-zone p{margin:9px 0 12px;font-size:12px;line-height:1.6}
+.extras-modal .nr-delete-account-button{display:inline-flex;justify-content:center;align-items:center;min-height:43px;padding:10px 15px;border:1px solid #e18a99;border-radius:9px;background:#44242d;color:#ffced5;font-weight:800;cursor:pointer}
+.extras-modal .nr-delete-account-button:disabled{opacity:.6;cursor:wait}
+#extra-delete-dialog .extras-fields{margin:18px 0}
+#extra-delete-dialog #extra-delete-confirm{letter-spacing:.02em}
+@media(max-width:580px){#extra-delete-dialog.extras-modal{width:calc(100vw - 24px);max-width:420px}}
