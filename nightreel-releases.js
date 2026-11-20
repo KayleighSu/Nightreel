@@ -366,6 +366,9 @@ async function refreshBatch(max,manual){
 $('nr-radar-refresh').onclick=()=>{if(!authenticated())return $('nr-radar-progress').textContent='Sign in to refresh your collection.';refreshBatch(12,true);};
 let scheduledUser='';
 const autoCheck=setInterval(()=>{
+ // Avoid decoding hundreds of poster cards while Safari is scrolling a long
+ // mobile library. Manual release refresh remains available everywhere.
+ if(window.matchMedia('(max-width:780px) and (pointer:coarse)').matches)return;
  if(!authenticated()||document.hidden||!state.entries.length)return;
  const id=state.user.id;
  if(id!==scheduledUser){scheduledUser=id;autoProcessed=0;}
