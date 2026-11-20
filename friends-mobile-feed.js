@@ -31,9 +31,9 @@
     const profile=add(header,'button','nrf-profile','View profile ↗');profile.type='button';
     profile.addEventListener('click',()=>{document.querySelector('[data-social-view="friends"]')?.click();
       // Existing friend profile buttons enforce privacy and access rules.
-      const buttons=[...document.querySelectorAll('#friends-results button,#people-results button')];
-      const match=buttons.find(b=>b.dataset.friendId===String(friend.id)||b.closest('[data-friend-id]')?.dataset.friendId===String(friend.id));
-      if(match)match.click();else document.getElementById('friends-results')?.scrollIntoView({behavior:'smooth',block:'start'});
+      const existing=document.querySelector('#friends-results [data-friend-action="view"][data-friend-id="'+String(friend.id)+'"]');
+      if(existing)existing.click();
+      else document.getElementById('friends-results')?.scrollIntoView({behavior:'smooth',block:'start'});
     });
     const content=add(card,'div','nrf-show');
     const artwork=validImage(anime.image_url);
