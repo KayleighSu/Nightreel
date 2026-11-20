@@ -100,6 +100,10 @@
   const banner=await signedImage('nightreel-banners',profile.banner_path);
   if(inspectedId!==id||!inspector.open)return;
   if(banner){const im=elem('img','nr-inspector-banner');im.src=banner;im.alt='Reported account banner';panel.append(im);}
+  const bannedUntil=data.banned_until?new Date(data.banned_until):null;
+  const isBanned=!!bannedUntil && !Number.isNaN(bannedUntil.getTime()) && bannedUntil.getTime()>Date.now();
+  panel.append(elem('p','nr-moderation-history',
+   isBanned?'Account status: SUSPENDED until '+bannedUntil.toLocaleString():'Account status: No active suspension'));
   panel.append(elem('h3','','Account moderation'));
   panel.append(elem('p','nr-moderation-meta','Suspensions block new sign-ins, but an already-issued access token may remain valid until it expires. Reversible actions are preferred.'));
   const controls=elem('div','nr-inspector-actions');
