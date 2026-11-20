@@ -20,6 +20,16 @@
  shell.innerHTML='<div id="nr-mobile-view"></div><nav id="nr-mobile-bottom" aria-label="Mobile navigation">'+
  ['discover','library','social','search','more'].map((t,i)=>'<button type="button" data-mobile-tab="'+t+'" aria-label="'+({discover:'Home',library:'Library',social:'Friends',search:'Search',more:'More'}[t])+'">'+svg(['home','library','social','discover','more'][i])+'<span>'+({discover:'Home',library:'Library',social:'Friends',search:'Search',more:'More'}[t])+'</span></button>').join('')+'</nav>';
  main.prepend(shell);
+ const headerActions=document.createElement('div');
+ headerActions.className='nrm-header-actions';
+ headerActions.innerHTML='<button type="button" data-nrm-header="search" aria-label="Search anime">'+svg('discover')+'</button><button type="button" data-nrm-header="messages" aria-label="Messages">'+
+ '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 5h16v13H8l-4 3z"/></svg></button>';
+ document.querySelector('.topbar-right')?.prepend(headerActions);
+ headerActions.addEventListener('click',event=>{
+   const b=event.target.closest('[data-nrm-header]');if(!b)return;
+   if(b.dataset.nrmHeader==='search')changeTab('search');
+   if(b.dataset.nrmHeader==='messages')document.getElementById('messages-top-button')?.click();
+ });
  const view=shell.querySelector('#nr-mobile-view');
  const detail=document.createElement('dialog');detail.id='nr-mobile-details';detail.setAttribute('aria-label','Anime details');document.body.append(detail);
  const entries=()=>Array.isArray(state?.entries)?state.entries:[];
