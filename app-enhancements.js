@@ -104,21 +104,10 @@ async function checkUsernameSetup(){
 const col=document.querySelector('.collection-section'), main=document.querySelector('.main-content');
 if(!col||!main)return;
 col.before(social);col.after(friendView);
-const friendCarousel=document.createElement('section');
-friendCarousel.id='nr-friends-watching';
-friendCarousel.className='nr-friends-watching';
-friendCarousel.hidden=true;
-friendCarousel.setAttribute('aria-label','What your friends are watching');
-friendCarousel.innerHTML=[
- '<div class="nr-friends-carousel-heading"><div><span class="nr-friends-eyebrow">✦ THE FRIEND FEED</span>',
- '<h2>What your friends are watching<span class="accent-dot">.</span></h2>',
- '<p>A peek at their current obsession and all-time favorite.</p></div>',
- '<div class="nr-friends-carousel-controls"><button type="button" data-friends-prev aria-label="Previous friend">‹</button>',
- '<span id="nr-friends-position" aria-live="polite">—</span>',
- '<button type="button" data-friends-next aria-label="Next friend">›</button></div></div>',
- '<div id="nr-friends-carousel-track" class="nr-friends-carousel-track" tabindex="0" aria-label="Swipe to explore friends"></div>'
-].join('');
-social.before(friendCarousel);
+// The carousel shell is part of index.html, so it exists on mobile even
+// before this script loads and can be reliably targeted after authentication.
+const friendCarousel=$s('nr-friends-watching');
+if(!friendCarousel)return;
 const owner=()=>Boolean(state.supabase&&state.user&&!state.demo);
 const lastArt=arr=>[...arr].sort((a,b)=>String(b.updated_at||b.created_at||'').localeCompare(String(a.updated_at||a.created_at||''))).find(x=>cleanedUrl(x.image_url))?.image_url||'';
 function putImage(id,url){const img=$s(id),safe=cleanedUrl(url);if(!img)return;img.hidden=!safe;if(safe)img.src=safe;else img.removeAttribute('src');}
