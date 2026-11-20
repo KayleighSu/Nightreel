@@ -134,7 +134,11 @@ function renderReports(){
     'Times reported: '+(history.has(item.reported_user_id)?history.get(item.reported_user_id):'—')+' · '+date(item.created_at));
   const actions=elt('div','nr-mod-card-actions');
   actions.append(
-   actionButton('View profile','nr-mod-button',()=>showDetail(item.id,'profile')),
+   actionButton('View profile','nr-mod-button',async()=>{ 
+    if(typeof window.NightreelOpenProfile!=='function'){status.textContent='Profile navigation unavailable. Refresh Nightreel.';return;}
+    const ok=await window.NightreelOpenProfile(item.reported_user_id);
+    if(ok){dialog.close();}else{status.textContent='Unable to open this user profile.';}
+   }),
    actionButton('Review content','nr-mod-button',()=>showDetail(item.id,'content')),
    actionButton('Suspend account','nr-mod-button nr-mod-button-warn',()=>showDetail(item.id,'actions')),
    actionButton('Dismiss report','nr-mod-button nr-mod-button-muted',()=>dismiss(item)));
