@@ -43,6 +43,19 @@
 @media(max-width:780px){input:not([type=checkbox]):not([type=radio]),textarea,select{font-size:16px!important}}
 </style>
   <link rel="stylesheet" href="app-enhancements.css?v=42" />
+
+<style id="preview-mobile-bottom-nav">
+@media(max-width:720px){
+  #nightreel-mobile-bottom{position:fixed;bottom:0;left:0;right:0;z-index:45;display:flex;justify-content:space-around;align-items:center;min-height:68px;padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));background:rgba(17,13,25,.97);border-top:1px solid #765269;box-shadow:0 -8px 28px rgba(0,0,0,.4);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+  #nightreel-mobile-bottom button{min-width:0;flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;border:0;border-radius:12px;background:transparent;color:#c9bacb;font-size:10px;font-weight:700;min-height:52px;padding:6px 2px;cursor:pointer}
+  #nightreel-mobile-bottom button[aria-current="page"]{color:#ff96b9;background:rgba(237,94,114,.13)}
+  #nightreel-mobile-bottom svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+  #nightreel-mobile-bottom button:focus-visible{outline:2px solid #ff99ba;outline-offset:2px}
+  #app-shell{padding-bottom:calc(77px + env(safe-area-inset-bottom,0px))}
+  #nr-chat-fab{bottom:calc(83px + env(safe-area-inset-bottom,0px))!important}
+}
+@media(min-width:721px){#nightreel-mobile-bottom{display:none!important}}
+</style>
 </head>
 <body>
   <section id="startup-warning" role="status" style="max-width:700px;margin:64px auto 20px;padding:24px;color:#eee;background:#27212c;border:1px solid #805362;border-radius:12px;font:15px/1.55 Arial,sans-serif">
@@ -1057,5 +1070,55 @@ start();
 <script defer src="nightreel-casework.js?v=3"></script>
 <script defer src="nightreel-suspension.js?v=1"></script>
 <script defer src="mobile-refresh.js?v=4"></script>
+
+<script id="preview-mobile-bottom-script">
+(()=>{
+ const app=document.getElementById('app-shell');
+ if(!app)return;
+ const icon=(paths)=>'<svg viewBox="0 0 24 24" aria-hidden="true">'+paths+'</svg>';
+ const icons={
+  home:icon('<path d="m3 10 9-7 9 7v10H15v-7H9v7H3z"/>'),
+  library:icon('<path d="M4 5h16M4 10h16M4 15h16M4 20h16"/>'),
+  friends:icon('<circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M17 5a3 3 0 0 1 0 6m1 4a5 5 0 0 1 3 5"/>'),
+  search:icon('<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>'),
+  more:icon('<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>')
+ };
+ const nav=document.createElement('nav');
+ nav.id='nightreel-mobile-bottom';
+ nav.setAttribute('aria-label','Mobile navigation');
+ const tabs=[['home','Home'],['library','Library'],['friends','Friends'],['search','Search'],['more','More']];
+ nav.innerHTML=tabs.map(([id,label])=>'<button type="button" data-bottom-tab="'+id+'"'+(id==='home'?' aria-current="page"':'')+'>'+icons[id]+'<span>'+label+'</span></button>').join('');
+ app.append(nav);
+ const active=id=>nav.querySelectorAll('button').forEach(btn=>{
+  if(btn.dataset.bottomTab===id)btn.setAttribute('aria-current','page');
+  else btn.removeAttribute('aria-current');
+ });
+ const library=()=>document.querySelector('[data-social-view="library"]')?.click();
+ nav.addEventListener('click',event=>{
+  const btn=event.target.closest('[data-bottom-tab]');if(!btn)return;
+  const tab=btn.dataset.bottomTab;
+  if(tab==='more'){document.getElementById('account-menu-button')?.click();return;}
+  if(tab==='friends'){document.querySelector('[data-social-view="friends"]')?.click();active(tab);return;}
+  if(tab==='search'){
+   library();active(tab);
+   document.querySelector('.collection-section')?.scrollIntoView({block:'start',behavior:'smooth'});
+   window.setTimeout(()=>document.getElementById('library-search')?.focus({preventScroll:true}),200);
+   return;
+  }
+  library();
+  if(tab==='home'){
+   document.getElementById('brand-home')?.click();
+   window.scrollTo({top:0,behavior:'smooth'});
+  }else{
+   document.querySelector('.collection-section')?.scrollIntoView({block:'start',behavior:'smooth'});
+  }
+  active(tab);
+ });
+ document.querySelector('.sidebar')?.addEventListener('click',event=>{
+   if(event.target.closest('[data-filter]'))active('library');
+ });
+ document.getElementById('brand-home')?.addEventListener('click',()=>active('home'));
+})();
+</script>
 </body>
 </html>
