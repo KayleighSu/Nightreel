@@ -16,54 +16,117 @@ function dialog(id,title){
  d.addEventListener('click',e=>{if(e.target===d)d.close();});document.body.append(d);
  return {d,inner};
 }
-const report=dialog('nr-evidence-report','Report this message');
-const explanation=make('p','nr-casework-help','The selected message and up to six nearby messages may be shared with authorized Nightreel moderators to help assess context. They are not shown to the reported account. This does not automatically suspend anyone.');
+const report=dialog('nr-evidence-report','Report selected messages');
+const explanation=make('p','nr-casework-help',
+ 'Only the messages you select will be copied to Nightreel moderators. Select 1–8 messages, including at least one sent by the account you are reporting. No additional messages are included automatically.');
 const reportForm=make('form','nr-casework-form');
-const reasonLabel=make('label','','Why are you reporting this message?');
-const reason=make('textarea');reason.required=true;reason.minLength=5;reason.maxLength=1000;reason.rows=4;reason.placeholder='Describe the concern (5–1,000 characters)';
+const reasonLabel=make('label','','Why are you reporting these messages?');
+const reason=make('textarea');reason.required=true;reason.minLength=5;reason.maxLength=1000;reason.rows=4;
+reason.placeholder='Describe the issue (5–1,000 characters)';
 reasonLabel.append(reason);
-const reportSubmit=make('button','extras-primary','Send message report');reportSubmit.type='submit';
+const reportSubmit=make('button','extras-primary','Submit selected messages');reportSubmit.type='submit';
 const reportStatus=make('p','extras-status');reportStatus.setAttribute('role','status');
-reportForm.append(reasonLabel,reportSubmit,reportStatus);
-report.inner.append(explanation,reportForm);
-let selectedMessage='';
-let activeMenu=null;
-function closeMessageMenu(){activeMenu?.remove();activeMenu=null;}
-document.addEventListener('click',e=>{
- const target=e.target.closest?.('.nr-message-options');
- if(target){
-  e.preventDefault();e.stopPropagation();
-  if(!session())return;
-  if(activeMenu?.dataset.messageId===target.dataset.messageId){closeMessageMenu();return;}
-  closeMessageMenu();
-  const menu=make('div','nr-message-option-menu');
-  menu.dataset.messageId=target.dataset.messageId||'';
-  const option=btn('Report this message',()=>{
-   selectedMessage=menu.dataset.messageId;
-   closeMessageMenu();
-   if(!selectedMessage)return;
-   reason.value='';reportStatus.textContent='';
-   if(!report.d.open)report.d.showModal();
-  },'nr-menu-report-action');
-  menu.append(option);
-  target.closest('.message-bubble')?.append(menu);
-  activeMenu=menu;return;
+reportForm.append(reasonLabel,reportSubmit,reportStatus);report.inner.append(explanation,reportForm);
+let selecting=null;
+const selectedMessages=new Set();
+const selectionBar=make('div','nr-chat-selection-bar');
+const selectedLabel=make('span','','Select messages (0/8)');
+const submitSelection=btn('Continue',()=>continueSelected(),'nr-selection-submit');
+const cancelSelection=btn('Cancel',()=>stopSelection(),'nr-selection-cancel');
+selectionBar.append(selectedLabel,cancelSelection,submitSelection);
+function syncSelected(){
+ if(!selecting)return;
+ const bubbles=selecting.thread.querySelectorAll('.message-bubble[data-message-id]');
+ for(const bubble of bubbles){
+  const selected=selectedMessages.has(bubble.dataset.messageId);
+  bubble.classList.toggle('nr-message-selected',selected);
+  bubble.setAttribute('role','checkbox');
+  bubble.setAttribute('aria-checked',String(selected));
+  bubble.tabIndex=0;
  }
- if(activeMenu&&!e.target.closest?.('.nr-message-option-menu'))closeMessageMenu();
+ selectedLabel.textContent='Select messages ('+selectedMessages.size+'/8)';
+ submitSelection.disabled=!selectedMessages.size;
+}
+let syncQueued=false;
+const selectionObserver=new MutationObserver(()=>{
+ if(!selecting||syncQueued)return;
+ syncQueued=true;queueMicrotask(()=>{syncQueued=false;syncSelected();});
+});
+function stopSelection(){
+ selectionObserver.disconnect();
+ if(selecting){
+  selecting.container.classList.remove('nr-chat-selecting');
+  selecting.container.querySelector('.nr-chat-report-start')?.removeAttribute('disabled');
+  for(const b of selecting.thread.querySelectorAll('.message-bubble')){
+   b.classList.remove('nr-message-selected');b.removeAttribute('role');b.removeAttribute('aria-checked');b.removeAttribute('tabindex');
+  }
+ }
+ selectionBar.remove();selecting=null;selectedMessages.clear();
+}
+function startSelection(target){
+ if(!session())return;
+ const desktop=target.closest('.nr-chat-window');
+ const container=desktop||target.closest('#extra-open-chat');
+ const thread=desktop?.querySelector('.nr-dock-thread')||container?.querySelector('#extra-chat-thread');
+ const other=desktop?desktop._friendId:container?.dataset.conversationId;
+ if(!container||!thread||!other)return;
+ stopSelection();
+ selecting={container,thread,other};
+ container.classList.add('nr-chat-selecting');
+ target.disabled=true;
+ const composer=container.querySelector('.nr-dock-form,#extra-send-message');
+ if(composer)composer.before(selectionBar);else thread.after(selectionBar);
+ syncSelected();
+ selectionObserver.observe(thread,{childList:true,subtree:true});
+}
+function toggleBubble(bubble){
+ if(!selecting||!bubble?.dataset.messageId)return;
+ const id=bubble.dataset.messageId;
+ if(selectedMessages.has(id))selectedMessages.delete(id);
+ else if(selectedMessages.size<8)selectedMessages.add(id);
+ syncSelected();
+}
+function continueSelected(){
+ if(!selecting||!selectedMessages.size)return;
+ const hasIncoming=[...selecting.thread.querySelectorAll('.message-bubble[data-message-id]')]
+  .some(b=>selectedMessages.has(b.dataset.messageId)&&b.dataset.senderId===selecting.other);
+ if(!hasIncoming){selectedLabel.textContent='Select at least one received message';return;}
+ const toReport={other:selecting.other,messageIds:[...selectedMessages]};
+ stopSelection();
+ pendingReport=toReport;
+ reason.value='';reportStatus.textContent='';
+ if(!report.d.open)report.d.showModal();
+}
+let pendingReport=null;
+document.addEventListener('click',event=>{
+ const start=event.target.closest?.('.nr-chat-report-start');
+ if(start){event.preventDefault();startSelection(start);return;}
+ const bubble=event.target.closest?.('.message-bubble[data-message-id]');
+ if(selecting&&bubble&&selecting.thread.contains(bubble)){event.preventDefault();toggleBubble(bubble);}
+});
+document.addEventListener('keydown',event=>{
+ if(!selecting)return;
+ if(event.key==='Escape'){stopSelection();return;}
+ const bubble=event.target.closest?.('.message-bubble[data-message-id]');
+ if(bubble&&selecting.thread.contains(bubble)&&(event.key===' '||event.key==='Enter')){
+  event.preventDefault();toggleBubble(bubble);
+ }
 });
 reportForm.onsubmit=async e=>{
- e.preventDefault();if(!session()||!selectedMessage)return;
- if(!window.confirm('Submit this message and up to six nearby messages to Nightreel moderators for review?'))return;
- reportSubmit.disabled=true;reportStatus.textContent='Submitting evidence…';
+ e.preventDefault();if(!session()||!pendingReport)return;
+ if(!window.confirm('Submit '+pendingReport.messageIds.length+' selected message(s) to Nightreel moderators? Only the selected messages and your written explanation will be attached.'))return;
+ reportSubmit.disabled=true;reportStatus.textContent='Submitting selected messages…';
  try{
-  const {data,error}=await state.supabase.rpc('nightreel_report_message',{p_message_id:selectedMessage,p_reason:reason.value.trim()});
+  const {data,error}=await state.supabase.rpc('nightreel_report_selected_messages',{
+   p_other_id:pendingReport.other,p_message_ids:pendingReport.messageIds,p_reason:reason.value.trim()
+  });
   if(error)throw error;
-  reportStatus.textContent='Report submitted with message evidence. Reference: '+String(data||'').slice(0,8)+'.';
-  reason.value='';
- }catch(err){reportStatus.textContent='Could not report message: '+err.message;}
+  reportStatus.textContent='Report submitted. Reference: '+String(data||'').slice(0,8)+'.';
+  reason.value='';pendingReport=null;
+ }catch(err){reportStatus.textContent='Could not submit report: '+err.message;}
  finally{reportSubmit.disabled=false;}
 };
-
+report.d.addEventListener('close',()=>{pendingReport=null;});
 const appealButton=btn('My moderation appeals',()=>openAppeals());
 appealButton.id='nr-my-appeals';appealButton.hidden=true;
 account.querySelector('.extras-menu-actions')?.append(appealButton);
