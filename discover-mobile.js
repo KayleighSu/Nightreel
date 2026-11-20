@@ -14,8 +14,17 @@ const list=()=>Array.isArray(state?.entries)?state.entries:[];
 const poster=a=>safeUrl(a?.images?.webp?.large_image_url||a?.images?.jpg?.large_image_url||a?.images?.jpg?.image_url||a?.image_url);
 const title=a=>String(a?.title_english||a?.title||'Untitled');
 const selectedCover=a=>poster(a)||'';
+const ownedTitleKeys=()=>new Set(list().flatMap(e=>[e.title,e.title_english,e.title_japanese,e.nightreelShowTitle].map(norm).filter(Boolean)));
+const ownedMalIds=()=>new Set(list().map(e=>Number(e.mal_id)).filter(Boolean));
+const isNewAnime=a=>{
+ const id=Number(a?.mal_id);
+ if(id&&ownedMalIds().has(id))return false;
+ const titles=[a?.title,a?.title_english,a?.title_japanese,a?.nightreelShowTitle].map(norm).filter(Boolean);
+ const owned=ownedTitleKeys();
+ return !titles.some(t=>owned.has(t));
+};
 const findOwned=a=>list().find(e=>e.mal_id&&Number(e.mal_id)===Number(a.mal_id))||
- list().find(e=>norm(e.title)===norm(title(a))||norm(e.title)===norm(a.title));
+ list().find(e=>norm(e.title)===norm(title(a))||norm(e.title)===norm(a.title)||norm(e.title)===norm(a.title_english));
 const icon=n=>({
  search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/>',
  bookmark:'<path d="M6 3h12v18l-6-5-6 5z"/>',
@@ -93,7 +102,7 @@ function build(){
  const caret=focused?document.activeElement.selectionStart:null;
  const w=watching();
  const fav=list().filter(e=>e.favorite).sort((a,b)=>(Number(a.favorite_rank)||99)-(Number(b.favorite_rank)||99));
- const recs=recommendations.length?recommendations: fav.filter(x=>x.image_url).map(ownAnime).slice(0,8);
+ const recs=recommendations.filter(isNewAnime);
  const results=search.trim().length>1;
  root.innerHTML='<div class="nrd-inner">'+
  '<label class="nrd-search">'+svg('search')+'<input id="nrd-query" type="search" placeholder="Search anime, characters, or tags…" value="'+escape(search)+'" aria-label="Search anime"></label>'+
@@ -111,7 +120,7 @@ function build(){
     '<div class="nrd-watch-list">'+w.slice(0,4).map(e=>'<button type="button" class="nrd-watch-row" data-own-id="'+escape(e.id)+'">'+
     '<span class="nrd-watch-art">'+useImage(e)+'</span><span class="nrd-watch-info"><strong>'+escape(e.title)+'</strong><small>'+Number(e.episodes_watched||0)+' / '+(Number(e.episodes_total||e.catalog_episode_total)||'?')+' episodes</small>'+
     '<span class="nrd-progress"><span style="width:'+percent(e)+'%"></span></span></span><small>'+percent(e)+'%</small></button>').join('')+'</div>':'')+
-   '<div class="nrd-recs">'+section(recommendations.length?'Because of Your Favorites':'Your Favorite Stories','',recs,'recs')+
+   '<div class="nrd-recs">'+(recLoading?'<div class="nrd-section-heading"><h2>New to Your Collection</h2></div>':section('New to Your Collection','',recs,'recs'))+
    (recLoading?'<p class="nrd-message">Finding recommendations from anime fans…</p>':'')+'</div>'
  )+'</div>';
  if(focused){const next=root.querySelector('#nrd-query');next?.focus({preventScroll:true});try{if(caret!=null)next.setSelectionRange(caret,caret)}catch{}}
@@ -128,7 +137,7 @@ const recommend=async()=>{
  const favorites=list().filter(e=>e.favorite||Number(e.rating)>=8).sort((a,b)=>Number(b.rating||0)-Number(a.rating||0)).slice(0,3);
  const key=favorites.map(e=>e.mal_id||e.title).join('|');
  if(key===recKey)return;recLoading=true;build();
- const out=new Map(),existing=new Set(list().map(e=>norm(e.title)));
+ const out=new Map();
  try{
   for(const e of favorites){
    let id=Number(e.mal_id);
@@ -140,13 +149,13 @@ const recommend=async()=>{
    await new Promise(resolve=>setTimeout(resolve,1200));
    try{
     const rows=await getJson('https://api.jikan.moe/v4/anime/'+id+'/recommendations');
-    rows.forEach(x=>{const a=x.entry;if(a?.mal_id&&!existing.has(norm(title(a)))&&!out.has(a.mal_id))out.set(a.mal_id,a)});
+    rows.forEach(x=>{const a=x.entry;if(a?.mal_id&&isNewAnime(a)&&!out.has(a.mal_id))out.set(a.mal_id,a)});
    }catch(error){console.warn('Recommendation seed unavailable',error)}
    if(out.size>=14)break;
   }
  }catch(err){console.warn('Discover recommendations unavailable',err)}
  finally{
-  recommendations=[...out.values()].slice(0,12);
+  recommendations=[...out.values()].filter(isNewAnime).slice(0,12);
   recKey=key;recLoading=false;build()
  }
 };
@@ -187,7 +196,7 @@ nav.addEventListener('click',e=>{
 },true);
 root.addEventListener('click',e=>{
  const select=e.target.closest('[data-select]');
- if(select){const [source,num]=select.dataset.select.split(':');const data=source==='trending'?trending:source==='recs'?(recommendations.length?recommendations:list().filter(e=>e.favorite).map(ownAnime)):searchResults;const a=data[Number(num)];if(a)openDetails(a);return}
+ if(select){const [source,num]=select.dataset.select.split(':');const data=source==='trending'?trending:source==='recs'?recommendations.filter(isNewAnime):searchResults;const a=data[Number(num)];if(a)openDetails(a);return}
  const f=e.target.closest('[data-feature-index]');if(f){featuredIndex=Number(f.dataset.featureIndex);build();return}
  if(e.target.closest('[data-feature-details]')){const a=trending[featuredIndex]||list().find(x=>x.image_url);if(a)openDetails(a);return}
  if(e.target.closest('[data-feature-save]')){const a=trending[featuredIndex]||list().find(x=>x.image_url);if(a)save(a);return}
