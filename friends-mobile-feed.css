@@ -530,3 +530,87 @@
  #nr-mobile-friend-activity .nrf-social-actions{gap:7px!important}
  #nr-mobile-friend-activity .nrf-action-icon svg{width:18px!important;height:18px!important}
 }
+/* Feed visual hierarchy: author + actual update time, activity context with
+   bold show title, square thumbnail and compact action footer. */
+@media(max-width:780px){
+ #nr-mobile-friend-activity .nrf-card{
+   padding:13px 13px 11px!important;
+   border:1px solid #6f4a6c!important;border-radius:17px!important;
+   background:linear-gradient(138deg,#251a30,#1b1524)!important;
+   box-shadow:0 6px 18px rgba(3,1,10,.23)!important;
+ }
+ #nr-mobile-friend-activity .nrf-card-header{
+   align-items:flex-start!important;gap:10px!important;margin-bottom:11px!important;
+ }
+ #nr-mobile-friend-activity .nrf-avatar{
+   flex:0 0 37px!important;width:37px!important;height:37px!important;
+   margin-top:1px!important;
+ }
+ #nr-mobile-friend-activity .nrf-identity{
+   display:flex!important;flex:1!important;flex-direction:column!important;
+   min-width:0!important;gap:5px!important;padding-top:1px!important;
+ }
+ #nr-mobile-friend-activity .nrf-byline{
+   display:flex!important;flex-wrap:wrap!important;align-items:baseline!important;
+   gap:4px 9px!important;min-width:0!important;
+ }
+ #nr-mobile-friend-activity .nrf-author{
+   color:#fff6fb!important;font:800 14px/1.2 var(--head,system-ui)!important;
+ }
+ #nr-mobile-friend-activity .nrf-post-time{
+   font:400 10px/1.2 system-ui,sans-serif!important;
+   color:#bdb0c4!important;white-space:nowrap!important;
+ }
+ #nr-mobile-friend-activity .nrf-activity-line{
+   display:block!important;min-width:0!important;
+   color:#d4c6d6!important;font:400 11px/1.36 system-ui,sans-serif!important;
+   overflow-wrap:anywhere!important;
+ }
+ #nr-mobile-friend-activity .nrf-activity-icon{
+   color:#f3a2c7!important;margin-right:6px!important;font-size:12px!important;
+ }
+ #nr-mobile-friend-activity .nrf-activity-title{
+   color:#fff3fb!important;font-weight:800!important;
+ }
+ #nr-mobile-friend-activity .nrf-profile{
+   flex:0 0 25px!important;width:25px!important;height:30px!important;
+   color:#f9e8f4!important;font-size:20px!important;
+ }
+ #nr-mobile-friend-activity .nrf-show{
+   gap:12px!important;padding-left:47px!important;
+   min-height:0!important;align-items:flex-start!important;
+ }
+ #nr-mobile-friend-activity .nrf-cover{
+   width:82px!important;flex-basis:82px!important;height:82px!important;
+   align-self:flex-start!important;
+ }
+ #nr-mobile-friend-activity .nrf-show-info{
+   min-width:0!important;flex:1!important;padding-top:4px!important;
+ }
+ #nr-mobile-friend-activity .nrf-anime-name{
+   color:white!important;font:800 16px/1.14 var(--head,system-ui)!important;
+   margin:0 0 7px!important;letter-spacing:-.02em!important;
+ }
+ #nr-mobile-friend-activity .nrf-subtitle{
+   font:400 11px/1.35 system-ui,sans-serif!important;color:#cbb9d0!important;
+   margin:0 0 8px!important;
+ }
+ #nr-mobile-friend-activity .nrf-progress{margin-top:3px!important}
+ #nr-mobile-friend-activity .nrf-actions{
+   margin:10px 0 0 47px!important;
+   display:flex!important;flex-wrap:nowrap!important;align-items:center!important;
+ }
+ #nr-mobile-friend-activity .nrf-watchlist{
+   font-size:10px!important;padding:7px 10px!important;
+   font-weight:700!important;
+ }
+ #nr-mobile-friend-activity .nrf-comment-panel{
+   margin:10px 0 0 47px!important;
+ }
+}
+@media(max-width:385px){
+ #nr-mobile-friend-activity .nrf-show{padding-left:0!important}
+ #nr-mobile-friend-activity .nrf-actions{margin-left:0!important}
+ #nr-mobile-friend-activity .nrf-comment-panel{margin-left:0!important}
+ #nr-mobile-friend-activity .nrf-cover{width:75px!important;flex-basis:75px!important;height:75px!important}
+}
