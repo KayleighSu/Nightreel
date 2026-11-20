@@ -29,11 +29,14 @@
       if(b.dataset.communityView===view)b.setAttribute('aria-current','page');
       else b.removeAttribute('aria-current');
     });
-    feed.querySelector('.nrf-hero').hidden=view==='friends';
-    feed.querySelector('.nrf-filters').hidden=view==='friends';
-    feed.querySelector('.nrf-items').hidden=view==='friends';
-    feed.querySelector('.nrf-bottom').hidden=view==='friends';
+    feed.querySelector('.nrf-hero').hidden=view!=='activity';
+    feed.querySelector('.nrf-filters').hidden=view!=='activity';
+    feed.querySelector('.nrf-items').hidden=view!=='activity';
+    feed.querySelector('.nrf-bottom').hidden=view!=='activity';
     manager.hidden=mobile() && view!=='friends';
+    const forYou=feed.querySelector('#nrf-for-you');
+    if(forYou)forYou.hidden=view!=='home';
+    if(view==='home')window.NightreelLoadForYou?.();
     if(view==='friends')manager.scrollIntoView({block:'nearest',behavior:'smooth'});
   }
   const list=feed.querySelector('.nrf-items');
@@ -139,11 +142,7 @@
     const viewButton=e.target.closest('[data-community-view]');
     if(viewButton){
       const target=viewButton.dataset.communityView;
-      if(target==='home'){
-        document.querySelector('[data-social-view="library"]')?.click();
-        document.getElementById('brand-home')?.click();
-        return;
-      }
+      if(target==='home'){switchCommunity('home');return;}
       if(target==='messages'){document.getElementById('messages-top-button')?.click();return;}
       switchCommunity(target);return;
     }
