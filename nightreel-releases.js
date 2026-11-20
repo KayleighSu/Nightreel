@@ -252,26 +252,38 @@ function compactEvents(){
 }
 function drawCompactRadar(){
  const grid=$('anime-grid');if(!grid)return;
- grid.querySelector('#nr-compact-radar')?.remove();
- if(state.filter!=='all'||String(state.search||'').trim())return;
+ const existing=grid.querySelector('#nr-compact-radar');
+ if(state.filter!=='all'||String(state.search||'').trim()){
+  existing?.remove();return;
+ }
  const events=compactEvents();
- const block=document.createElement('section');
- block.id='nr-compact-radar';block.className='nr-compact-radar';
- block.setAttribute('aria-label','Upcoming anime releases');
  const rows=events.map(e=>
   '<div class="nr-compact-release-row"><span class="nr-compact-release-name">'+
   safe(e.title)+'<small>'+safe(e.description)+'</small></span>'+
   '<span class="nr-compact-release-date">'+safe(e.when)+'</span></div>'
  ).join('');
- block.innerHTML='<div class="nr-compact-radar-heading"><div>'+
+ const content='<div class="nr-compact-radar-heading"><div>'+
    '<span class="nr-section-eyebrow">COMING UP IN YOUR COLLECTION</span><h3>Release Radar</h3></div>'+
    '<button type="button" data-radar-full aria-label="Open full release calendar">View all ↗</button></div>'+
    (events.length?'<div class="nr-compact-release-list">'+rows+'</div>':
     '<p class="nr-compact-empty">No upcoming dates found yet. Check the full radar to refresh your collection.</p>');
+ // Auto catalogue refreshes can run while someone is scrolling deep in their library.
+ // Never remove and reinsert the entire radar: that shifts the document and
+ // can cause iOS Safari to jump to the top of a long grouped collection.
+ if(existing){
+  if(existing.dataset.renderedContent!==content){
+   existing.innerHTML=content;
+   existing.dataset.renderedContent=content;
+  }
+  return;
+ }
+ const block=document.createElement('section');
+ block.id='nr-compact-radar';block.className='nr-compact-radar';
+ block.setAttribute('aria-label','Upcoming anime releases');
+ block.innerHTML=content;block.dataset.renderedContent=content;
  const featured=grid.querySelector('.nr-featured-section');
  if(featured)featured.after(block);else grid.prepend(block);
 }
-
 function drawDashboard(){
  const area=$('nr-radar-results');if(!area)return;
  const entries=state.entries||[],now=Date.now();
