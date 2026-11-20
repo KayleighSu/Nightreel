@@ -460,7 +460,15 @@ async function loadMessages(quiet=false){
    const bubble=document.createElement('div');bubble.className='message-bubble'+(item.sender_id===user?' mine':'');
    const body=document.createElement('span');body.textContent=item.body;
    const when=document.createElement('small');when.textContent=timeLabel(item.created_at);
-   bubble.append(body,when);box.append(bubble);
+   bubble.append(body,when);
+   if(item.sender_id!==user){
+    const report= document.createElement('button');
+    report.type='button';report.className='nr-report-message';report.textContent='Report';
+    report.setAttribute('aria-label','Report this message');
+    report.dataset.messageId=item.id;report.dataset.senderId=item.sender_id;
+    bubble.append(report);
+   }
+   box.append(bubble);
   }
   if(pinned||!quiet)box.scrollTop=box.scrollHeight;
   if(!quiet)message($('extra-messages-status'),'');
@@ -719,7 +727,15 @@ async function nrLoadDockMessages(win){
    const bubble=document.createElement('div');bubble.className='message-bubble'+(m.sender_id===user?' mine':'');
    const body=document.createElement('span');body.textContent=m.body;
    const when=document.createElement('small');when.textContent=timeLabel(m.created_at);
-   bubble.append(body,when);thread.append(bubble);
+   bubble.append(body,when);
+   if(m.sender_id!==user){
+    const report=document.createElement('button');report.type='button';
+    report.className='nr-report-message';report.textContent='Report';
+    report.setAttribute('aria-label','Report this message');
+    report.dataset.messageId=m.id;report.dataset.senderId=m.sender_id;
+    bubble.append(report);
+   }
+   thread.append(bubble);
   }
   if(pinned)thread.scrollTop=thread.scrollHeight;
  }catch(error){win.querySelector('.nr-dock-status').textContent=error.message;}
