@@ -20,8 +20,8 @@ jobs:
       APPSTORE_API_ISSUER_ID: ${{ secrets.APPSTORE_API_ISSUER_ID }}
       APPSTORE_API_KEY_P8_BASE64: ${{ secrets.APPSTORE_API_KEY_P8_BASE64 }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: '22'
       - name: Verify signing configuration
