@@ -125,3 +125,35 @@
  #nrf-friend-manager .social-row{margin:9px 0}
  #nr-mobile-friend-activity [hidden]{display:none!important}
 }
+
+/* For You recommendations live inside the same mobile community screen. */
+@media(max-width:780px){
+ #nrf-for-you{padding:0 15px 28px;max-width:100%}
+ #nrf-for-you[hidden]{display:none!important}
+ #nrf-for-you .nrf-rec-hero{
+   padding:27px 19px;margin:0 -15px 18px;
+   background:radial-gradient(circle at 92% 8%,#78446d88,transparent 53%),linear-gradient(130deg,#22162c,#100d1f);
+   border-bottom:1px solid #6c4565;
+ }
+ #nrf-for-you .nrf-rec-hero small{color:#ffafd3;letter-spacing:.17em;font-size:10px;font-weight:900}
+ #nrf-for-you .nrf-rec-hero h2{font:800 clamp(32px,8vw,42px)/1.1 var(--head,system-ui);letter-spacing:-.05em;color:#fff;margin:12px 0}
+ #nrf-for-you .nrf-rec-hero em{color:#ff92bf;font-style:normal}
+ #nrf-for-you .nrf-rec-hero p{color:#d8bdd3;font-size:13px;line-height:1.5;max-width:340px}
+ #nrf-for-you .nrf-rec-results{display:grid;gap:12px}
+ #nrf-for-you .nrf-rec-card{display:flex;gap:13px;align-items:stretch;border-radius:17px;border:1px solid #805578;padding:12px;background:linear-gradient(130deg,#2b1d33,#191323)}
+ #nrf-for-you .nrf-rec-cover{width:106px;flex:0 0 106px;min-height:156px;border-radius:11px;overflow:hidden;background:#30243b;display:grid;place-items:center;color:#f29bc8;font-size:34px}
+ #nrf-for-you .nrf-rec-cover img{width:100%;height:100%;object-fit:cover}
+ #nrf-for-you .nrf-rec-body{flex:1;min-width:0;display:flex;flex-direction:column}
+ #nrf-for-you .nrf-rec-body h3{color:#fff;font:800 17px/1.2 var(--head,system-ui);margin:2px 0 7px;overflow-wrap:anywhere}
+ #nrf-for-you .nrf-rec-meta{color:#e2b8d1;margin:0 0 5px;font-size:11px}
+ #nrf-for-you .nrf-rec-because{color:#ffa6cb;font-size:11px;font-weight:700;line-height:1.4;margin:4px 0 8px}
+ #nrf-for-you .nrf-rec-summary{font-size:11px;line-height:1.4;color:#d4bcd0;margin:2px 0 10px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
+ #nrf-for-you .nrf-rec-actions{margin-top:auto;padding-top:8px}
+ #nrf-for-you .nrf-rec-add{min-height:35px;border:1px solid #f3a2c8;border-radius:999px;background:#633552;color:#ffe7f1;padding:8px 11px;font-size:11px;font-weight:800}
+ #nrf-for-you .nrf-rec-retry{display:block;margin:18px auto 0;border:1px solid #8d6384;border-radius:13px;background:#3a2440;color:#ffe3f1;padding:11px 17px;font-size:12px;font-weight:750}
+ #nrf-for-you .nrf-rec-retry:disabled{opacity:.55}
+}
+@media(max-width:380px){
+ #nrf-for-you .nrf-rec-cover{width:88px;flex-basis:88px}
+ #nrf-for-you .nrf-rec-body h3{font-size:15px}
+}
