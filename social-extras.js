@@ -39,10 +39,11 @@ const profileDialog=createDialog('extra-account-dialog','Your Nightreel profile'
  '<button type="button" id="extra-scan-qr" class="extras-secondary">Scan a QR</button>',
  '<button type="button" id="extra-open-messages" class="extras-secondary">Messages</button>',
  '<button type="button" id="extra-logout" class="extras-secondary">Log out</button></div>',
- '<div class="extras-fields"><label>Change profile picture (JPG, PNG or WebP, max 2 MB)',
+ '<details class="nr-avatar-editor"><summary><span>Profile picture</span><span class="nr-avatar-hint">Change or remove</span></summary>',
+ '<div class="extras-fields"><label>Choose a JPG, PNG, or WebP image (up to 2 MB)',
  '<input type="file" id="extra-avatar-file" accept="image/jpeg,image/png,image/webp"></label>',
  '<button type="button" id="extra-avatar-upload" class="extras-primary">Save profile picture</button>',
- '<button type="button" id="extra-avatar-remove" class="extras-close">Remove profile picture</button></div>',
+ '<button type="button" id="extra-avatar-remove" class="extras-close">Remove profile picture</button></div></details>',
  '<p class="extras-status" id="extra-profile-status" role="status"></p>'
 ].join(''));
 const qrDialog=createDialog('extra-qr-dialog','Your friend QR code',[
