@@ -1,6 +1,7 @@
 /* Mobile Friends activity presentation — uses existing accepted-friend RPCs only. */
 (() => {
   'use strict';
+  const mobile=()=>window.matchMedia('(max-width:780px)').matches;
   const panel=document.getElementById('social-friends-panel');
   if(!panel)return;
   const feed=document.createElement('section');
@@ -36,7 +37,6 @@
     if(view==='friends')manager.scrollIntoView({block:'nearest',behavior:'smooth'});
   }
   const list=feed.querySelector('.nrf-items');
-  const mobile=()=>window.matchMedia('(max-width:780px)').matches;
   const validImage=(s)=>{try{const u=new URL(s);return u.protocol==='https:'?u.href:''}catch{return ''}};
   const values=[];let selected='all',userId='',loadedAt=0,loading=false,loadSeq=0;
   const add=(el,tag,cl,text)=>{const node=document.createElement(tag);if(cl)node.className=cl;if(text!=null)node.textContent=String(text);el.append(node);return node};
