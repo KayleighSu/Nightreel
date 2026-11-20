@@ -1,0 +1,40 @@
+/* Mobile Friends activity feed (real friend collection data). */
+@media(max-width:780px){
+ #social-friends-panel{padding:0!important;overflow:visible!important;border:0!important;background:transparent!important}
+ #social-friends-panel>#nr-mobile-friend-activity{display:block!important;margin:0 0 22px}
+ #nr-mobile-friend-activity .nrf-hero{margin:0 0 13px;padding:29px 20px 30px;border-radius:19px;border:1px solid #604366;background:radial-gradient(ellipse at top right,#58325a8c,transparent 60%),linear-gradient(120deg,#24172d,#15101f)}
+ #nr-mobile-friend-activity .nrf-hero>span{font:800 10px system-ui;letter-spacing:.20em;color:#f2a4c7}
+ #nr-mobile-friend-activity .nrf-hero h2{font:800 clamp(30px,8vw,43px)/1.08 var(--head,system-ui);letter-spacing:-.045em;color:#fff;margin:13px 0 11px}
+ #nr-mobile-friend-activity .nrf-hero em{font-style:normal;color:#f58eb7}
+ #nr-mobile-friend-activity .nrf-hero p{font-size:13px;line-height:1.55;color:#d9bfd3;margin:0;max-width:320px}
+ #nr-mobile-friend-activity .nrf-filters{display:flex;gap:8px;overflow-x:auto;margin:0 0 13px;scrollbar-width:none}
+ #nr-mobile-friend-activity .nrf-filters button{white-space:nowrap;border:1px solid #75536f;border-radius:30px;padding:10px 14px;font:700 12px system-ui;background:#211728;color:#e2cfdf}
+ #nr-mobile-friend-activity .nrf-filters button[aria-pressed=true]{background:#653652;border-color:#ec99bb;color:#fff0f6}
+ #nr-mobile-friend-activity .nrf-items{display:grid;gap:12px}
+ #nr-mobile-friend-activity .nrf-card{border:1px solid #765071;background:linear-gradient(135deg,#261a31,#1b1525);padding:15px;border-radius:19px;box-shadow:0 12px 28px #0003}
+ #nr-mobile-friend-activity .nrf-card-header{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+ #nr-mobile-friend-activity .nrf-avatar{display:grid;place-items:center;width:43px;height:43px;flex:0 0 43px;border-radius:50%;background:#71445d;border:1px solid #d591b3;color:white;font-size:19px;font-weight:800}
+ #nr-mobile-friend-activity .nrf-identity{flex:1;min-width:0;display:flex;flex-direction:column}
+ #nr-mobile-friend-activity .nrf-identity strong{font-size:15px;color:white}
+ #nr-mobile-friend-activity .nrf-identity span{font-size:11px;color:#d1b2cb}
+ #nr-mobile-friend-activity .nrf-profile{background:transparent;border:0;color:#f3aecb;font-size:11px;font-weight:800;padding:8px 2px}
+ #nr-mobile-friend-activity .nrf-show{display:flex;align-items:flex-start;gap:14px;min-width:0}
+ #nr-mobile-friend-activity .nrf-cover{width:89px;height:125px;flex:0 0 89px;overflow:hidden;border-radius:11px;border:1px solid #936485;background:#39283f;display:grid;place-items:center}
+ #nr-mobile-friend-activity .nrf-cover img{width:100%;height:100%;object-fit:cover}
+ #nr-mobile-friend-activity .nrf-cover-fallback{font-size:36px;color:#ec8bb8}
+ #nr-mobile-friend-activity .nrf-show-info{flex:1;min-width:0}
+ #nr-mobile-friend-activity .nrf-show-info h3{font:800 18px/1.22 var(--head,system-ui);color:white;overflow-wrap:anywhere;margin:3px 0 10px}
+ #nr-mobile-friend-activity .nrf-subtitle{font-size:12px;color:#decade;margin:0 0 10px}
+ #nr-mobile-friend-activity .nrf-progress{height:7px;background:#59435d;border-radius:99px;overflow:hidden}
+ #nr-mobile-friend-activity .nrf-progress span{height:100%;display:block;background:linear-gradient(90deg,#fa75a8,#ffb2d2)}
+ #nr-mobile-friend-activity .nrf-rating{font-size:16px;color:#ff95bc;font-weight:800;margin:2px 0 8px}
+ #nr-mobile-friend-activity .nrf-note{font-size:12px;color:#dfc9dc;line-height:1.5;margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+ #nr-mobile-friend-activity .nrf-actions{display:flex;justify-content:flex-end;margin-top:13px}
+ #nr-mobile-friend-activity .nrf-watchlist{background:#5c304e;color:#ffe1ef;border:1px solid #f29bbd;padding:10px 14px;border-radius:999px;font-weight:800;font-size:12px}
+ #nr-mobile-friend-activity .nrf-watchlist:disabled{opacity:.65;cursor:default}
+ #nr-mobile-friend-activity .nrf-message{text-align:center;border:1px solid #654360;background:#23192a;border-radius:14px;padding:20px 14px;color:#dfc2d5;font-size:13px}
+ #nr-mobile-friend-activity .nrf-bottom{text-align:center;margin:13px 0 23px}
+ #nr-mobile-friend-activity .nrf-bottom button{background:transparent;border:1px solid #704c6e;border-radius:12px;padding:9px 14px;color:#f7c4da;font-size:12px}
+ #social-friends-panel>h2,#social-friends-panel>.social-row,#social-friends-panel>#people-results,#social-friends-panel>#friends-results,#social-friends-panel>#friends-error{margin-left:14px!important;margin-right:14px!important}
+}
+@media(min-width:781px){#nr-mobile-friend-activity{display:none!important}}
