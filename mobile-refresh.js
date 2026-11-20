@@ -86,15 +86,32 @@
   indicator.textContent=ready?'↑ Release to refresh':'↓ Pull to refresh';
   indicator.style.transform='translate(-50%, '+Math.min(70,distance*.44)+'px)';
  },{passive:false});
- document.addEventListener('touchend',()=>{
+ document.addEventListener('touchend',async()=>{
   if(!tracking)return;
-  const shouldReload=ready;reset();
-  if(shouldReload&&!refreshing){
-   refreshing=true;
-   indicator.classList.add('nr-pull-active');
-   indicator.textContent='↻ Refreshing…';
-   rememberView();
-   window.location.reload();
+  const shouldRefresh=ready;reset();
+  if(!shouldRefresh||refreshing)return;
+  refreshing=true;
+  indicator.classList.add('nr-pull-active');
+  indicator.textContent='↻ Refreshing…';
+  try{
+   // Never navigate away: refresh the selected screen while preserving filters,
+   // open panels, active conversations and the current scroll position.
+   if(typeof window.NightreelRefreshCurrentView!=='function')throw Error('Refresh is not available yet.');
+   const originalY=window.scrollY;
+   await window.NightreelRefreshCurrentView();
+   if(typeof window.NightreelRefreshCurrentChat==='function')
+    await window.NightreelRefreshCurrentChat();
+   window.scrollTo({top:originalY,behavior:'instant'});
+   indicator.textContent='✓ Updated';
+  }catch(error){
+   console.warn('Nightreel refresh failed:',error);
+   indicator.textContent='Could not refresh — try again';
+  }finally{
+   refreshing=false;
+   window.setTimeout(()=>{
+    indicator.classList.remove('nr-pull-ready','nr-pull-active');
+    indicator.textContent='↓ Pull to refresh';
+   },850);
   }
  },{passive:true});
  document.addEventListener('touchcancel',reset,{passive:true});
