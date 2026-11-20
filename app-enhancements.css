@@ -1167,3 +1167,8 @@ body:has(#account-menu-button) #account-avatar{display:none!important}
 
 #nr-moderation-open .nr-moderation-count{display:inline-flex;align-items:center;justify-content:center;margin-left:8px;padding:2px 7px;border-radius:999px;background:#d14d78;color:white;min-width:21px;font-size:11px;font-weight:800;line-height:1.5}
 #nr-moderation-open .nr-moderation-count[hidden]{display:none}
+
+/* Moderator-only report history (role and row permissions enforced in Supabase) */
+.nr-profile-report-history{display:inline-block;background:#462b3d;border:1px solid #95667f;color:#ffd8e6;border-radius:999px;padding:5px 12px;font-size:12px;font-weight:700;margin:6px 0 0}
+.nr-profile-report-history[hidden]{display:none}
+.nr-moderation-card .nr-moderation-history{font-size:12px;font-weight:750;color:#ffd4e6;margin:3px 0 9px}
