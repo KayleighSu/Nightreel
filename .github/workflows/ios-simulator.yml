@@ -8,6 +8,16 @@ on:
       - 'capacitor.config.json'
       - 'package.json'
       - 'scripts/prepare-ios.mjs'
+      - 'scripts/configure-ios.mjs'
+      - 'index.html'
+      - 'community-guidelines.html'
+      - 'privacy.html'
+      - 'support.html'
+      - '*.js'
+      - '*.css'
+      - 'icons/**'
+      - 'images/**'
+      - 'manifest.webmanifest'
 
 permissions:
   contents: read
