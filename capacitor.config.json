@@ -1,0 +1,12 @@
+{
+  "appId": "com.kayleighsu.nightreel",
+  "appName": "Nightreel",
+  "webDir": "www",
+  "ios": {
+    "contentInset": "automatic",
+    "allowsLinkPreview": false
+  },
+  "server": {
+    "iosScheme": "capacitor"
+  }
+}
