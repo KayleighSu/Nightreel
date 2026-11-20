@@ -261,7 +261,12 @@
     const viewButton=e.target.closest('[data-community-view]');
     if(viewButton){
       const target=viewButton.dataset.communityView;
-      if(target==='home'){switchCommunity('home');return;}
+      if(target==='home'){
+        // The Discover screen owns recommendations. Do not open the old
+        // duplicate Friends/For You loader.
+        window.NightreelDiscover?.activate();
+        return;
+      }
       if(target==='messages'){document.getElementById('messages-top-button')?.click();return;}
       switchCommunity(target);return;
     }
