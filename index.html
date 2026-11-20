@@ -1134,7 +1134,8 @@ start();
      document.getElementById('brand-home')?.click();
      window.scrollTo({top:0,behavior:'smooth'});
    }else if(target==='discover'){
-     document.getElementById('open-catalog')?.click();
+     // Open the mobile Discover PAGE, not Friends / For You or the add-anime search modal.
+     window.NightreelDiscover?.activate();
    }else{
      document.querySelector('.collection-section')?.scrollIntoView({block:'start',behavior:'smooth'});
    }
@@ -1149,6 +1150,6 @@ start();
   <script defer src="friends-mobile-feed.js?v=7"></script>
 <script defer src="friends-for-you.js?v=1"></script>
   <script defer src="mobile-scroll-recovery.js?v=1"></script>
-  <script defer src="discover-mobile.js?v=2"></script>
+  <script defer src="discover-mobile.js?v=3"></script>
 </body>
 </html>
